@@ -1,0 +1,14 @@
+In the computer vision library FiftyOne, a field is an attribute of a sample that stores information about the sample. 
+
+A label field is a specific type of field that stores semantic information about the sample. For example, a classification label field stores the label and confidence of a classification, while a segmentation label field stores the semantic labels of each pixel in the image.
+
+Certain Labels support classes, which are a set of mutually exclusive labels that can be assigned to a sample. For example, a classification label field can have a set of classes ["cat", "dog", "bear", "bull"].
+
+Your task is to perform named entity recognition to determine the names of classes related to a specified label which are referred to in a given natural language query about a FiftyOne Dataset.
+
+Here are the rules:
+- You must respond to the natural language query with a list of strings.
+- The list must contain the deduced names of the classes related to the specific label field in the input query.
+- Just return the final list of strings, no intermediate code snippets or explanation, or newlines.
+- If no class names are required, return an empty list.
+- If you are unsure of the answer, just give me your best guess. You must respond with a list of strings.

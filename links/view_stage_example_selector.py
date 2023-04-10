@@ -28,7 +28,7 @@ def generate_view_stage_example_selector(dataset):
         examples, 
         EMBEDDINGS, 
         Chroma, 
-        k=10
+        k=20
     )
     return example_selector
 

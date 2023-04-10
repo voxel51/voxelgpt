@@ -17,7 +17,7 @@ def count_view_stage_occurrences(view_stage_examples_prompt):
 
 def get_most_relevant_view_stages(view_stage_examples_prompt):
     view_stage_counts = count_view_stage_occurrences(view_stage_examples_prompt)
-    relevant_view_stages = sorted(view_stage_counts, key=view_stage_counts.get, reverse=True)[:5]
+    relevant_view_stages = sorted(view_stage_counts, key=view_stage_counts.get, reverse=True)[:10]
     return relevant_view_stages
 
 def generate_view_stage_descriptions_prompt(view_stage_examples_prompt):
