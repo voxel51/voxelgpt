@@ -5,7 +5,6 @@ from langchain.vectorstores import Chroma
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.prompts import FewShotPromptTemplate, PromptTemplate
 
-
 EMBEDDINGS = OpenAIEmbeddings()
 
 VIEW_STAGE_EXAMPLE_PROMPT = PromptTemplate(
@@ -28,7 +27,7 @@ def generate_view_stage_example_selector(dataset):
         examples, 
         EMBEDDINGS, 
         Chroma, 
-        k=10
+        k=10,
     )
     return example_selector
 

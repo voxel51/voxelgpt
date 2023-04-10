@@ -1,8 +1,9 @@
 import pandas as pd
 
-from langchain.llms import OpenAI
+from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate, FewShotPromptTemplate
-llm = OpenAI(temperature=0.0)
+
+llm = ChatOpenAI(temperature=0, model_name='gpt-3.5-turbo')
 
 def get_field_selection_examples():
     df = pd.read_csv("examples/fiftyone_field_selection_examples.csv")
@@ -117,5 +118,5 @@ def generate_field_selector_prompt(dataset, query):
 
 def select_fields(dataset, query):
     field_selector_prompt = generate_field_selector_prompt(dataset, query)
-    res = llm(field_selector_prompt)
+    res = llm.call_as_llm(field_selector_prompt)
     return res.strip()
