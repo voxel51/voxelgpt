@@ -1,0 +1,146 @@
+{
+    "exclude": {
+        "description": "Exclude samples with specified IDs",
+        "inputs": "sample_ids: IDs to exclude. Can be single ID, iterable of IDs, Sample or SampleView instances, iterable of Sample or SampleView instances, or SampleCollection"
+    },
+    "exclude_by": {
+        "description": "Exclude samples with specified field values",
+        "inputs": "field: name of the field or embedded field. values: value or iterable of values to exclude by"
+    },
+    "exclude_fields": {
+        "description": "Exclude specified fields from samples",
+        "inputs": "field_names: field name or iterable of field names to exclude, including embedded.field.name"
+    },
+    "exclude_frames": {
+        "description": "Exclude frames with specified IDs from videos",
+        "inputs": "frame_ids: IDs to exclude. Can be single ID, iterable of IDs, Frame or FrameView instances, iterable of Frame or FrameView instances, or SampleCollection. omit_empty (True): whether to omit samples with no frames after excluding specified frames"
+    },
+    "exclude_groups": {
+        "description": "Exclude groups with specified IDs",
+        "inputs": "group_ids: IDs to exclude. Can be single ID, iterable of IDs, Sample or SampleView instances, group dict returned by get_group(), iterable of group dicts returned by get_group(), or SampleCollection"
+    },
+    "exclude_labels": {
+        "description": "Exclude specified labels",
+        "inputs": "labels: list of dicts specifying labels to exclude in the format returned by Session.selected_labels(). ids: ID or iterable of IDs of labels to exclude. tags: tag or iterable of tags of labels to exclude. fields: field or iterable of fields from which to exclude. omit_empty: whether to omit samples with no labels after filtering"
+    },
+    "exists": {
+        "description": "Return view of samples with (or without) a non-None value for specified field",
+        "inputs": "field: field name or embedded.field.name. bool: whether to check if field exists (True or None) or does not exist (False)"
+    },
+    "filter_field": {
+        "description": "Filter values of field of each sample",
+        "inputs": "field: field name or embedded.field.name. filter: ViewExpression or MongoDB expression returning boolean describing filter to apply. only_matches (True): whether to only include samples that match filter or include all samples"
+    },
+    "filter_labels": {
+        "description": "Filters Label field of each sample. For single Label fields, fields for which filter returns False are replaced with None. For Label list fields, label elements for which filter returns False are omitted from view",
+        "inputs": "field: label field to filter. filter: ViewExpression or MongoDB expression returning boolean describing filter to apply. only_matches (True): whether to only include samples with at least one label after filtering or include all samples. trajectories: whether to match entire object trajectories for which object matches given filter on at least one frame. Only applicable to datasets with videos and frame-level label fields whose objects have their index attributes populated"
+    },
+    "filter_keypoints": {
+        "description": "Filters individual Keypoint.points elements in specified keypoints field of each sample",
+        "inputs": "field: Keypoint or Keypoints field to filter.\nfilter: ViewExpression or MongoDB expression returning boolean to apply element-wise to field (list of same length as Keypoint.points).\nlabels: label or iterable of keypoint skeleton labels to keep.\nonly_matches (True): whether to only include keypoints/samples with at least one point after filtering or include all keypoints/samples"
+    },
+    "geo_near": {
+        "description": "Sorts samples in collection by proximity to specified geolocation. Must be first stage in any DatasetView",
+        "inputs": "point: reference point to compute distances to, can be a [longitude, latitude] list, GeoJSON dict with Point type, or GeoLocation instance.\nlocation_field: location data of each sample to use, can be name of GeoLocation field or embedded.field.name containing GeoJSON data to use as location data, or None.\nmin_distance: filter samples that are less than this distance (in meters) from point.\nmax_distance: filter samples that are greater than this distance (in meters) from point.\nquery: optional dict defining MongoDB read query that samples must match to be included in view"
+    },
+    "geo_within": {
+        "description": "Filters samples in collection to only include samples whose geolocation is within specified boundary",
+        "inputs": "boundary: GeoLocation, GeoLocations, GeoJSON dict, or list of coordinates that define Polygon or MultiPolygon to search within.\nlocation_field: location data of each sample to use, can be name of GeoLocation field or embedded.field.name containing GeoJSON location data to use, or None.\nstrict: whether sample’s location data must strictly fall within boundary (True) to match or whether any intersection suffices (False)"
+    },
+    "group_by": {
+        "description": "Reorganizes samples in the collection into groups by a specified field or expression",
+        "inputs": "field_or_expr: field name, embedded field name, ViewExpression, or MongoDB aggregation expression to group by.\nmatch_expr: optional ViewExpression or MongoDB aggregation expression to include certain groups in the output view.\nsort_expr: optional ViewExpression or MongoDB aggregation expression to sort the groups in the output view.\nreverse: whether to return the results in descending order"
+    },
+    "limit": {
+        "description": "Returns a view with at most the given number of samples",
+        "inputs": "limit: maximum number of samples to return. Returns an empty view if limit is non-positive"
+    },
+    "limit_labels": {
+        "description": "Limits the number of Label instances in the specified labels list field of each sample in the collection. Must be one of: Classifications, Detections, Keypoints, Polylines",
+        "inputs": "field – labels list field to limit\nlimit – maximum number of labels to include in each labels list. If non-positive, all lists will be empty"
+    },
+    "map_labels": {
+        "description": "Maps the label values of a Label field to new values for each sample in the collection",
+        "inputs": "field – labels field to map\nmap – dict mapping label values to new label values"
+    },
+    "set_field": {
+        "description": "Sets a field or embedded field on each sample in a collection by evaluating the given expression",
+        "inputs": "field – field or embedded.field.name to set\nexpr – ViewExpression or MongoDB expression that defines the field value to set"
+    },
+    "match": {
+        "description": "Filters the samples in the collection by the given filter",
+        "inputs": "filter: ViewExpression or MongoDB expression that returns a boolean describing the filter to apply"
+    },
+    "match_frames": {
+        "description": "Filters the frames in the video collection by the given filter",
+        "inputs": "filter – ViewExpression or MongoDB aggregation expression that returns a boolean describing the filter to apply\nomit_empty – whether to omit samples with no frame labels after filtering"
+    },
+    "match_labels": {
+        "description": "Selects samples from the collection based on label criteria. Selection can be performed via any of the following methods: labels, ids, tags, and filter. If multiple criteria are specified, labels must match all of them. By default, the selection is applied to all label fields, but you can provide the fields argument to explicitly define the field(s) to search",
+        "inputs": "labels: list of dicts specifying the labels to select in the format returned by Session.selected_labels()\nids: ID or iterable of IDs of the labels to select\ntags: tag or iterable of tags of labels to select\nfilter: ViewExpression or MongoDB aggregation expression that returns a boolean to select a given label\nfields: field or iterable of fields from which to select\nbool: whether to match samples that have at least one label that matches the specified criteria (True/None), or samples that do not have any matching labels (False)"
+    },
+    "match_tags": {
+        "description": "Returns a view containing samples in the collection that have or don't have any/all of the specified tags",
+        "inputs": "tags: tag or iterable of tags to match\nbool: whether to match samples that have the given tags (True/None) or do not have them (False)\nall: whether to match samples that have all (True) or any (False) of the specified tags"
+    },
+    "select": {
+        "description": "Selects samples with the given IDs from the collection. IDs can be provided in various formats including iterable of IDs, boolean iterable of the same length as the collection encoding, Sample or SampleView, iterable of Sample or SampleView instances, and SampleCollection. If ordered is True, the samples in the returned view will be sorted to match the order of the provided IDs",
+        "inputs": "sample_ids: the samples to select in one of the following formats: sample ID, iterable of sample IDs, iterable of booleans, Sample or SampleView, iterable of Sample or SampleView instances, SampleCollection\nordered: whether to sort the samples in the returned view to match the order of the provided IDs"
+    },
+    "select_by": {
+        "description": "Selects samples with the given field values from the collection, typically for categorical fields. Use match() for floating point fields",
+        "inputs": "field: field/embedded.field.name, values: value/iterable, ordered: bool"
+    },
+    "select_fields": {
+        "description": "Selects given field names from samples in the collection. Excludes other fields. Default sample fields are always selected",
+        "inputs": "field_names: field name/iterable. May contain embedded.field.name"
+    },
+    "select_frames": {
+        "description": "Selects frames with given IDs from video collection",
+        "inputs": "frame_ids: ID/iterable of frame IDs/Frame/FrameView/SampleCollection, omit_empty: bool"
+    },
+    "select_groups": {
+        "description": "Selects groups with given IDs from grouped collection",
+        "inputs": "group_ids: ID/iterable of group IDs/Sample or SampleView/group dict/get_group() instances/SampleCollection, ordered: bool"
+    },
+    "select_group_slices": {
+        "description": "Selects samples in group collection from given slice(s). Returned view is a flattened non-grouped view with only the slice(s) of interest",
+        "inputs": "slices: group slice/iterable of group slices, media_type: media type"
+    },
+    "select_labels": {
+        "description": "Selects specified labels from the collection. Returned view omits samples, sample fields, and individual labels that do not match selection criteria. Labels can be selected via list of dicts, IDs, or tags. Multiple criteria must be matched",
+        "inputs": "labels: list of dicts, ids: ID/iterable of IDs, tags: tag/iterable of tags, fields: field/iterable of fields, omit_empty: bool"
+    },
+    "shuffle": {
+        "description": "Randomly shuffles samples in the collection",
+        "inputs": "seed: optional random seed for shuffling"
+    },
+    "skip": {
+        "description": "Omits the given number of samples from the head of the collection. Non-positive skip values result in no samples being omitted",
+        "inputs": "skip: int"
+    },
+    "sort_by": {
+        "description": "Sorts samples in the collection by given field(s) or expression(s)",
+        "inputs": "field_or_expr: str or ViewExpression or MongoDB aggregation expression or list of (field_or_expr, order) tuples defining a compound sort criteria, where order can be 1 for ascending or any string starting with 'a', or -1 for descending or any string starting with 'd', reverse: bool (default False)"
+    },
+    "sort_by_similarity": {
+        "description": "Sorts the collection by similarity to a specified query",
+        "inputs": "query: ID or iterable of IDs or num_dims vector or num_queries x num_dims array of vectors or text prompt or iterable of text prompts, k: int (defaults to entire collection), reverse: bool (default False), dist_field: name of float field to store distance of each example to query, brain_key: existing fiftyone.brain.compute_similarity() run on the dataset"
+    },
+    "take": {
+        "description": "Randomly samples the given number of samples from the collection",
+        "inputs": "size: int (non-positive values result in an empty view), seed: optional random seed to use for sample selection"
+    },
+    "to_patches": {
+        "description": "Creates a view with one sample per object patch in the specified field of the collection",
+        "inputs": "field: patches field of type Detections or Polylines, other_fields: field or list of fields to include, True to include all other fields, or None or False to include no other fields, keep_label_lists: whether to store patches in label list fields of the same type as input collection"
+    },
+    "to_evaluation_patches": {
+        "description": "Creates a view based on the evaluation with the given key that contains one sample for each true positive, false positive, and false negative example in the collection",
+        "inputs": "eval_key: evaluation key for Detections or Polylines ground truth or predicted fields, other_fields: field or list of fields to include, True to include all other fields, or None or False to include no other fields"
+    },
+    "to_clips": {
+        "description": "Creates a view that contains one sample per clip defined by the given field or expression in the video collection",
+        "inputs": "field_or_expr: TemporalDetection or TemporalDetections or FrameSupportField or list of FrameSupportField field or boolean ViewExpression or list of [(first1, last1), (first2, last2), ...], other_fields: field or list of fields to include, True to include all other fields, None or False to include no other fields (default None), tol: max number of false frames to overlook when generating clips (default 0), min_len: min allowable clip length in frames (default 0), trajectories: whether to create clips for each unique object trajectory defined by their (label, index) (default False)"
+    }
+}
