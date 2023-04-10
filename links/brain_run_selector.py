@@ -1,10 +1,9 @@
 import pandas as pd
 
-# import json
-from langchain.llms import OpenAI
+from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate, FewShotPromptTemplate
 
-llm = OpenAI(temperature=0.0)
+llm = ChatOpenAI(temperature=0, model_name='gpt-3.5-turbo')
 
 #####################################################################
 
@@ -22,16 +21,6 @@ BRAIN_RUN_EXAMPLE_PROMPT = PromptTemplate(
 BRAIN_RUN_PROMPT_PREFIX = "Return the name of the {run_type} run required to generate the DatasetView specified in the query, given available {run_type} runs:\n" 
 BRAIN_RUN_PROMPT_SUFFIX = "Query: {query}\nAvailable runs: {available_runs}\nSelected run:"
 BRAIN_RUN_PROMPT_INPUTS = ["run_type", "query", "available_runs"]
-
-# def generate_brain_run_examples_prompt(examples, query, available_runs):
-#     return FewShotPromptTemplate(
-#         examples=examples,
-#         example_prompt=BRAIN_RUN_EXAMPLE_PROMPT,
-#         prefix=BRAIN_RUN_PROMPT_PREFIX,
-#         suffix=BRAIN_RUN_PROMPT_SUFFIX,
-#         input_variables=BRAIN_RUN_PROMPT_INPUTS,
-#         example_separator="\n",
-#     )
 
 TASK_RULES_FILE = {
     "uniqueness": "prompts/uniqueness_task_rules.txt",
@@ -139,7 +128,7 @@ class BrainRunSelector:
             return available_brain_runs[0]['key']
         else:
             prompt = self.generate_prompt(query, available_brain_runs)
-            response = llm(prompt)
+            response = llm.call_as_llm(prompt)
             return response.strip()
 
 

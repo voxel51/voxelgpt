@@ -1,6 +1,7 @@
-from langchain.llms import OpenAI
+from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
-llm = OpenAI(temperature=0.0)
+
+llm = ChatOpenAI(temperature=0, model_name='gpt-3.5-turbo')
 
 UNIQUENESS_PROMPT_TEMPLATE = """
 A uniqueness brain run determines how unique each image is in the dataset. Its results are stored in the {uniqueness_field} field on the samples.
@@ -169,5 +170,5 @@ def generate_dataset_view_text(
         examples_prompt
     )
 
-    response = llm(prompt)
+    response = llm.call_as_llm(prompt)
     return response.strip()
