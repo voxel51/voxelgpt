@@ -1,8 +1,9 @@
 import pandas as pd
 
-from langchain.llms import OpenAI
+from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate, FewShotPromptTemplate
-llm = OpenAI(temperature=0.0)
+
+llm = ChatOpenAI(temperature=0, model_name='gpt-3.5-turbo')
 
 BRAIN_METHODS = (
         'uniqueness', 
@@ -57,5 +58,5 @@ def generate_brain_method_selector_prompt(query):
 
 def select_brain_methods(query):
     brain_method_selector_prompt = generate_brain_method_selector_prompt(query)
-    res = llm(brain_method_selector_prompt)
+    res = llm.call_as_llm(brain_method_selector_prompt)
     return [method for method in BRAIN_METHODS if method in res]
