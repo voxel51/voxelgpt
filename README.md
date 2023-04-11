@@ -36,7 +36,7 @@ Goal: use GPT model to interpret user queries and generate valid view stages!
 
 ## Getting started
 
-`pip install openai langchain chromadb`
+`pip install openai langchain chromadb tiktoken`
 
 Then create an OpenAI account and generate an API key
 
