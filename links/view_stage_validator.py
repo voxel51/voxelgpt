@@ -27,6 +27,135 @@ KEYWORD_TYPES = {
     "filter": "expression",
 }
 
+EXPRESSION_METHODS = {
+    "abs": {'args': [], 'kwargs': {}},
+    "all": {'args': ["expression_list"], 'kwargs': {}},
+    "any": {'args': ["expression_list"], 'kwargs': {}},
+    "append": {'args': ["const"], 'kwargs': {}},
+    "apply": {'args': ["expression"], 'kwargs': {}},
+    "arccos": {'args': [], 'kwargs': {}},
+    "arccosh": {'args': [], 'kwargs': {}},
+    "arcsin": {'args': [], 'kwargs': {}},
+    "arcsinh": {'args': [], 'kwargs': {}},
+    "arctan": {'args': [], 'kwargs': {}},
+    "arctanh": {'args': [], 'kwargs': {}},
+    "cases": {
+        'args': ["const_or_expression_dict"], 
+        'kwargs': {"default": "const_or_expression"}
+        },
+    "ceil": {'args': [], 'kwargs': {}},
+    "concat": {'args': ["string_or_expression_list"], 'kwargs': {"before": "bool"}},
+    "contains": {'args': ["string_or_string_list"], 'kwargs': {"all": "bool"}},
+    "contains_str": {
+        'args': ["string_or_string_list"], 
+        'kwargs': {"case_sensitive": "bool"}
+        },
+    "cos": {'args': [], 'kwargs': {}},
+    "cosh": {'args': [], 'kwargs': {}},
+    "day_of_month": {'args': [], 'kwargs': {}},
+    "day_of_week": {'args': [], 'kwargs': {}},
+    "day_of_year": {'args': [], 'kwargs': {}},
+    "difference": {'args': ["list"], 'kwargs': {}},
+    "ends_with": {
+        'args': ["string_or_string_list"], 
+        'kwargs': {"case_sensitive": "bool"}
+        },
+    "enumerate": {'args': ["list"], 'kwargs': {"start": "int"}},
+    "exists": {'args': [], 'kwargs': {"bool": "bool"}},
+    "exp": {'args': [], 'kwargs': {}},
+    "extend": {'args': ["expression_or_expression_list"], 'kwargs': {}},
+    "filter": {'args': ["expression"], 'kwargs': {}},
+    "floor": {'args': [], 'kwargs': {}},
+    "hour": {'args': [], 'kwargs': {}},
+    "if_else": {'args': ["expression", "expression"], 'kwargs': {}},
+    "insert": {'args': ["int", "const"], 'kwargs': {}},
+    "intersection": {'args': ["string_list_or_expression"], 'kwargs': {}},
+    "is_array": {'args': [], 'kwargs': {}},
+    "is_in": {'args': ["list"], 'kwargs': {}},
+    "is_missing": {'args': [], 'kwargs': {}},
+    "is_null": {'args': [], 'kwargs': {}},
+    "is_number": {'args': [], 'kwargs': {}},
+    "is_string": {'args': [], 'kwargs': {}},
+    "is_subset": {'args': ["list"], 'kwargs': {}},
+    "join": {'args': ["string"], 'kwargs': {}},
+    "length": {'args': [], 'kwargs': {}},
+    "let_in": {'args': ["expression"], 'kwargs': {}},
+    "literal": {'args': ["string"], 'kwargs': {}},
+    "ln": {'args': [], 'kwargs': {}},
+    "log": {'args': ["int"], 'kwargs': {}},
+    "log10": {'args': [], 'kwargs': {}},
+    "lower": {'args': [], 'kwargs': {}},
+    "lstrip": {'args': [], 'kwargs': {"chars": "string"}},
+    "map": {'args': ["expression"], 'kwargs': {}},
+    "map_values": {'args': ["dict"], 'kwargs': {}},
+    "matches_str": {
+        'args': ["string_or_string_list"], 
+        'kwargs': {"case_sensitive": "bool"}
+    },
+    "max": {'args': [], 'kwargs': {"value": "float"}},
+    "mean": {'args': [], 'kwargs': {}},
+    "millisecond": {'args': [], 'kwargs': {}},
+    "min": {'args': [], 'kwargs': {"value": "float"}},
+    "minute": {'args': [], 'kwargs': {}},
+    "month": {'args': [], 'kwargs': {}},
+    "pow": {'args': ["float"], 'kwargs': {}},
+    "prepend": {'args': ["const"], 'kwargs': {}},
+    "randn": {'args': [], 'kwargs': {}},
+    "range": {'args': ["int"], 'kwargs': {"stop": "int"}},
+    "re_match": {'args': ["string"], 'kwargs': {"options": "string"}},
+    "reduce": {'args': ["expression"], 'kwargs': {"init_val": "const"}},
+    "replace": {'args': ["string", "string"], 'kwargs': {}},
+    "reverse": {'args': [], 'kwargs': {}},
+    "round": {'args': [], 'kwargs': {"place": "int"}},
+    "rsplit": {'args': ["string"], 'kwargs': {"maxsplit": "int"}},
+    "rstrip": {'args': [], 'kwargs': {"chars": "string"}},
+    "second": {'args': [], 'kwargs': {}},
+    "set_equals": {'args': ["expression_or_expression_list"], 'kwargs': {}},
+    "set_field": {
+        'args': ["string", "const_or_expression"], 
+        'kwargs': {"relative": "bool"}
+        },
+    "sin": {'args': [], 'kwargs': {}},
+    "sinh": {'args': [], 'kwargs': {}},
+    "sort": {'args': [], 'kwargs': {"key":"const", "numeric":"bool", "reverse": "bool"}},
+    "split": {'args': ["string"], 'kwargs': {"maxsplit": "int"}},
+    "sqrt": {'args': [], 'kwargs': {}},
+    "startswith": {
+        'args': ["string_or_string_list"], 
+        'kwargs': {"case_sensitive": "bool"}
+        },
+    "std": {'args': [], 'kwargs': {}},
+    "strip": {'args': [], 'kwargs': {"chars": "string"}},
+    "strlen": {'args': [], 'kwargs': {}},
+    "substr": {'args': ["int"], 'kwargs': {"start": "int", "end": "int", "count": "int"}},
+    "sum": {'args': [], 'kwargs': {}},
+    "switch":  {
+        'args': ["const_or_expression_dict"], 
+        'kwargs': {"default": "const_or_expression"}
+        },
+    "tan": {'args': [], 'kwargs': {}},
+    "tanh": {'args': [], 'kwargs': {}},
+    "to_bool": {'args': [], 'kwargs': {}},
+    "to_date": {'args': [], 'kwargs': {}},
+    "to_double": {'args': [], 'kwargs': {}},
+    "to_int": {'args': [], 'kwargs': {}},
+    "to_string": {'args': [], 'kwargs': {}},
+    "trunc": {'args': [], 'kwargs': {"place": "int"}},
+    "type": {'args': [], 'kwargs': {}},
+    "union": {'args': ["string_list_or_expression"], 'kwargs': {}},
+    "unique": {'args': [], 'kwargs': {}},
+    "upper": {'args': [], 'kwargs': {}},
+    "week": {'args': [], 'kwargs': {}},
+    "year": {'args': [], 'kwargs': {}},
+    "zip": {
+        'args': ["string_list_or_expression"], 
+        'kwargs': {"use_longest": "bool", "defaults": "list"}
+        },
+}
+
+
+###################################################################### 
+
 ######################################################################
 
 from ast import parse
@@ -61,7 +190,19 @@ def validate_const(aj):
         return True
     else:
         raise ValueError("Expected a constant")
+
+def validate_dict(aj):
+    if aj['_type'] != 'Dict':
+        raise ValueError("Expected a dictionary")
     
+    for k in aj['keys']:
+        validate_const(k)
+    for v in aj['values']:
+        validate_const(v)
+
+    ### also validate that types of keys and values are the same
+    return True
+
 def validate_string_dict(aj):
     if aj['_type'] != 'Dict':
         raise ValueError("Expected a dictionary")
@@ -112,25 +253,30 @@ def validate_expression_base(aj):
         raise ValueError("ViewField should be a call to F")
 
 def validate_expression_args(args, expr_method):
-    if len(args) != len(expression_methods[expr_method]['args']):
+    if len(args) != len(EXPRESSION_METHODS[expr_method]['args']):
         raise ValueError("ViewField method has incorrect number of arguments")
     
     for i, arg in enumerate(args):
-        expected_type = expression_methods[expr_method]['args'][i]
+        expected_type = EXPRESSION_METHODS[expr_method]['args'][i]
         validate_type(arg, expected_type)
 
 def validate_expression_keywords(keywords, expr_method):
     for kw in keywords:
-        if kw['arg'] not in expression_methods[expr_method]['kwargs']:
+        if kw['arg'] not in EXPRESSION_METHODS[expr_method]['kwargs']:
             raise ValueError("ViewField method has incorrect keyword argument")
-        expected_type = expression_methods[expr_method]['kwargs'][kw['arg']]
+        expected_type = EXPRESSION_METHODS[expr_method]['kwargs'][kw['arg']]
         validate_type(kw['value'], expected_type)
 
 def validate_attribute(aj):
     attr = aj['func']['attr']
-    if attr not in list(expression_methods.keys()):
+    if attr not in list(EXPRESSION_METHODS.keys()):
         raise ValueError("ViewField method not recognized")
-    validate_expression(aj['func']['value'])
+    
+    args = aj['args']
+    keywords = aj['keywords']
+    validate_expression_args(args, attr)
+    validate_expression_keywords(keywords, attr)
+    return validate_expression(aj['func']['value'])
 
 def validate_binop(aj):
     ### Boolean algebra OR on types (expression = 1, float = 0)
@@ -158,7 +304,9 @@ def validate_call(aj):
 def validate_expression_subroutine(aj):
     ### Base case
     if aj['_type'] == 'Call':
-        validate_call(aj)
+        return validate_call(aj)
+    elif aj['_type'] == 'UnaryOp':
+        return validate_expression_subroutine(aj['operand'])
     else: ### BinOp
         return validate_binop(aj)
     
@@ -167,14 +315,56 @@ def validate_expression(aj):
     ve = validate_expression_subroutine(aj)
     if not ve:
         raise ValueError("Expected an expression")
+    return True
     
-###############################################################################
+def validate_expression_or_expression_list(aj):
+    if aj['_type'] not in ['List', 'Tuple']:
+        if aj['_type'] != 'Call':
+            raise ValueError("Expected an expression or list of expressions")
+        else:
+            return validate_expression(aj)
+    
+    for el in aj['elts']:
+        validate_expression(el)
+    return True
+
+def validate_const_or_expression(aj):
+    return validate_const(aj) or validate_expression(aj)
+
+def validate_const_or_expression_dict(aj):
+    if aj['_type'] != 'Dict':
+        raise ValueError("Expected a dictionary")
+    
+    for k in aj['keys']:
+        validate_const_or_expression(k)
+    for v in aj['values']:
+        validate_const_or_expression(v)
+
+    return True
 
 def validate_string_or_expression(aj):
     if aj['_type'] == 'Constant' and type(aj['n']) == str:
         return True
     else:
         return validate_expression(aj)
+
+def validate_string_or_expression_list(aj):
+    if aj['_type'] not in ['List', 'Tuple']:
+        return validate_string_or_expression(aj)
+    
+    for el in aj['elts']:
+        validate_string_or_expression(el)
+    return True
+
+def validate_string_list_or_expression(aj):
+    if aj['_type'] not in ['List', 'Tuple']:
+        return validate_expression(aj)
+    else:
+        return validate_string_list(aj)
+
+###############################################################################
+
+
     
 def validate_type(aj, expected_type):
 
@@ -190,6 +380,12 @@ def validate_type(aj, expected_type):
         'expression': validate_expression,
         "string_or_expression": validate_string_or_expression,
         "string_dict": validate_string_dict,
+        "dict": validate_dict,
+        "expression_or_expression_list": validate_expression_or_expression_list,
+        "const_or_expression": validate_const_or_expression,
+        "const_or_expression_dict": validate_const_or_expression_dict,
+        "string_or_expression_list": validate_string_or_expression_list,
+        "string_list_or_expression": validate_string_list_or_expression
     }
 
     return router[expected_type](aj)
@@ -419,11 +615,6 @@ class LimitViewStageValidator(StageValidator):
     def validate_specific_stage(self, args, keywords):
         """validate the limit_labels view stage"""
         return True
-
-    # def validate_specific_stage(self, args, keywords):
-    #     """validate the limit view stage"""
-    #     limit = args, keywords[0][0]
-    #     return IntValidator().validate(limit)
     
 class LimitLabelsViewStageValidator(StageValidator):
     """validator for the limit_labels view stage"""
@@ -586,11 +777,6 @@ class SkipViewStageValidator(StageValidator):
         super().__init__()
         self.stage_name = 'skip'
         self.keywords = []
-
-    # def validate_specific_stage(self, args, keywords):
-    #     """validate the skip view stage"""
-    #     skip = args, keywords[0][0]
-    #     return IntValidator().validate(skip)
     
 class SortByViewStageValidator(StageValidator):
     """validator for the sort_by view stage"""
@@ -622,11 +808,6 @@ class TakeViewStageValidator(StageValidator):
         self.stage_name = 'take'
         self.arg_types = ["int"]
         self.keywords = ["seed"]
-
-    # def validate_specific_stage(self, args, keywords):
-    #     """validate the take view stage"""
-    #     take = args, keywords[0][0]
-    #     return IntValidator().validate(take)
 
 class ToPatchesViewStageValidator(StageValidator):
     """validator for the to_patches view stage"""
@@ -703,119 +884,7 @@ class ToFramesViewStageValidator(StageValidator):
 
 ###########################################################################
 
-expression_methods = {
-    "abs": {'args': [], 'kwargs': {}},
-    "all": {'args': ["expression_list"], 'kwargs': {}},
-    "any": {'args': ["expression_list"], 'kwargs': {}},
-    "append": {'args': ["const"], 'kwargs': {}},
-    "apply": {'args': ["expression"], 'kwargs': {}},
-    "arccos": {'args': [], 'kwargs': {}},
-    "arccosh": {'args': [], 'kwargs': {}},
-    "arcsin": {'args': [], 'kwargs': {}},
-    "arcsinh": {'args': [], 'kwargs': {}},
-    "arctan": {'args': [], 'kwargs': {}},
-    "arctanh": {'args': [], 'kwargs': {}},
-    # "cases": {'args': ["expression_list"], 'kwargs': {}},
-    "ceil": {'args': [], 'kwargs': {}},
-    # "concat": {'args': ["const"], 'kwargs': {}},
-    "contains": {'args': ["string_or_string_list"], 'kwargs': {"all": "bool"}},
-    "contains_str": {
-        'args': ["string_or_string_list"], 
-        'kwargs': {"case_sensitive": "bool"}
-        },
-    "cos": {'args': [], 'kwargs': {}},
-    "cosh": {'args': [], 'kwargs': {}},
-    "day_of_month": {'args': [], 'kwargs': {}},
-    "day_of_week": {'args': [], 'kwargs': {}},
-    "day_of_year": {'args': [], 'kwargs': {}},
-    "difference": {'args': ["list"], 'kwargs': {}},
-    "ends_with": {
-        'args': ["string_or_string_list"], 
-        'kwargs': {"case_sensitive": "bool"}
-        },
-    "enumerate": {'args': ["list"], 'kwargs': {"start": "int"}},
-    "exists": {'args': [], 'kwargs': {"bool": "bool"}},
-    "exp": {'args': [], 'kwargs': {}},
-    # "extend": {'args': ["const"], 'kwargs': {}},
-    "filter": {'args': ["expression"], 'kwargs': {}},
-    "floor": {'args': [], 'kwargs': {}},
-    "hour": {'args': [], 'kwargs': {}},
-    "if_else": {'args': ["expression", "expression"], 'kwargs': {}},
-    "insert": {'args': ["int", "const"], 'kwargs': {}},
-    # "intersection": {'args': ["list"], 'kwargs': {}},
-    "is_array": {'args': [], 'kwargs': {}},
-    "is_in": {'args': ["list"], 'kwargs': {}},
-    "is_missing": {'args': [], 'kwargs': {}},
-    "is_null": {'args': [], 'kwargs': {}},
-    "is_number": {'args': [], 'kwargs': {}},
-    "is_string": {'args': [], 'kwargs': {}},
-    "is_subset": {'args': ["list"], 'kwargs': {}},
-    "join": {'args': ["string"], 'kwargs': {}},
-    "length": {'args': [], 'kwargs': {}},
-    "let_in": {'args': ["expression"], 'kwargs': {}},
-    "literal": {'args': ["string"], 'kwargs': {}},
-    "ln": {'args': [], 'kwargs': {}},
-    "log": {'args': ["int"], 'kwargs': {}},
-    "log10": {'args': [], 'kwargs': {}},
-    "lower": {'args': [], 'kwargs': {}},
-    "lstrip": {'args': [], 'kwargs': {"chars": "string"}},
-    "map": {'args': ["expression"], 'kwargs': {}},
-    # "map_values": {'args': ["expression"], 'kwargs': {}},
-    # "matches_str": {'args': ["expression"], 'kwargs': {}},
-    "max": {'args': [], 'kwargs': {"value": "float"}},
-    "mean": {'args': [], 'kwargs': {}},
-    "millisecond": {'args': [], 'kwargs': {}},
-    "min": {'args': [], 'kwargs': {"value": "float"}},
-    "minute": {'args': [], 'kwargs': {}},
-    "month": {'args': [], 'kwargs': {}},
-    "pow": {'args': ["float"], 'kwargs': {}},
-    "prepend": {'args': ["const"], 'kwargs': {}},
-    "randn": {'args': [], 'kwargs': {}},
-    "range": {'args': ["int"], 'kwargs': {"stop": "int"}},
-    # "re_match": {'args': ["string"], 'kwargs': {}},
-    "reduce": {'args': ["expression"], 'kwargs': {"init_val": "const"}},
-    "replace": {'args': ["string", "string"], 'kwargs': {}},
-    "reverse": {'args': [], 'kwargs': {}},
-    "round": {'args': [], 'kwargs': {"place": "int"}},
-    "rsplit": {'args': ["string"], 'kwargs': {"maxsplit": "int"}},
-    "rstrip": {'args': [], 'kwargs': {"chars": "string"}},
-    "second": {'args': [], 'kwargs': {}},
-    # "set_equals": {'args': [], 'kwargs': {}},
-    # "set_field": {'args': ["string"], 'kwargs': {}},
-    "sin": {'args': [], 'kwargs': {}},
-    "sinh": {'args': [], 'kwargs': {}},
-    "sort": {'args': [], 'kwargs': {"key":"const", "numeric":"bool", "reverse": "bool"}},
-    "split": {'args': ["string"], 'kwargs': {"maxsplit": "int"}},
-    "sqrt": {'args': [], 'kwargs': {}},
-    "startswith": {
-        'args': ["string_or_string_list"], 
-        'kwargs': {"case_sensitive": "bool"}
-        },
-    "std": {'args': [], 'kwargs': {}},
-    "strip": {'args': [], 'kwargs': {"chars": "string"}},
-    "strlen": {'args': [], 'kwargs': {}},
-    "substr": {'args': ["int"], 'kwargs': {"start": "int", "end": "int", "count": "int"}},
-    "sum": {'args': [], 'kwargs': {}},
-    # "switch": {'args': ["expression"], 'kwargs': {}},
-    "tan": {'args': [], 'kwargs': {}},
-    "tanh": {'args': [], 'kwargs': {}},
-    "to_bool": {'args': [], 'kwargs': {}},
-    "to_date": {'args': [], 'kwargs': {}},
-    "to_double": {'args': [], 'kwargs': {}},
-    "to_int": {'args': [], 'kwargs': {}},
-    "to_string": {'args': [], 'kwargs': {}},
-    "trunc": {'args': [], 'kwargs': {"place": "int"}},
-    "type": {'args': [], 'kwargs': {}},
-    # "union": {'args': ["list"], 'kwargs': {}},
-    "unique": {'args': [], 'kwargs': {}},
-    "upper": {'args': [], 'kwargs': {}},
-    "week": {'args': [], 'kwargs': {}},
-    "year": {'args': [], 'kwargs': {}},
-    # "zip": {'args': ["list"], 'kwargs': {}},
-}
-
-
-######################################################################     
+    
 
         
 def validate_view_stage(stage_string):
@@ -830,7 +899,6 @@ def validate_view_stage(stage_string):
     stage = body["func"]["id"]
     args = body["args"]
     keywords = body["keywords"]
-
     stage_validator = StageValidatorFactory().get(stage)
     stage_validator.validate(args, keywords)
 
@@ -842,4 +910,18 @@ def validate_view_stages(stage_strings):
 
 
 
+stage_strings = ['']
+# stage_strings = ['filter_labels("frames.detections", F("label") >= (F("vehicle")>3))']
+# stage_strings = ['limit(5)']
+# stage_strings = ['limit(5)', 'shuffle(seed ="51", limit = 5)']
+# stage_strings = ['limit(5)', 'shuffle(seed =51, limit = 5)']
+# stage_strings = ['limit(5)', 'shuffle(seed =51)']
+stage_strings = ['limit(F("vehicle")>3)', '("predictions", F("confidence") > 0.8)']
+# stage_strings = ['limit(10)', 'filter_labels("predictions", F("confidence") > 0.8)']
+# stage_strings = ['match(F("predictions.detections").filter(bbox_area < 0.2).length() > 0)'] ### this is a bug in my expression validation
 
+
+stage_strings = ['match(F("predictions.detections").ends_with("my_arg", case_sensitive = True) > 0)']
+
+stage_strings = ['match(~F("predictions.detections").pow(2))']
+validate_view_stages(stage_strings)
