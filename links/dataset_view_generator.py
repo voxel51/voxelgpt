@@ -1,3 +1,6 @@
+from ast import parse
+from ast2json import ast2json
+
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
 
@@ -165,3 +168,37 @@ def generate_dataset_view_text(
 
     response = llm.call_as_llm(prompt)
     return response.strip()
+
+def split_into_stages(text):
+    stext = text.strip()
+    if stext[0] != "[" or stext[-1] != "]":
+        raise ValueError(f"Invalid response: {text}. Must be a list of strings.")
+    ast = parse(text)
+    ast_json = ast2json(ast)
+    elts = ast_json['body'][0]['value']['elts']
+    if len(elts) == 0:
+        return []
+    else:
+        col_offsets = [elt['col_offset'] for elt in elts]
+        end_col_offsets = [elt['end_col_offset'] for elt in elts]
+        stage_strings = [
+            text[col_offsets[i]:end_col_offsets[i]] for i in range(len(elts))
+            ]
+        return stage_strings
+
+def get_gpt_view_stage_strings(
+        dataset,
+        required_brain_runs,
+        available_fields,
+        view_stage_descriptions,
+        examples_prompt
+    ):
+    response = generate_dataset_view_text(
+        dataset,
+        required_brain_runs,
+        available_fields,
+        view_stage_descriptions,
+        examples_prompt
+    )
+
+    return split_into_stages(response)

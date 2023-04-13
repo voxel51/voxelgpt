@@ -1,4 +1,5 @@
 import pandas as pd
+import re
 
 from langchain.prompts.example_selector import SemanticSimilarityExampleSelector
 from langchain.vectorstores import Chroma
@@ -12,13 +13,22 @@ VIEW_STAGE_EXAMPLE_PROMPT = PromptTemplate(
     template="Input: {input}\nOutput: {output}",
 )
 
+def format_example_text(text):
+    text = text.replace("\"\"", "'").replace("\"\'", "'")
+    text = text.replace("\'\"", "'").replace("\'\'", "'").replace("\"", "'")
+    text = text.replace("\n", " ").replace("\t", " ").replace("\r", " ")
+    text = re.sub('\s{2,}', ' ', text).replace("\"", "'")
+    return text
+
 def get_view_stage_examples(dataset):
     media_type = dataset.media_type
     examples = pd.read_csv("examples/fiftyone_viewstage_examples.csv")
     relevant_examples = examples[examples["media_type"].isin([media_type, "all"])][["query", "stages"]]
     queries = relevant_examples["query"].tolist()
     stages_lists = relevant_examples["stages"].tolist()
-    examples_dict = [{"input": query, "output": sl} for query, sl in zip(queries, stages_lists)]
+    examples_dict = [
+        {"input": format_example_text(query), "output": format_example_text(sl)} 
+        for query, sl in zip(queries, stages_lists)]
     return examples_dict
 
 def generate_view_stage_example_selector(dataset):

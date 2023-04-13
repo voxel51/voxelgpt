@@ -1,3 +1,7 @@
+from ast import parse
+from ast2json import ast2json
+
+
 KEYWORD_TYPES = {
     "seed": "int",
     "k": "int",
@@ -24,7 +28,9 @@ KEYWORD_TYPES = {
     "output_dir": "string",
     "rel_dir": "string",
     "frames_patt": "string",
+    "brain_key": "string",
     "filter": "expression",
+    "config": "dict",
 }
 
 EXPRESSION_METHODS = {
@@ -158,8 +164,7 @@ EXPRESSION_METHODS = {
 
 ######################################################################
 
-from ast import parse
-from ast2json import ast2json
+
 
 def validate_bool(aj):
     if aj['_type'] == 'Constant' and type(aj['n']) == bool:
@@ -646,6 +651,7 @@ class SetFieldViewStageValidator(StageValidator):
         super().__init__()
         self.stage_name = 'set_field'
         self.arg_types = ["string", "expression"]
+        self.keywords = []
 
     def validate_specific_stage(self, args, keywords):
         """validate the set_field view stage"""
@@ -776,6 +782,7 @@ class SkipViewStageValidator(StageValidator):
     def __init__(self):
         super().__init__()
         self.stage_name = 'skip'
+        self.arg_types = []
         self.keywords = []
     
 class SortByViewStageValidator(StageValidator):
@@ -783,6 +790,7 @@ class SortByViewStageValidator(StageValidator):
     def __init__(self):
         super().__init__()
         self.stage_name = 'sort_by'
+        self.arg_types = ["string"]
         self.keywords = ["reverse"]
 
     def validate_specific_stage(self, args, keywords):
@@ -838,7 +846,8 @@ class ToEvaluationPatchesViewStageValidator(StageValidator):
     def __init__(self):
         super().__init__()
         self.stage_name = 'to_evaluation_patches'
-        self.keywords = ["other_fields"]
+        self.arg_types = ["string"]
+        self.keywords = ["config"]
 
     def validate_specific_stage(self, args, keywords):
         """validate the to_evaluation_patches view stage"""
@@ -884,10 +893,8 @@ class ToFramesViewStageValidator(StageValidator):
 
 ###########################################################################
 
-    
-
-        
 def validate_view_stage(stage_string):
+    # print("Validating view stage: ", stage_string)
     try:
         ast = parse(stage_string)
     except SyntaxError:
@@ -910,18 +917,23 @@ def validate_view_stages(stage_strings):
 
 
 
-stage_strings = ['']
+# stage_strings = ['']
 # stage_strings = ['filter_labels("frames.detections", F("label") >= (F("vehicle")>3))']
 # stage_strings = ['limit(5)']
 # stage_strings = ['limit(5)', 'shuffle(seed ="51", limit = 5)']
 # stage_strings = ['limit(5)', 'shuffle(seed =51, limit = 5)']
 # stage_strings = ['limit(5)', 'shuffle(seed =51)']
-stage_strings = ['limit(F("vehicle")>3)', '("predictions", F("confidence") > 0.8)']
+# stage_strings = ['limit(F("vehicle")>3)', '("predictions", F("confidence") > 0.8)']
 # stage_strings = ['limit(10)', 'filter_labels("predictions", F("confidence") > 0.8)']
 # stage_strings = ['match(F("predictions.detections").filter(bbox_area < 0.2).length() > 0)'] ### this is a bug in my expression validation
 
 
-stage_strings = ['match(F("predictions.detections").ends_with("my_arg", case_sensitive = True) > 0)']
+# stage_strings = ['match(F("predictions.detections").ends_with("my_arg", case_sensitive = True) > 0)']
 
-stage_strings = ['match(~F("predictions.detections").pow(2))']
-validate_view_stages(stage_strings)
+# stage_strings = ['match(~F("predictions.detections").ends_with("my_arg", case_sensitive = True))']
+# stage_strings = ['match(F("predictions.detections").filter(F("a") >3).length() > 0)'] ### this is a bug in my expression validation
+# stage_strings = ['filter_labels("frames.detections", F("label") >= (F("vehicle")>3))']
+
+# validate_view_stages(stage_strings)
+
+
