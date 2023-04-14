@@ -1,0 +1,34 @@
+prompt,eval_yn
+show me high confidence false positives,Y
+Only include samples that have a value in their `predictions`,N
+what are all the missed detections,Y
+find all the missed license plates,Y
+show me all samples that contain giraffes,N
+find false positives with confidence greater than 0.8,Y
+low confidence true positives,Y
+what are the 20 most unique incorrect predictions,N
+all false negatives involving cats,Y
+show me all images that are either cloudy or nighttime,N
+Only include samples whose `numeric_field` value is positive,N
+show me all misclassified examples,Y
+show me high confidence misclassifications,Y
+show me all misclassifications with a low confidence ,Y
+"filter the 'my_field' field for negative values, but show me all images, even those that aren't matches",N
+find the first 10 samples that have a car in it,N
+all examples where the correct label is not in the top 5 predictions,Y
+show me all the video frames that have at least two detections,N
+show me all false positives in the open images evaluation,Y
+limit my dataset to 40 samples shuffled randomly,N
+images where `prediction1` was wrong and `prediction2` was right,Y
+find all incorrect detections using evaluation with iou threshold 0.8,Y
+all false positives in the `predictions` field,Y
+samples that do NOT have a value in some_field,N
+"10 Most similar images to the third image, with sim2",N
+show me all false negatives,Y
+"exclude samples with filepath containing ""oreo""",N
+create a clips view for my videos,N
+give me all vehicles that were misclassified ,Y
+find all cars that were misclassified as trucks,Y
+show all images where the zipcode is in 07920 or 07923,N
+samples where `prediction1` and `prediction2` differ,Y
+show me all overly bright images,N

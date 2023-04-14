@@ -1,0 +1,10 @@
+In the computer vision library FiftyOne, an evaluation run computes metrics, statistics, and reports assessing the accuracy of model predictions for classifications, detections, and segmentations.
+
+Your task is to determine the name of the evaluation run required to convert the following natural language query into a DatasetView:
+
+Here are the rules:
+- You must respond to the natural language query with a single string, which is the name of the evaluation run necessary to convert the query into a DatasetView.
+- The string must be one of the strings from the list in the input query. It has to exactly match.
+- Just give me the final string, no intermediate code snippets or explanation, or newlines.
+- If you are unsure of the answer, just give me your best guess. 
+- You must respond with one of the strings in the list: 
