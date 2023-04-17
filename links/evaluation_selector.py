@@ -9,12 +9,12 @@ llm = ChatOpenAI(temperature=0, model_name='gpt-3.5-turbo')
 
 EVAL_EXAMPLE_TEMPLATE = """
 Query: {query}
-Available evaluations: {available_evals}
-Selected evaluation: {selected_eval}\n
+Available evaluations: {available_evaluations}
+Selected evaluation: {selected_evaluation}\n
 """
 
 EVAL_EXAMPLE_PROMPT = PromptTemplate(
-    input_variables=["query", "available_evals", "selected_eval"],
+    input_variables=["query", "available_evaluations", "selected_evaluation"],
     template=EVAL_EXAMPLE_TEMPLATE,
 )
 
@@ -27,7 +27,7 @@ TASK_RULES_FILE = {
 }
 
 EXAMPLES_FILE = {
-    "default": "examples/fiftyone_evaluation_selector_examples.csv",
+    "default": "examples/fiftyone_evaluation_selector_examples_3.csv",
 }
 
 class EvaluationSelector:
@@ -52,19 +52,18 @@ class EvaluationSelector:
     def get_evaluation_info(self, brain_run):
         raise NotImplementedError("get_brain_run_info method not implemented")
     
-    #OK
     def get_available_evaluations(self):
         evals = self.dataset.list_evaluations()
         eval_infos_reduced = [self.get_reduced_evaluation_info(x) for x in evals]
         return eval_infos_reduced
         #raise NotImplementedError("get_available_brain_runs method not implemented")
 
-    #OK
     def get_reduced_evaluation_info(self, eval_key):
         info = self.dataset.get_evaluation_info(eval_key)
         cfg = info.config
 
-        CONFIG_KEYS_KEEP = ['method', 'cls', 'pred_field', 'gt_field', 'iou']
+        #CONFIG_KEYS_KEEP = ['method', 'cls', 'pred_field', 'gt_field', 'iou']
+        CONFIG_KEYS_KEEP = ['method', 'pred_field', 'gt_field', 'iou']
         info_keep = {'key': eval_key}
         info_keep.update({f'config_{k}':getattr(cfg,k) for k in CONFIG_KEYS_KEEP if hasattr(cfg,k)})
 
@@ -97,13 +96,16 @@ class EvaluationSelector:
 
     def generate_prompt(self, query, available_evals):
         prefix = self.load_prompt_prefix()
-        prefix += ', '.join([x['key'] for x in available_evals])
-        prefix += '\n'
+        #prefix += ', '.join([x['key'] for x in available_evals])
+        #prefix += '\n\n'
         body = self.generate_examples_prompt(query, available_evals)
         return (prefix + body).replace('{', '(').replace('}', ')')
     
     def generate_examples_prompt(self, query, available_evals):
         examples = self.get_examples()
+
+        # remove single quotes from dict str to match examples template
+        available_evals_str = str(available_evals).replace("'","")
 
         return FewShotPromptTemplate(
             examples=examples,
@@ -114,23 +116,25 @@ class EvaluationSelector:
             example_separator="\n",
         ).format(
             query=query, 
-            available_evals=available_evals, #            run_type=self.run_type
+            available_evals=available_evals_str, #            run_type=self.run_type
             )
     
     def get_examples(self):
         with open(self.examples_file, "r") as f:
             df = pd.read_csv(f)
+        return df.to_dict('records') 
+        '''
         examples = []
 
         for _, row in df.iterrows():
             example = {
                 "query": row.query,
-                "available_evals": row.available_evals,
-                "selected_eval": row.selected_eval
+                "available_evaluations": row.available_evaluations,
+                "selected_evaluation": row.selected_evaluation
             }
             examples.append(example)
         return examples
-    
+        '''
     def llm_select_evaluation(self, query, evals=None):
         if evals is None:
             evals = self.get_available_evaluations()
@@ -145,51 +149,69 @@ class EvaluationSelector:
         if len(evals) == 0:
             self.value_error()
         elif len(evals) == 1:
-            return evals[0]['key']
+            prompt = '<single available evaluation>'
+            resp = evals[0]['key']
         else:
-            return self.llm_select_evaluation(query, evals=evals)
+            _, prompt, resp = self.llm_select_evaluation(query, evals=evals)
+        
+        return resp, prompt, evals
 
     
-#OK
 class DefaultEvaluationSelector(EvaluationSelector):
      def __init__(self, dataset):
         super().__init__(dataset)
 
-#OK
 def select_evaluation_run(dataset, query):
     selector = DefaultEvaluationSelector(dataset)
     return selector.select_evaluation_run(query)
 
 
-'''
-brain_run_selectors = {
-    "uniqueness": UniquenessBrainRunSelector,
-    "mistakenness": MistakennessBrainRunSelector,
-    "image_similarity": ImageSimilarityBrainRunSelector,
-    "text_similarity": TextSimilarityBrainRunSelector,
-    # "hardness": HardnessBrainRunSelector
-}
-'''
+class EvaluationYesNo:
+    """Class to determine whether an evaluation run is necessary for a given query and dataset"""
 
-'''
-class BrainRunsSelector:
-    """Class to select the correct brain runs for a given query and dataset"""
+    EXAMPLES_FILE = 'examples/fiftyone_evaluation_yn.csv'
+    PREFIX_FILE = 'prompts/evaluation_yesno_prefix.txt'
+    EXAMPLE_TEMPLATE = """
+        Query: {query}
+        Evaluation run used: {yesno}\n
+        """
+    EXAMPLE_TEMPLATE_INPUTS = ['query', 'yesno']
 
-    def __init__(self, dataset):
-        self.dataset = dataset
+    def get_examples(self):
+        df = pd.read_csv(self.EXAMPLES_FILE)
+        return df.to_dict('records')
 
-    def select_brain_runs(self, query, run_types):
-        selected_runs = {}
+    def get_prompt_prefix(self):
+        with open(self.PREFIX_FILE,"r") as f:
+            prefix = f.read()
+        return prefix
+    
+    def get_single_example_template(self):
+        return PromptTemplate(
+            input_variables=self.EXAMPLE_TEMPLATE_INPUTS,
+            template=self.EXAMPLE_TEMPLATE,
+        )
 
-        for rt in run_types:
-            brain_run_selector = brain_run_selectors[rt](self.dataset)
-            brain_run = brain_run_selector.select_brain_run(query)
-            selected_runs[rt] = brain_run
+    def generate_prompt(self, query):
+        examples = self.get_examples()
+        example_template = self.get_single_example_template()
+        prefix = self.get_prompt_prefix()
+        
+        prompt = FewShotPromptTemplate(
+            examples=examples,
+            example_prompt=example_template,
+            prefix=prefix,
+            suffix="Query: {query}\nEvaluation run used:",
+            input_variables=["query"],
+            example_separator="\n",
+        )
 
-        return selected_runs
-'''
+        return prompt.format(query = query)
 
-
+    def generate_evaluation_yesno(self,query):
+        prompt = self.generate_prompt(query)
+        resp = llm.call_as_llm(prompt).strip()
+        return resp, prompt
 
 
 

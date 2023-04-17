@@ -1,4 +1,4 @@
-prompt,eval_yn
+query,yesno
 show me high confidence false positives,Y
 Only include samples that have a value in their `predictions`,N
 what are all the missed detections,Y

@@ -7,4 +7,3 @@ Here are the rules:
 - The string must be one of the strings from the list in the input query. It has to exactly match.
 - Just give me the final string, no intermediate code snippets or explanation, or newlines.
 - If you are unsure of the answer, just give me your best guess. 
-- You must respond with one of the strings in the list: 
