@@ -248,26 +248,27 @@ class TextSimilarityBrainRunSelector(BrainRunSelector):
         return brain_runs
     
     
-# class HardnessBrainRunSelector(BrainRunSelector):
-#     """Class to select the correct hardness brain run for a given query and dataset"""
+class HardnessBrainRunSelector(BrainRunSelector):
+    """Class to select the correct hardness brain run for a given query and dataset"""
 
-#     def __init__(self, dataset):
-#         super().__init__(dataset)
+    def __init__(self, dataset):
+        super().__init__(dataset)
 
-#     def set_run_type(self):
-#         self.run_type = "hardness"
+    def set_run_type(self):
+        self.run_type = "hardness"
         
-#     ## TODO: add a method to get the available brain runs for a given dataset
-#     def get_brain_run_info(self, brain_run):
-#         field = brain_run.config.uniqueness_field
-#         model = brain_run.config.model.split('.')[-1]
-#         return {"key": field, "model": model}
+    ## TODO: add a method to get the available brain runs for a given dataset
+    def get_brain_run_info(self, brain_run):
+        key = brain_run.key
+        label_field = brain_run.config.label_field
+        hardness_field = brain_run.config.hardness_field
+        return {"key": key, "label_field": label_field, "hardness_field": hardness_field}
     
-#     def get_available_brain_runs(self):
-#         brain_runs = self.dataset.list_brain_runs(method = "hardness")
-#         brain_runs = [self.dataset.get_brain_info(br) for br in brain_runs]
-#         brain_runs = [self.get_brain_run_info(br) for br in brain_runs]
-#         return brain_runs
+    def get_available_brain_runs(self):
+        brain_runs = self.dataset.list_brain_runs(method = "hardness")
+        brain_runs = [self.dataset.get_brain_info(br) for br in brain_runs]
+        brain_runs = [self.get_brain_run_info(br) for br in brain_runs]
+        return brain_runs
     
 
 brain_run_selectors = {
@@ -275,7 +276,7 @@ brain_run_selectors = {
     "mistakenness": MistakennessBrainRunSelector,
     "image_similarity": ImageSimilarityBrainRunSelector,
     "text_similarity": TextSimilarityBrainRunSelector,
-    # "hardness": HardnessBrainRunSelector
+    "hardness": HardnessBrainRunSelector
 }
 
 
