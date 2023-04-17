@@ -6,7 +6,7 @@ find all the missed license plates,Y
 show me all samples that contain giraffes,N
 find false positives with confidence greater than 0.8,Y
 low confidence true positives,Y
-what are the 20 most unique incorrect predictions,N
+what are the 20 most unique incorrect predictions,Y
 all false negatives involving cats,Y
 show me all images that are either cloudy or nighttime,N
 Only include samples whose `numeric_field` value is positive,N
