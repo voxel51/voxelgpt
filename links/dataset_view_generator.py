@@ -90,6 +90,10 @@ TEXT_SIMILARITY_PROMPT = PromptTemplate(
 )
 
 def generate_brain_runs_prompt(dataset, brain_runs):
+    ## If there are no brain runs, return an empty string
+    if len(brain_runs) == 0:
+        return ""
+    
     header = "Here is the relevant information about the brain runs that were run on this dataset:\n"
     prompt = header
 
@@ -125,24 +129,25 @@ def load_dataset_view_prompt_prefix_template():
         prefix = f.read()
     return prefix
 
-def generate_dataset_view_prompt_prefix(available_fields):
+def generate_dataset_view_prompt_prefix(available_fields, label_classes):
     template = load_dataset_view_prompt_prefix_template()
     prompt = PromptTemplate(
-        input_variables=["available_fields"],
+        input_variables=["available_fields", "label_classes"],
         template=template
     )
 
-    return prompt.format(available_fields=available_fields)
+    return prompt.format(available_fields=available_fields, label_classes=label_classes)
 
 def generate_dataset_view_prompt(
         dataset,
         required_brain_runs,
         available_fields,
+        label_classes,
         view_stage_descriptions,
         examples_prompt
     ):
 
-    prompt = generate_dataset_view_prompt_prefix(available_fields)
+    prompt = generate_dataset_view_prompt_prefix(available_fields, label_classes)
     prompt += generate_brain_runs_prompt(dataset, required_brain_runs)
     prompt += view_stage_descriptions
     prompt += examples_prompt
@@ -152,6 +157,7 @@ def generate_dataset_view_text(
         dataset,
         required_brain_runs,
         available_fields,
+        label_classes,
         view_stage_descriptions,
         examples_prompt
     ):
@@ -159,6 +165,7 @@ def generate_dataset_view_text(
         dataset,
         required_brain_runs,
         available_fields,
+        label_classes,
         view_stage_descriptions,
         examples_prompt
     )
