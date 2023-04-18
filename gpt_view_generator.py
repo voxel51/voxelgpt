@@ -7,6 +7,10 @@ from links.label_class_selector import select_label_classes
 from links.dataset_view_generator import generate_dataset_view_text
 
 def get_gpt_view_text(dataset, query):
+    #### Validate media type
+    if dataset.media_type not in ["image", "video"]:
+        print(f"At present, the FiftyOne GPT integration only supports image and video datasets. The dataset {dataset.name} has media type {dataset.media_type}. If you would like to use this feature, please try a different dataset.")
+        return
     print(f"Finding similar examples for query: {query}")
     examples = generate_view_stage_examples_prompt(
         dataset, query
