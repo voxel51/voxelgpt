@@ -17,7 +17,7 @@ Goal: use GPT model to interpret user queries and generate valid view stages!
     - add stage to `dataset_view_generator.py`
     - add `prompts/evaluation_task_rules.txt` prompt
     - add examples to Examples spreadsheet in new tab, and then put in `examples` folder
-- **Leila**: Add support for `hardness` brain runs
+- DONE ~ **Leila**: Add support for `hardness` brain runs
     - fill out the template in `links/brain_run_selector.py` 
     - add `prompts/hardness_task_rules.txt` prompt modeled after uniqueness and mistakenness.
     - new examples tab `hardness` modeled after `uniqueness` and `mistakenness` tabs and then put in `examples` folder
