@@ -142,5 +142,9 @@
     "to_clips": {
         "description": "Creates a view that contains one sample per clip defined by the given field or expression in the video collection",
         "inputs": "field_or_expr: TemporalDetection or TemporalDetections or FrameSupportField or list of FrameSupportField field or boolean ViewExpression or list of [(first1, last1), (first2, last2), ...], other_fields: field or list of fields to include, True to include all other fields, None or False to include no other fields (default None), tol: max number of false frames to overlook when generating clips (default 0), min_len: min allowable clip length in frames (default 0), trajectories: whether to create clips for each unique object trajectory defined by their (label, index) (default False)"
+    },
+    "to_frames": {
+        "description": "Creates a view that contains one sample per frame in the video collection",
+        "inputs": "sample_frames: whether to assume that frame images have already been sampled at locations stored in the filepath field, fps: optional frame rate to sample each video's frames, max_fps: optional maximum frame rate, size: optional (width, height) at which to sample frames, min_size: optional minimum (width, height) for each frame, max_size: optional mamimum (width, height) for each frame, force_sample: whether to resample videos whose sampled frames already, skip_failures: whether to gracefully continue without raising an error if a video cannot be sampled"
     }
 }
