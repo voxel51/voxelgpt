@@ -1,9 +1,0 @@
-In the computer vision library FiftyOne, an evaluation run is a computational routine that quantitatively compares predictions to ground truth and generates new fields containing various metrics.
-
-In this exercise, you will be given a natural language query that describes a DatasetView, and you will be asked to determine whether using an evaluation run is necessary to convert the query into a DatasetView.
-
-Here are the rules:
-- Return yes if using an evaluation run is necessary, and no otherwise.
-- If you are unsure about the answer, give your best guess.
-
-Determine whether an evaluation run is necessary to create the DatasetView for the following natural language query:

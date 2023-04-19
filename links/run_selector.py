@@ -7,20 +7,20 @@ llm = ChatOpenAI(temperature=0, model_name='gpt-3.5-turbo')
 
 #####################################################################
 
-BRAIN_RUN_EXAMPLE_TEMPLATE = """
+RUN_EXAMPLE_TEMPLATE = """
 Query: {query}
 Available runs: {available_runs}
 Selected run: {selected_run}\n
 """
 
-BRAIN_RUN_EXAMPLE_PROMPT = PromptTemplate(
+RUN_EXAMPLE_PROMPT = PromptTemplate(
     input_variables=["query", "available_runs", "selected_run"],
-    template=BRAIN_RUN_EXAMPLE_TEMPLATE,
+    template=RUN_EXAMPLE_TEMPLATE,
 )
 
-BRAIN_RUN_PROMPT_PREFIX = "Return the name of the {run_type} run required to generate the DatasetView specified in the query, given available {run_type} runs:\n" 
-BRAIN_RUN_PROMPT_SUFFIX = "Query: {query}\nAvailable runs: {available_runs}\nSelected run:"
-BRAIN_RUN_PROMPT_INPUTS = ["run_type", "query", "available_runs"]
+RUN_PROMPT_PREFIX = "Return the name of the {run_type} run required to generate the DatasetView specified in the query, given available {run_type} runs:\n" 
+RUN_PROMPT_SUFFIX = "Query: {query}\nAvailable runs: {available_runs}\nSelected run:"
+RUN_PROMPT_INPUTS = ["run_type", "query", "available_runs"]
 
 TASK_RULES_FILE = {
     "uniqueness": "prompts/uniqueness_task_rules.txt",
@@ -28,6 +28,7 @@ TASK_RULES_FILE = {
     "mistakenness": "prompts/mistakenness_task_rules.txt",
     "image_similarity": "prompts/image_similarity_task_rules.txt",
     "text_similarity": "prompts/text_similarity_task_rules.txt",
+    "evaluation": "prompts/evaluation_task_rules.txt",
 }
 
 EXAMPLES_FILE = {
@@ -36,10 +37,11 @@ EXAMPLES_FILE = {
     "mistakenness": "examples/fiftyone_mistakenness_run_examples.csv",
     "image_similarity": "examples/fiftyone_image_similarity_run_examples.csv",
     "text_similarity": "examples/fiftyone_text_similarity_run_examples.csv",
+    "evaluation": "examples/fiftyone_evaluation_run_examples.csv",
 }
 
-class BrainRunSelector:
-    """Class to select the correct brain run for a given query and dataset"""
+class RunSelector:
+    """Class to select the correct run for a given query and dataset"""
 
     def __init__(self, dataset):
         self.dataset = dataset
@@ -56,14 +58,14 @@ class BrainRunSelector:
     def set_examples_file(self):
         raise NotImplementedError("set_examples_file method not implemented")
     
-    def get_brain_run_info(self, brain_run):
-        raise NotImplementedError("get_brain_run_info method not implemented")
+    def get_run_info(self, run):
+        raise NotImplementedError("get_run_info method not implemented")
     
-    def get_available_brain_runs(self):
-        raise NotImplementedError("get_available_brain_runs method not implemented")
+    def get_available_runs(self):
+        raise NotImplementedError("get_available_runs method not implemented")
 
-    def get_brain_run(self):
-        raise NotImplementedError("get_brain_run method not implemented")
+    def get_run(self):
+        raise NotImplementedError("get_run method not implemented")
     
     def get_task_rules_file(self):
         return TASK_RULES_FILE[self.run_type]
@@ -79,15 +81,15 @@ class BrainRunSelector:
             prompt_prefix = f.read() + '\n'
         return prompt_prefix
     
-    def load_prompt_suffix(self, query, brain_runs):
+    def load_prompt_suffix(self, query, runs):
         return self.prompt_suffix.format(
             query=query,
-            brain_runs=brain_runs
+            runs=runs
         )
     
-    def generate_prompt(self, query, brain_runs):
+    def generate_prompt(self, query, runs):
         prefix = self.load_prompt_prefix()
-        body = self.generate_examples_prompt(query, brain_runs)
+        body = self.generate_examples_prompt(query, runs)
         return (prefix + body).replace('{', '(').replace('}', ')')
     
     def generate_examples_prompt(self, query, available_runs):
@@ -95,10 +97,10 @@ class BrainRunSelector:
 
         return FewShotPromptTemplate(
             examples=examples,
-            example_prompt=BRAIN_RUN_EXAMPLE_PROMPT,
-            prefix=BRAIN_RUN_PROMPT_PREFIX,
-            suffix=BRAIN_RUN_PROMPT_SUFFIX,
-            input_variables=BRAIN_RUN_PROMPT_INPUTS,
+            example_prompt=RUN_EXAMPLE_PROMPT,
+            prefix=RUN_PROMPT_PREFIX,
+            suffix=RUN_PROMPT_SUFFIX,
+            input_variables=RUN_PROMPT_INPUTS,
             example_separator="\n",
         ).format(
             query=query, 
@@ -120,23 +122,67 @@ class BrainRunSelector:
             examples.append(example)
         return examples
     
-    def select_brain_run(self, query):
-        available_brain_runs = self.get_available_brain_runs()
-        if len(available_brain_runs) == 0:
+    def select_run(self, query):
+        available_runs = self.get_available_runs()
+        if len(available_runs) == 0:
             self.compute_run_message()
             return None
-            # self.value_error()
-        elif len(available_brain_runs) == 1:
-            return available_brain_runs[0]['key']
+        elif len(available_runs) == 1:
+            return available_runs[0]['key']
         else:
-            prompt = self.generate_prompt(query, available_brain_runs)
+            prompt = self.generate_prompt(query, available_runs)
             response = llm.call_as_llm(prompt)
             return response.strip()
 
 
+class EvaluationRunSelector(RunSelector):
+    """Class to select the correct evaluation run for a given query and dataset"""
+
+    def __init__(self, dataset):
+        super().__init__(dataset)
+
+    def set_run_type(self):
+        self.run_type = "evaluation"
+
+    def compute_run_message(self):
+        base_message =  "No evaluation runs found.\n\n"
+        detection_message = "If you want to compute detection evaluation, please run the following command:\n"
+        detection_command = """
+        ```
+        dataset.evaluate_detections(
+            "<det_predictions>",
+            eval_key="eval_det",,
+        )
+        ```
+        """
+
+        classification_message = "If you want to compute classification evaluation, please run the following command:\n"
+        classification_command = """
+        ```
+        dataset.evaluate_classifications(
+            "<classif_predictions>",
+            eval_key="eval_classif",,
+        )
+        ```
+        """
+        message = base_message + detection_message + detection_command + classification_message + classification_command
+        print(message)
+        
+    def get_run_info(self, run):
+        key = run.key
+        config = run.config
+        config_keys = ['method', 'pred_field', 'gt_field', 'iou']
+        config_keys = [ck for ck in config_keys if ck in config]
+
+        return {"key": key, **{ck: config[ck] for ck in config_keys}}
     
-class UniquenessBrainRunSelector(BrainRunSelector):
-    """Class to select the correct uniqueness brain run for a given query and dataset"""
+    def get_available_runs(self):
+        return [self.get_evaluation_info(run) for run in self.dataset.list_evaluations()]
+
+
+
+class UniquenessRunSelector(RunSelector):
+    """Class to select the correct uniqueness run for a given query and dataset"""
 
     def __init__(self, dataset):
         super().__init__(dataset)
@@ -154,20 +200,20 @@ class UniquenessBrainRunSelector(BrainRunSelector):
         """
         print(message + command)
         
-    def get_brain_run_info(self, brain_run):
-        key = brain_run.key
-        model = brain_run.config.model.split('.')[-1]
-        uniqueness_field = brain_run.config.uniqueness_field
+    def get_run_info(self, run):
+        key = run.key
+        model = run.config.model.split('.')[-1]
+        uniqueness_field = run.config.uniqueness_field
         return {"key": key, "model": model, "uniqueness_field": uniqueness_field}
     
-    def get_available_brain_runs(self):
-        brain_runs = self.dataset.list_brain_runs(method = "uniqueness")
-        brain_runs = [self.dataset.get_brain_info(br) for br in brain_runs]
-        brain_runs = [self.get_brain_run_info(br) for br in brain_runs]
-        return brain_runs
+    def get_available_runs(self):
+        runs = self.dataset.list_brain_runs(method = "uniqueness")
+        runs = [self.dataset.get_brain_info(r) for r in runs]
+        runs = [self.get_run_info(r) for r in runs]
+        return runs
     
-class MistakennessBrainRunSelector(BrainRunSelector):
-    """Class to select the correct mistakenness brain run for a given query and dataset"""
+class MistakennessRunSelector(RunSelector):
+    """Class to select the correct mistakenness run for a given query and dataset"""
 
     def __init__(self, dataset):
         super().__init__(dataset)
@@ -185,11 +231,11 @@ class MistakennessBrainRunSelector(BrainRunSelector):
         """
         print(message + command)
         
-    def get_brain_run_info(self, brain_run):
-        key = brain_run.key
-        prediction_field = brain_run.config.pred_field
-        label_field = brain_run.config.label_field
-        mistakenness_field = brain_run.config.mistakenness_field
+    def get_run_info(self, run):
+        key = run.key
+        prediction_field = run.config.pred_field
+        label_field = run.config.label_field
+        mistakenness_field = run.config.mistakenness_field
         return {
             "key": key,
             "mistakenness_field": mistakenness_field,
@@ -197,14 +243,14 @@ class MistakennessBrainRunSelector(BrainRunSelector):
             "label_field": label_field
             }
     
-    def get_available_brain_runs(self):
-        brain_runs = self.dataset.list_brain_runs(method = "mistakenness")
-        brain_runs = [self.dataset.get_brain_info(br) for br in brain_runs]
-        brain_runs = [self.get_brain_run_info(br) for br in brain_runs]
-        return brain_runs
+    def get_available_runs(self):
+        runs = self.dataset.list_brain_runs(method = "mistakenness")
+        runs = [self.dataset.get_brain_info(r) for r in runs]
+        runs = [self.get_run_info(r) for r in runs]
+        return runs
     
-class ImageSimilarityBrainRunSelector(BrainRunSelector):
-    """Class to select the correct image_similarity brain run for a given query and dataset"""
+class ImageSimilarityRunSelector(RunSelector):
+    """Class to select the correct image_similarity run for a given query and dataset"""
 
     def __init__(self, dataset):
         super().__init__(dataset)
@@ -226,12 +272,12 @@ class ImageSimilarityBrainRunSelector(BrainRunSelector):
         """
         print(message + command)
         
-    def get_brain_run_info(self, brain_run):
-        key = brain_run.key
-        method = brain_run.config.method
-        embeddings_field = brain_run.config.embeddings_field
-        model = brain_run.config.model
-        patches_field = brain_run.config.patches_field
+    def get_run_info(self, run):
+        key = run.key
+        method = run.config.method
+        embeddings_field = run.config.embeddings_field
+        model = run.config.model
+        patches_field = run.config.patches_field
         return {
             "key": key, 
             "method": method, 
@@ -240,19 +286,19 @@ class ImageSimilarityBrainRunSelector(BrainRunSelector):
             "patches_field": patches_field
             }
     
-    def get_available_brain_runs(self):
-        brain_runs = []
+    def get_available_runs(self):
+        runs = []
 
         for run in self.dataset.list_brain_runs():
             info = self.dataset.get_brain_info(run)
             if "Similarity" in info.config.cls:
-                brain_runs.append(info)
+                runs.append(info)
 
-        brain_runs = [self.get_brain_run_info(br) for br in brain_runs]
-        return brain_runs
+        runs = [self.get_run_info(r) for r in runs]
+        return runs
     
-class TextSimilarityBrainRunSelector(BrainRunSelector):
-    """Class to select the correct text_similarity brain run for a given query and dataset"""
+class TextSimilarityRunSelector(RunSelector):
+    """Class to select the correct text_similarity run for a given query and dataset"""
 
     def __init__(self, dataset):
         super().__init__(dataset)
@@ -274,11 +320,11 @@ class TextSimilarityBrainRunSelector(BrainRunSelector):
         """
         print(message + command)
         
-    def get_brain_run_info(self, brain_run):
-        key = brain_run.key
-        method = brain_run.config.method
-        model = brain_run.config.model
-        patches_field = brain_run.config.patches_field
+    def get_run_info(self, run):
+        key = run.key
+        method = run.config.method
+        model = run.config.model
+        patches_field = run.config.patches_field
         return {
             "key": key, 
             "backend": method, 
@@ -286,20 +332,20 @@ class TextSimilarityBrainRunSelector(BrainRunSelector):
             "patches_field": patches_field
             }
     
-    def get_available_brain_runs(self):
-        brain_runs = []
+    def get_available_runs(self):
+        runs = []
 
         for run in self.dataset.list_brain_runs():
             info = self.dataset.get_brain_info(run)
             if "Similarity" in info.config.cls and info.config.supports_prompts:
-                brain_runs.append(info)
+                runs.append(info)
 
-        brain_runs = [self.get_brain_run_info(br) for br in brain_runs]
-        return brain_runs
+        runs = [self.get_run_info(r) for r in runs]
+        return runs
     
     
-class HardnessBrainRunSelector(BrainRunSelector):
-    """Class to select the correct hardness brain run for a given query and dataset"""
+class HardnessRunSelector(RunSelector):
+    """Class to select the correct hardness run for a given query and dataset"""
 
     def __init__(self, dataset):
         super().__init__(dataset)
@@ -320,48 +366,78 @@ class HardnessBrainRunSelector(BrainRunSelector):
         """
         print(message + command)
         
-    def get_brain_run_info(self, brain_run):
-        key = brain_run.key
-        label_field = brain_run.config.label_field
-        hardness_field = brain_run.config.hardness_field
+    def get_run_info(self, run):
+        key = run.key
+        label_field = run.config.label_field
+        hardness_field = run.config.hardness_field
         return {"key": key, "label_field": label_field, "hardness_field": hardness_field}
     
-    def get_available_brain_runs(self):
-        brain_runs = self.dataset.list_brain_runs(method = "hardness")
-        brain_runs = [self.dataset.get_brain_info(br) for br in brain_runs]
-        brain_runs = [self.get_brain_run_info(br) for br in brain_runs]
-        return brain_runs
+    def get_available_runs(self):
+        runs = self.dataset.list_brain_runs(method = "hardness")
+        runs = [self.dataset.get_brain_info(r) for r in runs]
+        runs = [self.get_brain_run_info(r) for r in runs]
+        return runs
+    
+class MetadataRunSelector(RunSelector):
+    """Class for metadata computation validation"""
+
+    def __init__(self, dataset):
+        super().__init__(dataset)
+
+    def set_run_type(self):
+        self.run_type = "metadata"
+
+    def compute_run_message(self):
+        message = "No metadata found. To compute metadata for your samples, please run the following command:\n"
+        command = """
+        ```
+        dataset.compute_metadata()
+        ```
+        """
+        print(message + command)
+        
+    def get_run_info(self, run):
+        return {'metadata': 'metadata'}
+    
+    def get_available_runs(self):
+        nsamples = self.dataset.count()
+        if self.datasets.exists('metadata').count() != nsamples:
+            return []
+        else:
+            return ["metadata"]
     
 
-brain_run_selectors = {
-    "uniqueness": UniquenessBrainRunSelector,
-    "mistakenness": MistakennessBrainRunSelector,
-    "image_similarity": ImageSimilarityBrainRunSelector,
-    "text_similarity": TextSimilarityBrainRunSelector,
-    "hardness": HardnessBrainRunSelector
+run_selectors = {
+    "uniqueness": UniquenessRunSelector,
+    "mistakenness": MistakennessRunSelector,
+    "image_similarity": ImageSimilarityRunSelector,
+    "text_similarity": TextSimilarityRunSelector,
+    "hardness": HardnessRunSelector,
+    "evaluation": EvaluationRunSelector,
+    "metadata": MetadataRunSelector,
+    
 }
 
-
-class BrainRunsSelector:
-    """Class to select the correct brain runs for a given query and dataset"""
+class RunsSelector:
+    """Class to select the correct runs for a given query and dataset"""
 
     def __init__(self, dataset):
         self.dataset = dataset
 
-    def select_brain_runs(self, query, run_types):
+    def select_runs(self, query, run_types):
         selected_runs = {}
 
         for rt in run_types:
-            brain_run_selector = brain_run_selectors[rt](self.dataset)
-            brain_run = brain_run_selector.select_brain_run(query)
-            if brain_run:
-                selected_runs[rt] = brain_run
+            run_selector = run_selectors[rt](self.dataset)
+            run = run_selector.select_run(query)
+            if run:
+                selected_runs[rt] = run
 
         return selected_runs
 
-def select_brain_runs(dataset, query, run_types):
-    brain_runs_selector = BrainRunsSelector(dataset)
-    return brain_runs_selector.select_brain_runs(query, run_types)
+def select_runs(dataset, query, run_types):
+    runs_selector = RunsSelector(dataset)
+    return runs_selector.select_runs(query, run_types)
 
 
 

@@ -1,0 +1,23 @@
+In the computer vision library FiftyOne, a run is a computational routine that can be applied to a dataset to generate a new field.
+
+There are 7 types of runs:
+- uniqueness: a run that determines how unique each image is in the dataset
+- mistakenness: a run that determines how mistaken each image is in the dataset
+- hardness: a run that scores each image based on how difficult it is to classify for a specified label field
+- image_similarity: a run that determines how similar each image is to another image
+- text_similarity: a run that determines how similar each image is to a user-specified input text prompt
+- evaluation: a run that computes metrics, statistics, and reports assessing the accuracy of model predictions for classifications, detections, and segmentations
+- metadata: a run that computes data type-specific metadata about the raw data in the sample. For image samples, this info includes their size_bytes, mime_type, width, height, and num_channels
+
+In this exercise, you will be given a natural language query that describes a DatasetView, and you will be asked to determine what types of runs are necessary to convert the query into a DatasetView.
+
+Here are the rules:
+- you must return a list of run types
+- if no runs are necessary, return an empty list
+- You can only use the following runs: uniqueness, mistakenness, hardness, image_similarity, text_similarity, evaluation, and metadata.
+- You can only use each run once.
+- The order of the run types in your answer does not matter.
+- You are allowed to use any number of run types in your answer.
+- If you are unsure about the answer, give your best guess.
+
+Generate the list of run types that are necessary to create the DatasetView for the following natural language query:

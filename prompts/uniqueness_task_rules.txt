@@ -1,9 +1,9 @@
-In the computer vision library FiftyOne, a uniqueness brain run determines how unique each image is in the dataset. Its results are stored in a field on the samples.
+In the computer vision library FiftyOne, a uniqueness run determines how unique each image is in the dataset. Its results are stored in a field on the samples.
 
-Your task is to determine the name of the field that contains the results of the uniqueness brain run required to convert the following natural language query into a DatasetView:
+Your task is to determine the name of the field that contains the results of the uniqueness run required to convert the following natural language query into a DatasetView:
 
 Here are the rules:
 - You must respond to the natural language query with a single string, which is the name of the uniqueness field necessary to convert the query into a DatasetView.
-- The string must be one of the strings from the list in the input query. It should not just contain the string for the brain run - it has to exactly match.
+- The string must be one of the strings from the list in the input query. It should not just contain the string for the run - it has to exactly match.
 - Just give me the final string, no intermediate code snippets or explanation, or newlines.
 - If you are unsure of the answer, just give me your best guess. You must respond with one of the strings in the list.

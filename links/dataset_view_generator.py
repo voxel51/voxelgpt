@@ -4,24 +4,24 @@ from langchain.prompts import PromptTemplate
 llm = ChatOpenAI(temperature=0, model_name='gpt-3.5-turbo')
 
 UNIQUENESS_PROMPT_TEMPLATE = """
-A uniqueness brain run determines how unique each image is in the dataset. Its results are stored in the {uniqueness_field} field on the samples.
+A uniqueness run determines how unique each image is in the dataset. Its results are stored in the {uniqueness_field} field on the samples.
 When converting a natural language query into a DatasetView, if you determine that the uniqueness of the images is important, a view stage should use the {uniqueness_field} field.
 """
 
 HARDNESS_PROMPT_TEMPLATE = """
-A hardness brain run scores each image based on how difficult it is to classify for a specified label field. In this task, the hardness of each sample for the {label_field} field is has been scored, and its results are stored in the {hardness_field} field on the samples.
+A hardness run scores each image based on how difficult it is to classify for a specified label field. In this task, the hardness of each sample for the {label_field} field is has been scored, and its results are stored in the {hardness_field} field on the samples.
 """
 
 IMAGE_SIMILARITY_PROMPT_TEMPLATE = """
-An image_similarity brain run determines determines how similar each image is to another image. You can use the {image_similarity_key} brain key to access the results of this brain run and sort images by similarity.
+An image_similarity run determines determines how similar each image is to another image. You can use the {image_similarity_key} key to access the results of this run and sort images by similarity.
 """
 
 TEXT_SIMILARITY_PROMPT_TEMPLATE = """
-A text_similarity brain run determines determines how similar each image is to a user-specified input text prompt. You can use the {text_similarity_key} brain key to access the results of this brain run and find images that most resemble the description in the user-input text prompt.
+A text_similarity run determines determines how similar each image is to a user-specified input text prompt. You can use the {text_similarity_key} key to access the results of this run and find images that most resemble the description in the user-input text prompt.
 """
 
 MISTAKENNESS_FIELD_PROMPT_TEMPLATE = """
-A mistakenness brain run determines how mistaken each image is in the dataset. Its results are stored in the {mistakenness_field} field on the samples.
+A mistakenness run determines how mistaken each image is in the dataset. Its results are stored in the {mistakenness_field} field on the samples.
 When converting a natural language query into a DatasetView, if you determine that the mistakenness of the images is important, the following fields store relevant information:
 - {mistakenness_field}: the mistakenness score for each image
 """
@@ -41,12 +41,28 @@ spurious_field_prompt = PromptTemplate(
     template="- {spurious_field}: the spurious score for each image\n",
 )
 
-mistakenness_eval_prompt = PromptTemplate(
+EVALUATION_PROMPT_TEMPLATE = """
+An evaluation run computes metrics, statistics, and reports assessing the accuracy of model predictions for classifications, detections, and segmentations. You can use the {eval_key} key to access the results of this run, including TP, FP, and FNs.
+"""
+
+EVAL_FIELDS_PROMPT_TEMPLATE = PromptTemplate(
     input_variables=["eval_tp_field", "eval_fp_field", "eval_fn_field"],
     template="""- {eval_tp_field}: the true positive score for each image
 - {eval_fp_field}: the false positive score for each image
-- {eval_fn_field}: the false negative score for each image""",
+- {eval_fn_field}: the false negative score for each image
+""",
 )
+
+def generate_evaluation_prompt(dataset, eval_key):
+    field_names = dataset.first().field_names
+
+    prompt = EVALUATION_PROMPT_TEMPLATE.format(eval_key=eval_key)
+
+    if f"{eval_key}_tp" in field_names:
+        prompt += EVAL_FIELDS_PROMPT_TEMPLATE.format(eval_tp_field=f"{eval_key}_tp", eval_fp_field=f"{eval_key}_fp", eval_fn_field=f"{eval_key}_fn")
+    
+    return prompt
+
 
 def generate_mistakenness_prompt(dataset, brain_key):
     field_names = dataset.first().field_names
@@ -63,10 +79,6 @@ def generate_mistakenness_prompt(dataset, brain_key):
     if spurious_field in field_names:
         prompt += spurious_field_prompt.format(spurious_field=spurious_field)
 
-    eval_key = brc.eval_key
-    if f"{eval_key}_tp" in field_names:
-        prompt += mistakenness_eval_prompt.format(eval_tp_field=f"{eval_key}_tp", eval_fp_field=f"{eval_key}_fp", eval_fn_field=f"{eval_key}_fn")
-    
     return prompt
 
 UNIQUENESS_PROMPT = PromptTemplate(
@@ -89,38 +101,45 @@ TEXT_SIMILARITY_PROMPT = PromptTemplate(
     template=TEXT_SIMILARITY_PROMPT_TEMPLATE,
 )
 
-def generate_brain_runs_prompt(dataset, brain_runs):
-    ## If there are no brain runs, return an empty string
-    if len(brain_runs) == 0:
+def generate_runs_prompt(dataset, runs):
+    ## If there are no runs, return an empty string
+    if len(runs) == 0:
         return ""
     
-    header = "Here is the relevant information about the brain runs that were run on this dataset:\n"
+    header = "Here is the relevant information about the runs that were run on this dataset:\n"
     prompt = header
 
-    if "uniqueness" in brain_runs:
-        uniqueness_field = brain_runs["uniqueness"]
+    if "uniqueness" in runs:
+        uniqueness_field = runs["uniqueness"]
         uniqueness_prompt = UNIQUENESS_PROMPT.format(uniqueness_field=uniqueness_field)
         prompt += uniqueness_prompt
 
-    if "hardness" in brain_runs:
-        hardness_field = brain_runs["hardness"]["hardness_field"]
-        label_field = brain_runs["hardness"]["label_field"]
+    if "hardness" in runs:
+        hardness_field = runs["hardness"]["hardness_field"]
+        label_field = runs["hardness"]["label_field"]
         hardness_prompt = HARDNESS_PROMPT.format(hardness_field=hardness_field, label_field=label_field)
         prompt += hardness_prompt
 
-    if "image_similarity" in brain_runs:
-        image_similarity_key = brain_runs["image_similarity"]
+    if "image_similarity" in runs:
+        image_similarity_key = runs["image_similarity"]
         image_similarity_prompt = IMAGE_SIMILARITY_PROMPT.format(image_similarity_key=image_similarity_key)
         prompt += image_similarity_prompt
 
-    if "text_similarity" in brain_runs:
-        text_similarity_key = brain_runs["text_similarity"]
+    if "text_similarity" in runs:
+        text_similarity_key = runs["text_similarity"]
         text_similarity_prompt = TEXT_SIMILARITY_PROMPT.format(text_similarity_key=text_similarity_key)
         prompt += text_similarity_prompt
 
-    if "mistakenness" in brain_runs:
-        mistakenness_prompt = generate_mistakenness_prompt(dataset, brain_runs["mistakenness"])
+    if "mistakenness" in runs:
+        mistakenness_prompt = generate_mistakenness_prompt(dataset, runs["mistakenness"])
         prompt += mistakenness_prompt
+
+    if "evaluation" in runs:
+        evaluation_prompt = generate_evaluation_prompt(dataset, runs["evaluation"])
+        prompt += evaluation_prompt
+
+    if "metadata" in runs:
+        prompt += "You can also use the `metadata` key to access the metadata for each sample.\n"
 
     return prompt
 
@@ -140,7 +159,7 @@ def generate_dataset_view_prompt_prefix(available_fields, label_classes):
 
 def generate_dataset_view_prompt(
         dataset,
-        required_brain_runs,
+        required_runs,
         available_fields,
         label_classes,
         view_stage_descriptions,
@@ -148,14 +167,14 @@ def generate_dataset_view_prompt(
     ):
 
     prompt = generate_dataset_view_prompt_prefix(available_fields, label_classes)
-    prompt += generate_brain_runs_prompt(dataset, required_brain_runs)
+    prompt += generate_runs_prompt(dataset, required_runs)
     prompt += view_stage_descriptions
     prompt += examples_prompt
     return prompt
 
 def generate_dataset_view_text(
         dataset,
-        required_brain_runs,
+        required_runs,
         available_fields,
         label_classes,
         view_stage_descriptions,
@@ -163,7 +182,7 @@ def generate_dataset_view_text(
     ):
     prompt = generate_dataset_view_prompt(
         dataset,
-        required_brain_runs,
+        required_runs,
         available_fields,
         label_classes,
         view_stage_descriptions,
