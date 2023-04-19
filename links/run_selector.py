@@ -29,6 +29,7 @@ TASK_RULES_FILE = {
     "image_similarity": "prompts/image_similarity_task_rules.txt",
     "text_similarity": "prompts/text_similarity_task_rules.txt",
     "evaluation": "prompts/evaluation_task_rules.txt",
+    "metadata": None
 }
 
 EXAMPLES_FILE = {
@@ -38,6 +39,7 @@ EXAMPLES_FILE = {
     "image_similarity": "examples/fiftyone_image_similarity_run_examples.csv",
     "text_similarity": "examples/fiftyone_text_similarity_run_examples.csv",
     "evaluation": "examples/fiftyone_evaluation_run_examples.csv",
+    "metadata": None
 }
 
 class RunSelector:
@@ -63,6 +65,10 @@ class RunSelector:
     
     def get_available_runs(self):
         raise NotImplementedError("get_available_runs method not implemented")
+    
+    def print_compute_run_message(self):
+        message = self.generate_compute_run_message()
+        print(message)
 
     def get_run(self):
         raise NotImplementedError("get_run method not implemented")
@@ -125,14 +131,16 @@ class RunSelector:
     def select_run(self, query):
         available_runs = self.get_available_runs()
         if len(available_runs) == 0:
-            self.compute_run_message()
+            self.print_compute_run_message()
             return None
         elif len(available_runs) == 1:
             return available_runs[0]['key']
         else:
             prompt = self.generate_prompt(query, available_runs)
-            response = llm.call_as_llm(prompt)
-            return response.strip()
+            response = llm.call_as_llm(prompt).strip()
+            if response not in available_runs:
+                response = available_runs[0]
+            return response
 
 
 class EvaluationRunSelector(RunSelector):
@@ -144,7 +152,7 @@ class EvaluationRunSelector(RunSelector):
     def set_run_type(self):
         self.run_type = "evaluation"
 
-    def compute_run_message(self):
+    def generate_compute_run_message(self):
         base_message =  "No evaluation runs found.\n\n"
         detection_message = "If you want to compute detection evaluation, please run the following command:\n"
         detection_command = """
@@ -166,20 +174,42 @@ class EvaluationRunSelector(RunSelector):
         ```
         """
         message = base_message + detection_message + detection_command + classification_message + classification_command
-        print(message)
+        return message
         
     def get_run_info(self, run):
         key = run.key
         config = run.config
-        config_keys = ['method', 'pred_field', 'gt_field', 'iou']
-        config_keys = [ck for ck in config_keys if ck in config]
 
-        return {"key": key, **{ck: config[ck] for ck in config_keys}}
+        dict = {"key": key}
+
+        try:
+            dict["method"] = config.method
+        except:
+            pass
+
+        try:
+            dict["pred_field"] = config.pred_field
+        except:
+            pass
+
+        try:
+            dict["gt_field"] = config.gt_field
+        except:
+            pass
+
+        try:
+            dict["iou"] = config.iou
+        except:
+            pass
+        
+       
+        return dict
     
     def get_available_runs(self):
-        return [self.get_evaluation_info(run) for run in self.dataset.list_evaluations()]
-
-
+        runs = self.dataset.list_evaluations()
+        runs = [self.dataset.get_evaluation_info(run) for run in runs]
+        runs = [self.get_run_info(run) for run in runs]
+        return runs
 
 class UniquenessRunSelector(RunSelector):
     """Class to select the correct uniqueness run for a given query and dataset"""
@@ -190,7 +220,7 @@ class UniquenessRunSelector(RunSelector):
     def set_run_type(self):
         self.run_type = "uniqueness"
 
-    def compute_run_message(self):
+    def generate_compute_run_message(self):
         message = "No uniqueness runs found. If you want to compute uniqueness, please run the following command:\n"
         command = """
         ```
@@ -198,7 +228,7 @@ class UniquenessRunSelector(RunSelector):
         fob.compute_uniqueness(dataset)
         ```
         """
-        print(message + command)
+        return message + command
         
     def get_run_info(self, run):
         key = run.key
@@ -221,7 +251,7 @@ class MistakennessRunSelector(RunSelector):
     def set_run_type(self):
         self.run_type = "mistakenness"
     
-    def compute_run_message(self):
+    def generate_compute_run_message(self):
         message = "No mistakenness runs found. To compute the difficulty of classifying samples (`<pred_field>`), please run the following command:\n"
         command = """
         ```
@@ -229,7 +259,7 @@ class MistakennessRunSelector(RunSelector):
         fob.compute_mistakenness(dataset, <pred_field>)
         ```
         """
-        print(message + command)
+        return message + command
         
     def get_run_info(self, run):
         key = run.key
@@ -258,7 +288,7 @@ class ImageSimilarityRunSelector(RunSelector):
     def set_run_type(self):
         self.run_type = "image_similarity"
 
-    def compute_run_message(self):
+    def generate_compute_run_message(self):
         message = "No similarity index found. To generate a similarity index for your samples, please run the following command:\n"
         command = """
         ```
@@ -270,7 +300,7 @@ class ImageSimilarityRunSelector(RunSelector):
             )
         ```
         """
-        print(message + command)
+        return message + command
         
     def get_run_info(self, run):
         key = run.key
@@ -306,7 +336,7 @@ class TextSimilarityRunSelector(RunSelector):
     def set_run_type(self):
         self.run_type = "text_similarity"
 
-    def compute_run_message(self):
+    def generate_compute_run_message(self):
         message = "No similarity index found that supports text prompts. To generate a similarity index for your samples, please run the following command:\n"
         command = """
         ```
@@ -318,7 +348,7 @@ class TextSimilarityRunSelector(RunSelector):
             )
         ```
         """
-        print(message + command)
+        return message + command
         
     def get_run_info(self, run):
         key = run.key
@@ -353,7 +383,7 @@ class HardnessRunSelector(RunSelector):
     def set_run_type(self):
         self.run_type = "hardness"
 
-    def compute_run_message(self):
+    def generate_compute_run_message(self):
         message = "No hardness run found. To measure of the uncertainty of your model's predictions (in `<label_field>`) on the samples in your dataset, please run the following command:\n"
         command = """
         ```
@@ -364,7 +394,7 @@ class HardnessRunSelector(RunSelector):
             )
         ```
         """
-        print(message + command)
+        return message + command
         
     def get_run_info(self, run):
         key = run.key
@@ -375,7 +405,7 @@ class HardnessRunSelector(RunSelector):
     def get_available_runs(self):
         runs = self.dataset.list_brain_runs(method = "hardness")
         runs = [self.dataset.get_brain_info(r) for r in runs]
-        runs = [self.get_brain_run_info(r) for r in runs]
+        runs = [self.get_run_info(r) for r in runs]
         return runs
     
 class MetadataRunSelector(RunSelector):
@@ -387,21 +417,21 @@ class MetadataRunSelector(RunSelector):
     def set_run_type(self):
         self.run_type = "metadata"
 
-    def compute_run_message(self):
+    def generate_compute_run_message(self):
         message = "No metadata found. To compute metadata for your samples, please run the following command:\n"
         command = """
         ```
         dataset.compute_metadata()
         ```
         """
-        print(message + command)
+        return message + command
         
     def get_run_info(self, run):
         return {'metadata': 'metadata'}
     
     def get_available_runs(self):
         nsamples = self.dataset.count()
-        if self.datasets.exists('metadata').count() != nsamples:
+        if self.dataset.exists('metadata').count() != nsamples:
             return []
         else:
             return ["metadata"]
