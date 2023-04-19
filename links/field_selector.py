@@ -37,10 +37,6 @@ def initialize_available_fields_list():
     tags_field = "tags: list"
     return [id_field, filepath_field, tags_field]
 
-def add_metadata_field(sample, available_fields):
-    if sample.metadata != None:
-        available_fields.append("metadata: metadata")
-
 def remove_field_from_list(field_names, field_name):
     if field_name in field_names:
         field_names.remove(field_name)
@@ -73,13 +69,18 @@ def remove_brain_run_fields(dataset, field_names):
 def get_available_fields(dataset):
     sample= dataset.first()
     field_names = list(sample.field_names)
+    print("field_names", field_names)
 
     available_fields = initialize_available_fields_list()
-    add_metadata_field(sample, available_fields)
+    print("available_fields", available_fields)
+
+    fs = remove_brain_run_fields(dataset, field_names)
+    print("fs", fs)
 
     for fn in remove_brain_run_fields(dataset, field_names):
         if fn in ["id", "filepath", "tags", "metadata"]:
             continue
+        print("fn", fn)
         field_type = get_field_type(sample, fn)
         available_fields.append(f"{fn}: {field_type}")
     
