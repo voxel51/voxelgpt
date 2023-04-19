@@ -252,11 +252,15 @@ class MistakennessRunSelector(RunSelector):
         self.run_type = "mistakenness"
     
     def generate_compute_run_message(self):
-        message = "No mistakenness runs found. To compute the difficulty of classifying samples (`<pred_field>`), please run the following command:\n"
+        message = "No mistakenness runs found. To compute the difficulty of classifying samples (`<pred_field>`) with respect to ground truth label `<gt_field>`, please run the following command:\n"
         command = """
         ```
         import fiftyone.brain as fob
-        fob.compute_mistakenness(dataset, <pred_field>)
+        fob.compute_mistakenness(
+            dataset, 
+            <pred_field>,
+            label_field=<gt_field>
+            )
         ```
         """
         return message + command
