@@ -1,6 +1,6 @@
-from langchain.llms import OpenAI
+from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate, FewShotPromptTemplate
-llm = OpenAI(temperature=0.0)
+llm = ChatOpenAI(temperature=0, model_name='gpt-3.5-turbo')
 
 examples = [
     {
@@ -85,7 +85,7 @@ def generate_class_selector_prompt(query, label_field):
 
 def identify_named_classes(query, label_field):
     class_selector_prompt = generate_class_selector_prompt(query, label_field)
-    res = llm(class_selector_prompt).strip()
+    res = llm.call_as_llm(class_selector_prompt).strip()
     ncs = [c.strip().replace('\'', '') for c in res[1:-1].split(",")]
     ncs = [c for c in ncs if c != ""]
     return ncs

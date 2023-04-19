@@ -1,0 +1,4 @@
+query,available_runs,selected_run
+hardness with model1 classifications,"[(key: m1_hardness, label_field: m1_classifications, hardness_field: one_hardness), (key: m2_hardness, label_field: m2_classifications, hardness_field: two_hardness)]",m1_hardness
+trickiest samples with key 'abc',"[(key: hard, label_field: predictions, hardness_field: hard_hardness), (key: very_hard, label_field: classifications, hardness_field: very_hard_hardness), (key: abc, label_field: predictions, hardness_field: abc_hardness), (key: unknown, label_field: ground_truth, hardness_field: idk_hardness)]",abc
+sort by difficulty,"[(key: hardness, label_field: my_classifications, hardness_field: hardness), (key: test, label_field: my_classes, hardness_field: hardness)]",hardness

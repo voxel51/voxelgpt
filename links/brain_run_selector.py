@@ -123,7 +123,9 @@ class BrainRunSelector:
     def select_brain_run(self, query):
         available_brain_runs = self.get_available_brain_runs()
         if len(available_brain_runs) == 0:
-            self.value_error()
+            self.compute_run_message()
+            return None
+            # self.value_error()
         elif len(available_brain_runs) == 1:
             return available_brain_runs[0]['key']
         else:
@@ -141,6 +143,16 @@ class UniquenessBrainRunSelector(BrainRunSelector):
 
     def set_run_type(self):
         self.run_type = "uniqueness"
+
+    def compute_run_message(self):
+        message = "No uniqueness runs found. If you want to compute uniqueness, please run the following command:\n"
+        command = """
+        ```
+        import fiftyone.brain as fob
+        fob.compute_uniqueness(dataset)
+        ```
+        """
+        print(message + command)
         
     def get_brain_run_info(self, brain_run):
         key = brain_run.key
@@ -162,6 +174,16 @@ class MistakennessBrainRunSelector(BrainRunSelector):
 
     def set_run_type(self):
         self.run_type = "mistakenness"
+    
+    def compute_run_message(self):
+        message = "No mistakenness runs found. To compute the difficulty of classifying samples (`<pred_field>`), please run the following command:\n"
+        command = """
+        ```
+        import fiftyone.brain as fob
+        fob.compute_mistakenness(dataset, <pred_field>)
+        ```
+        """
+        print(message + command)
         
     def get_brain_run_info(self, brain_run):
         key = brain_run.key
@@ -189,6 +211,20 @@ class ImageSimilarityBrainRunSelector(BrainRunSelector):
 
     def set_run_type(self):
         self.run_type = "image_similarity"
+
+    def compute_run_message(self):
+        message = "No similarity index found. To generate a similarity index for your samples, please run the following command:\n"
+        command = """
+        ```
+        import fiftyone.brain as fob
+        fob.compute_similarity(
+            dataset, 
+            model='mobilenet-v2-imagenet-torch',
+            brain_run_key='img_sim',
+            )
+        ```
+        """
+        print(message + command)
         
     def get_brain_run_info(self, brain_run):
         key = brain_run.key
@@ -223,6 +259,20 @@ class TextSimilarityBrainRunSelector(BrainRunSelector):
 
     def set_run_type(self):
         self.run_type = "text_similarity"
+
+    def compute_run_message(self):
+        message = "No similarity index found that supports text prompts. To generate a similarity index for your samples, please run the following command:\n"
+        command = """
+        ```
+        import fiftyone.brain as fob
+        fob.compute_similarity(
+            dataset, 
+            model='clip-vit-base32-torch',
+            brain_run_key='text_sim',
+            )
+        ```
+        """
+        print(message + command)
         
     def get_brain_run_info(self, brain_run):
         key = brain_run.key
@@ -248,26 +298,39 @@ class TextSimilarityBrainRunSelector(BrainRunSelector):
         return brain_runs
     
     
-# class HardnessBrainRunSelector(BrainRunSelector):
-#     """Class to select the correct hardness brain run for a given query and dataset"""
+class HardnessBrainRunSelector(BrainRunSelector):
+    """Class to select the correct hardness brain run for a given query and dataset"""
 
-#     def __init__(self, dataset):
-#         super().__init__(dataset)
+    def __init__(self, dataset):
+        super().__init__(dataset)
 
-#     def set_run_type(self):
-#         self.run_type = "hardness"
+    def set_run_type(self):
+        self.run_type = "hardness"
+
+    def compute_run_message(self):
+        message = "No hardness run found. To measure of the uncertainty of your model's predictions (in `<label_field>`) on the samples in your dataset, please run the following command:\n"
+        command = """
+        ```
+        import fiftyone.brain as fob
+        fob.compute_hardness(
+            dataset, 
+            <label_field>,
+            )
+        ```
+        """
+        print(message + command)
         
-#     ## TODO: add a method to get the available brain runs for a given dataset
-#     def get_brain_run_info(self, brain_run):
-#         field = brain_run.config.uniqueness_field
-#         model = brain_run.config.model.split('.')[-1]
-#         return {"key": field, "model": model}
+    def get_brain_run_info(self, brain_run):
+        key = brain_run.key
+        label_field = brain_run.config.label_field
+        hardness_field = brain_run.config.hardness_field
+        return {"key": key, "label_field": label_field, "hardness_field": hardness_field}
     
-#     def get_available_brain_runs(self):
-#         brain_runs = self.dataset.list_brain_runs(method = "hardness")
-#         brain_runs = [self.dataset.get_brain_info(br) for br in brain_runs]
-#         brain_runs = [self.get_brain_run_info(br) for br in brain_runs]
-#         return brain_runs
+    def get_available_brain_runs(self):
+        brain_runs = self.dataset.list_brain_runs(method = "hardness")
+        brain_runs = [self.dataset.get_brain_info(br) for br in brain_runs]
+        brain_runs = [self.get_brain_run_info(br) for br in brain_runs]
+        return brain_runs
     
 
 brain_run_selectors = {
@@ -275,7 +338,7 @@ brain_run_selectors = {
     "mistakenness": MistakennessBrainRunSelector,
     "image_similarity": ImageSimilarityBrainRunSelector,
     "text_similarity": TextSimilarityBrainRunSelector,
-    # "hardness": HardnessBrainRunSelector
+    "hardness": HardnessBrainRunSelector
 }
 
 
@@ -291,7 +354,8 @@ class BrainRunsSelector:
         for rt in run_types:
             brain_run_selector = brain_run_selectors[rt](self.dataset)
             brain_run = brain_run_selector.select_brain_run(query)
-            selected_runs[rt] = brain_run
+            if brain_run:
+                selected_runs[rt] = brain_run
 
         return selected_runs
 
