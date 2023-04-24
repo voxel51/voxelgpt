@@ -69,18 +69,12 @@ def remove_brain_run_fields(dataset, field_names):
 def get_available_fields(dataset):
     sample= dataset.first()
     field_names = list(sample.field_names)
-    print("field_names", field_names)
 
     available_fields = initialize_available_fields_list()
-    print("available_fields", available_fields)
-
-    fs = remove_brain_run_fields(dataset, field_names)
-    print("fs", fs)
 
     for fn in remove_brain_run_fields(dataset, field_names):
         if fn in ["id", "filepath", "tags", "metadata"]:
             continue
-        print("fn", fn)
         field_type = get_field_type(sample, fn)
         available_fields.append(f"{fn}: {field_type}")
     
