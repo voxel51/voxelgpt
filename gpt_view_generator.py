@@ -4,7 +4,7 @@ from links.algorithm_selector import select_algorithms
 from links.run_selector import select_runs
 from links.field_selector import select_fields
 from links.label_class_selector import select_label_classes
-from links.dataset_view_generator import generate_dataset_view_text
+from links.dataset_view_generator import get_gpt_view_stage_strings
 
 def get_gpt_view_text(dataset, query):
     #### Validate media type
@@ -22,15 +22,16 @@ def get_gpt_view_text(dataset, query):
     if len(algorithms) > 0:
         print(f"Identified algorithms: {algorithms}")
     runs = select_runs(dataset, query, algorithms)
+    run_keys = {k: v["key"] for k, v in runs.items()}
     if len(runs) > 0:
-        print(f"Identified runs: {runs}")
+        print(f"Identified runs: {run_keys}")
     fields = select_fields(dataset, query)
     print(f"Identified potentially relevant fields: {fields}")
     label_classes = select_label_classes(dataset, query, fields)
     if len(label_classes) > 0:
         print(f"Identified label classes: {label_classes}")
 
-    response = generate_dataset_view_text(
+    response = get_gpt_view_stage_strings(
         dataset,
         runs,
         fields,
