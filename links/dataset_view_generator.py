@@ -238,6 +238,11 @@ def get_gpt_view_stage_strings(
         label_classes,
         view_stage_descriptions,
         examples_prompt
-    )
+    ).strip()
 
-    return split_into_stages(response.strip())
+    if '_MORE_' in response:
+        return '_MORE_'
+    elif "_CONFUSED_" in response:
+        return "_CONFUSED_" 
+    else:
+        return split_into_stages(response)

@@ -1,3 +1,4 @@
+from links.query_validator import validate_query
 from links.view_stage_example_selector import generate_view_stage_examples_prompt
 from links.view_stage_description_selector import generate_view_stage_descriptions_prompt, get_most_relevant_view_stages
 from links.algorithm_selector import select_algorithms
@@ -11,6 +12,11 @@ def get_gpt_view_text(dataset, query):
     if dataset.media_type not in ["image", "video"]:
         print(f"At present, the FiftyOne GPT integration only supports image and video datasets. The dataset {dataset.name} has media type {dataset.media_type}. If you would like to use this feature, please try a different dataset.")
         return
+    
+    valid = validate_query(query)
+    if not valid:
+        return '_CONFUSED_'
+    
     print(f"Finding similar examples for query: {query}")
     examples = generate_view_stage_examples_prompt(
         dataset, query
