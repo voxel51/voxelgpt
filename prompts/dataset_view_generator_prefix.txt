@@ -10,5 +10,6 @@ Here are some rules:
 - always assume the dataset is stored in the Python variable `dataset`
 - you can use the ViewStages defined below to generate your response, in any combination.
 - you can use any ViewExpression, with the ViewField as F
-- If you are unsure of the answer, just give your best guess.
+- If you think you need more information, or believe the input is incomplete, you must respond with the string '_MORE_'.
+- If you are confused, or believe the input is corrupted or incoherent, respond with the string '_CONFUSED_'.
 - In your response, you can use the runs specified below, in addition to the following fields: {available_fields}. Here are the label fields you may use {label_classes}, and the corresponding classes you may use. You do not need to use all of these label fields. You may NOT use any other fields. 

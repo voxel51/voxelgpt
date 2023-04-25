@@ -1,3 +1,5 @@
+import re
+
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
 
@@ -191,3 +193,56 @@ def generate_dataset_view_text(
 
     response = llm.call_as_llm(prompt)
     return response.strip()
+
+
+
+def split_into_stages(stages_text):
+    print("splitting into stages")
+    with open("view_stages_list.txt", "r") as f:
+        view_stages = f.read().splitlines()
+    pattern = ','+'|,'.join(view_stages)[:-1]
+
+    st = stages_text[1:-1].replace(', ', ',').replace('\n', '').replace('\r', '')
+    x = re.finditer(pattern, st)
+    stages = []
+    spans = []
+    for match in x:
+        spans.append(match.span())
+
+    spans = spans[::-1]
+    for i, span in enumerate(spans):
+        if i == 0:
+            stages.append(st[span[0]+1:])
+        else:
+            stages.append(st[span[0]+1:spans[i-1][0]])
+    if len(stages) != 0:
+        stages.append(st[:spans[-1][0]])
+    else:
+        stages.append(st)
+
+    stages = stages[::-1]
+    return stages
+
+def get_gpt_view_stage_strings(
+        dataset,
+        required_brain_runs,
+        available_fields,
+        label_classes,
+        view_stage_descriptions,
+        examples_prompt
+    ):
+    response = generate_dataset_view_text(
+        dataset,
+        required_brain_runs,
+        available_fields,
+        label_classes,
+        view_stage_descriptions,
+        examples_prompt
+    ).strip()
+
+    if '_MORE_' in response:
+        return '_MORE_'
+    elif "_CONFUSED_" in response:
+        return "_CONFUSED_" 
+    else:
+        return split_into_stages(response)
