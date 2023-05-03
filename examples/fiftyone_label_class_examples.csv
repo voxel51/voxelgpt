@@ -1,0 +1,7 @@
+query,field,label_classes,added_by
+dog predictions with a confidence of 0.9 or higher,predictions,"['dog']",Jacob
+first four ground truth object detections,ground_truth,[],Jacob
+"images classified as table, chair, or person",model_predictions,"['table', 'chair', 'person']",Jacob
+images with a confidence of 0.9 or higher,predictions,[],Jacob
+object patches of cars and buses,ground_truth,"['car', 'bus']",Jacob
+samples with at least one cow prediction and no horses,predictions,"['cow', 'horse']",Jacob

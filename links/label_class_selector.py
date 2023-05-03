@@ -1,39 +1,20 @@
+import pandas as pd
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate, FewShotPromptTemplate
 llm = ChatOpenAI(temperature=0, model_name='gpt-3.5-turbo')
 
-examples = [
-    {
-        "query": "dog predictions with a confidence of 0.9 or higher",
-        "field": "predictions",
-        "label_classes": ["dog"]
-     },
-    {
-        "query": "first four ground truth object detections",
-        "field": "ground_truth",
-        "label_classes": []
-    },
-    {
-        "query": "images classified as table, chair, or person",
-        "field": "model_predictions",
-        "label_classes": ["table", "chair", "person"]
-    },
-    {
-        "query": "images with a confidence of 0.9 or higher",
-        "field": "predictions",
-        "label_classes": []
-    },
-    {
-        "query": "object patches of cars and buses",
-        "field": "ground_truth",
-        "label_classes": ["car", "bus"]
-    },
-    {  
-        "query": "samples with at least one cow prediction and no horses",
-        "field": "predictions",
-        "label_classes": ["cow", "horse"]
-    }
-]
+def get_label_class_selection_examples():
+    df = pd.read_csv("examples/fiftyone_label_class_examples.csv")
+    examples = []
+
+    for _, row in df.iterrows():
+        example = {
+            "query": row.query,
+            "field": row.field,
+            "label_classes": row.label_classes
+        }
+        examples.append(example)
+    return examples
 
 LABELS_WITH_CLASSES = (
     "Classification",
@@ -43,10 +24,6 @@ LABELS_WITH_CLASSES = (
     "Detections",
     "Polylines",
 )
-
-
-def get_label_class_selection_examples():
-    return examples
 
 def load_class_selector_prefix():
     with open("prompts/label_class_selector_prefix.txt", "r") as f:
