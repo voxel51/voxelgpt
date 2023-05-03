@@ -41,11 +41,7 @@
     },
     "geo_near": {
         "description": "Sorts samples in collection by proximity to specified geolocation. Must be first stage in any DatasetView",
-        "inputs": "point: reference point to compute distances to, can be a [longitude, latitude] list, GeoJSON dict with Point type, or GeoLocation instance.\nlocation_field: location data of each sample to use, can be name of GeoLocation field or embedded.field.name containing GeoJSON data to use as location data, or None.\nmin_distance: filter samples that are less than this distance (in meters) from point.\nmax_distance: filter samples that are greater than this distance (in meters) from point.\nquery: optional dict defining MongoDB read query that samples must match to be included in view"
-    },
-    "geo_within": {
-        "description": "Filters samples in collection to only include samples whose geolocation is within specified boundary",
-        "inputs": "boundary: GeoLocation, GeoLocations, GeoJSON dict, or list of coordinates that define Polygon or MultiPolygon to search within.\nlocation_field: location data of each sample to use, can be name of GeoLocation field or embedded.field.name containing GeoJSON location data to use, or None.\nstrict: whether sample’s location data must strictly fall within boundary (True) to match or whether any intersection suffices (False)"
+        "inputs": "point: reference point to compute distances to, can be a [longitude, latitude] list, GeoJSON dict with Point type, or GeoLocation instance.\nlocation_field: location data of each sample to use, can be name of GeoLocation field or embedded.field.name containing GeoJSON data to use as location data, or None.\nmin_distance: filter samples that are less than this distance (in meters) from point.\nmax_distance: filter samples that are greater than this distance (in meters) from point."
     },
     "group_by": {
         "description": "Reorganizes samples in the collection into groups by a specified field or expression",
