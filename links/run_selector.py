@@ -134,7 +134,7 @@ class RunSelector:
             self.print_compute_run_message()
             return None
         elif len(available_runs) == 1:
-            return available_runs[0]['key']
+            return available_runs[0]
         else:
             prompt = self.generate_prompt(query, available_runs)
             response = llm.call_as_llm(prompt).strip()

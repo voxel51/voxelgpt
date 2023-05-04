@@ -8,7 +8,6 @@ filter_field
 filter_labels
 filter_keypoints
 geo_near
-geo_within
 limit
 limit_labels
 map_labels
