@@ -105,7 +105,18 @@ def validate_class_name(class_name, label_classes, label_field):
 
 def select_label_field_classes(dataset, query, label_field):
     class_names = identify_named_classes(query, label_field)
+    if len(class_names) == 0:
+        return []
     _classes = get_dataset_label_classes(dataset, label_field)
+
+    ### Need better way to match class names
+    # labels_classes = []
+    # for cn in class_names:
+        ## if fewer than 1k classes, try semantic matching --> need new prompt
+        ## if more than 1k classes, don't try semantic matching
+
+        # if nothing found, and no text similarity run, then ask for more info
+
     label_classes = [
         validate_class_name(c, _classes, label_field) 
         for c in class_names
