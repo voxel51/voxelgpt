@@ -1,0 +1,4 @@
+fiftyone:
+    version: ~0.21.0
+name: "@voxel51/fiftyone-gpt"
+js_bundle: dist/index.umd.js
