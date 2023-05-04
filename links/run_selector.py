@@ -431,14 +431,14 @@ class MetadataRunSelector(RunSelector):
         return message + command
         
     def get_run_info(self, run):
-        return {'metadata': 'metadata'}
+        return {"key": 'metadata'}
     
     def get_available_runs(self):
         nsamples = self.dataset.count()
         if self.dataset.exists('metadata').count() != nsamples:
             return []
         else:
-            return ["metadata"]
+            return [self.get_run_info("metadata")]
     
 
 run_selectors = {
