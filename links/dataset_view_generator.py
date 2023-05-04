@@ -194,7 +194,11 @@ def generate_dataset_view_text(
     response = llm.call_as_llm(prompt)
     return response.strip()
 
-
+def remove_whitespace(stage_str):
+    return re.sub(
+        r'\s+', lambda m: ' ' if len(m.group(0)) == 1 else '',
+        stage_str
+        )
 
 def split_into_stages(stages_text):
     print("splitting into stages")
@@ -221,6 +225,7 @@ def split_into_stages(stages_text):
         stages.append(st)
 
     stages = stages[::-1]
+    stages = [remove_whitespace(stage) for stage in stages]
     return stages
 
 def get_gpt_view_stage_strings(
