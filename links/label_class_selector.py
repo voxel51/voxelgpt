@@ -121,6 +121,8 @@ def identify_semantic_matches(class_name, label_classes):
     ncs = [c.strip().replace('\'', '') for c in res[1:-1].split(",")]
     ncs = [c for c in ncs if c != ""]
     ncs = [c for c in ncs if c in label_classes and c != class_name]
+    if len(ncs) == 1:
+        return ncs[0]
     return ncs
 
 def get_field_type(dataset, field_name):
@@ -159,27 +161,10 @@ def validate_class_name(class_name, label_classes, label_field):
         print(f"Class name {class_name} not found for label {label_field}")
         return None
 
-# def semantically_match_class_name(class_name, label_classes):
-#     prefix = "Given a class name, your task is to find all likely semantic matches in the label classes. Return a list of matches. This list can be empty. If it is not empty, all elements in the list should be strings and should be in the label classes."
-#     formatter_template = """
-#     Class name: {class_name}
-#     Label classes: {label_classes}
-#     Semantic matches: 
-#     """
-
-#     prompt = prefix + formatter_template.format(
-#         class_name = class_name, 
-#         label_classes = label_classes
-#         )
-    
-#     res = llm.call_as_llm(prompt).strip()
-#     if res[0] != "[" or res[-1] != "]" or res == "[]":
-#         return []
-#     else:
-#         return [c.strip().replace('\'', '') for c in res[1:-1].split(",")]
-
 def select_label_field_classes(dataset, query, label_field):
     class_names = identify_named_classes(query, label_field)
+    if len(' '.join(class_names)) > len(query):
+        return '_CONFUSED_'
     if len(class_names) == 0:
         return []
     _classes = get_dataset_label_classes(dataset, label_field)
@@ -190,12 +175,11 @@ def select_label_field_classes(dataset, query, label_field):
     for cn in class_names:
         cn_validated = validate_class_name(cn, _classes, label_field)
         if cn_validated is not None:
-            label_classes.append(cn_validated)
+            label_classes.append({cn:cn_validated})
         elif sm_flag:
-            ## try semantic matching
             sm_classes = identify_semantic_matches(cn, _classes)
             print(f"Found semantically similar classes: {sm_classes} for {cn}")
-            label_classes.extend(sm_classes)
+            label_classes.append({cn: sm_classes})
     
     return label_classes
 
@@ -207,9 +191,14 @@ def select_label_classes(dataset, query, required_fields):
     for field in fields:
         field_type = get_field_type(dataset, field)
         if field_type in LABELS_WITH_CLASSES:
-            label_classes[field] = select_label_field_classes(
+            field_label_classes = select_label_field_classes(
                 dataset, 
                 query, 
                 field
-                )
+            )
+
+            if field_label_classes == '_CONFUSED_':
+                return '_CONFUSED_'
+            else:
+                label_classes[field] = field_label_classes
     return label_classes
