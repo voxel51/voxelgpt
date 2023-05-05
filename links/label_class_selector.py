@@ -150,7 +150,6 @@ def validate_class_name(class_name, label_classes, label_field):
         ## try matching with case-insensitive
         for c in label_classes:
             if c.lower() == class_name.lower():
-                print(f"Matching {class_name} with {c}")
                 return c
         
         ## try matching with prefix
@@ -158,7 +157,6 @@ def validate_class_name(class_name, label_classes, label_field):
             if c.lower().startswith(class_name.lower()):
                 print(f"Matching {class_name} with {c}")
                 return c
-        print(f"Class name {class_name} not found for label {label_field}")
         return None
 
 def select_label_field_classes(dataset, query, label_field):
@@ -178,7 +176,6 @@ def select_label_field_classes(dataset, query, label_field):
             label_classes.append({cn:cn_validated})
         elif sm_flag:
             sm_classes = identify_semantic_matches(cn, _classes)
-            print(f"Found semantically similar classes: {sm_classes} for {cn}")
             label_classes.append({cn: sm_classes})
     
     return label_classes
