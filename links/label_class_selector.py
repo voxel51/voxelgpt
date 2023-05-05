@@ -18,6 +18,19 @@ def get_label_class_selection_examples():
         examples.append(example)
     return examples
 
+def get_semantic_class_selection_examples():
+    df = pd.read_csv("examples/fiftyone_semantic_class_selector_examples.csv")
+    examples = []
+
+    for _, row in df.iterrows():
+        example = {
+            "class_name": row.class_name,
+            "available_label_classes": row.available_label_classes,
+            "semantic_matches": row.semantic_matches
+        }
+        examples.append(example)
+    return examples
+
 LABELS_WITH_CLASSES = (
     "Classification",
     "Detection",
@@ -32,6 +45,10 @@ def load_class_selector_prefix():
         prefix = f.read()
     return prefix
 
+def load_semantic_class_selector_prefix():
+    with open("prompts/semantic_class_selector_prefix.txt", "r") as f:
+        prefix = f.read()
+    return prefix
 
 def generate_class_selector_prompt(query, label_field):
     prefix = load_class_selector_prefix()
@@ -62,11 +79,48 @@ def generate_class_selector_prompt(query, label_field):
         field = label_field
         )
 
+def generate_semantic_class_selector_prompt(class_name, label_classes):
+    prefix = load_semantic_class_selector_prefix()
+    semantic_class_selection_examples = get_semantic_class_selection_examples()
+
+    semantic_class_selection_example_formatter_template = """
+    Class name: {class_name}
+    Available label classes: {available_label_classes}
+    Semantic matches: {semantic_matches}\n
+    """
+
+    semantic_class_labels_prompt = PromptTemplate(
+        input_variables=["class_name", "available_label_classes", "semantic_matches"],
+        template=semantic_class_selection_example_formatter_template,
+    )
+
+    semantic_class_selector_prompt = FewShotPromptTemplate(
+        examples=semantic_class_selection_examples,
+        example_prompt=semantic_class_labels_prompt,
+        prefix=prefix,
+        suffix="Class name: {class_name}\nAvailable label classes: {available_label_classes}\nSemantic matches: ",
+        input_variables=["class_name", "available_label_classes"],
+        example_separator="\n",
+    )
+
+    return semantic_class_selector_prompt.format(
+        class_name = class_name, 
+        available_label_classes = label_classes
+        )
+
 def identify_named_classes(query, label_field):
     class_selector_prompt = generate_class_selector_prompt(query, label_field)
     res = llm.call_as_llm(class_selector_prompt).strip()
     ncs = [c.strip().replace('\'', '') for c in res[1:-1].split(",")]
     ncs = [c for c in ncs if c != ""]
+    return ncs
+
+def identify_semantic_matches(class_name, label_classes):
+    semantic_class_selector_prompt = generate_semantic_class_selector_prompt(class_name, label_classes)
+    res = llm.call_as_llm(semantic_class_selector_prompt).strip()
+    ncs = [c.strip().replace('\'', '') for c in res[1:-1].split(",")]
+    ncs = [c for c in ncs if c != ""]
+    ncs = [c for c in ncs if c in label_classes and c != class_name]
     return ncs
 
 def get_field_type(dataset, field_name):
@@ -105,25 +159,24 @@ def validate_class_name(class_name, label_classes, label_field):
         print(f"Class name {class_name} not found for label {label_field}")
         return None
 
-def semantically_match_class_name(class_name, label_classes):
-    prefix = "Given a class name, your task is to find all likely semantic matches in the label classes. Return a list of matches. This list can be empty. If it is not empty, all elements in the list should be strings and should be in the label classes."
-    formatter_template = """
-    Class name: {class_name}
-    Label classes: {label_classes}
-    Semantic matches: 
-    """
+# def semantically_match_class_name(class_name, label_classes):
+#     prefix = "Given a class name, your task is to find all likely semantic matches in the label classes. Return a list of matches. This list can be empty. If it is not empty, all elements in the list should be strings and should be in the label classes."
+#     formatter_template = """
+#     Class name: {class_name}
+#     Label classes: {label_classes}
+#     Semantic matches: 
+#     """
 
-    prompt = prefix + formatter_template.format(
-        class_name = class_name, 
-        label_classes = label_classes
-        )
+#     prompt = prefix + formatter_template.format(
+#         class_name = class_name, 
+#         label_classes = label_classes
+#         )
     
-    res = llm.call_as_llm(prompt).strip()
-    print(res)
-    if res[0] != "[" or res[-1] != "]" or res == "[]":
-        return []
-    else:
-        return [c.strip().replace('\'', '') for c in res[1:-1].split(",")]
+#     res = llm.call_as_llm(prompt).strip()
+#     if res[0] != "[" or res[-1] != "]" or res == "[]":
+#         return []
+#     else:
+#         return [c.strip().replace('\'', '') for c in res[1:-1].split(",")]
 
 def select_label_field_classes(dataset, query, label_field):
     class_names = identify_named_classes(query, label_field)
@@ -140,7 +193,8 @@ def select_label_field_classes(dataset, query, label_field):
             label_classes.append(cn_validated)
         elif sm_flag:
             ## try semantic matching
-            sm_classes = semantically_match_class_name(cn, _classes)
+            sm_classes = identify_semantic_matches(cn, _classes)
+            print(f"Found semantically similar classes: {sm_classes} for {cn}")
             label_classes.extend(sm_classes)
     
     return label_classes
