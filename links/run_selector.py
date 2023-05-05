@@ -134,7 +134,7 @@ class RunSelector:
             self.print_compute_run_message()
             return None
         elif len(available_runs) == 1:
-            return available_runs[0]['key']
+            return available_runs[0]
         else:
             prompt = self.generate_prompt(query, available_runs)
             response = llm.call_as_llm(prompt).strip()
@@ -431,14 +431,14 @@ class MetadataRunSelector(RunSelector):
         return message + command
         
     def get_run_info(self, run):
-        return {'metadata': 'metadata'}
+        return {"key": 'metadata'}
     
     def get_available_runs(self):
         nsamples = self.dataset.count()
         if self.dataset.exists('metadata').count() != nsamples:
             return []
         else:
-            return ["metadata"]
+            return [self.get_run_info("metadata")]
     
 
 run_selectors = {
