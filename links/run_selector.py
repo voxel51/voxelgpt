@@ -159,7 +159,7 @@ class EvaluationRunSelector(RunSelector):
         ```
         dataset.evaluate_detections(
             "<det_predictions>",
-            eval_key="eval_det",,
+            eval_key="eval_det",
         )
         ```
         """
@@ -169,7 +169,7 @@ class EvaluationRunSelector(RunSelector):
         ```
         dataset.evaluate_classifications(
             "<classif_predictions>",
-            eval_key="eval_classif",,
+            eval_key="eval_classif",
         )
         ```
         """
