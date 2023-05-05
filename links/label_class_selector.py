@@ -3,6 +3,8 @@ from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate, FewShotPromptTemplate
 llm = ChatOpenAI(temperature=0, model_name='gpt-3.5-turbo')
 
+SEMANTIC_MATCH_THRESHOLD = 1000
+
 def get_label_class_selection_examples():
     df = pd.read_csv("examples/fiftyone_label_class_examples.csv")
     examples = []
@@ -101,26 +103,45 @@ def validate_class_name(class_name, label_classes, label_field):
                 print(f"Matching {class_name} with {c}")
                 return c
         print(f"Class name {class_name} not found for label {label_field}")
-        return class_name
+        return None
+
+def semantically_match_class_name(class_name, label_classes):
+    prefix = "Given a class name, your task is to find all likely semantic matches in the label classes. Return a list of matches. This list can be empty. If it is not empty, all elements in the list should be strings and should be in the label classes."
+    formatter_template = """
+    Class name: {class_name}
+    Label classes: {label_classes}
+    Semantic matches: 
+    """
+
+    prompt = prefix + formatter_template.format(
+        class_name = class_name, 
+        label_classes = label_classes
+        )
+    
+    res = llm.call_as_llm(prompt).strip()
+    print(res)
+    if res[0] != "[" or res[-1] != "]" or res == "[]":
+        return []
+    else:
+        return [c.strip().replace('\'', '') for c in res[1:-1].split(",")]
 
 def select_label_field_classes(dataset, query, label_field):
     class_names = identify_named_classes(query, label_field)
     if len(class_names) == 0:
         return []
     _classes = get_dataset_label_classes(dataset, label_field)
+    num_classes = len(_classes)
+    sm_flag = num_classes < SEMANTIC_MATCH_THRESHOLD
 
-    ### Need better way to match class names
-    # labels_classes = []
-    # for cn in class_names:
-        ## if fewer than 1k classes, try semantic matching --> need new prompt
-        ## if more than 1k classes, don't try semantic matching
-
-        # if nothing found, and no text similarity run, then ask for more info
-
-    label_classes = [
-        validate_class_name(c, _classes, label_field) 
-        for c in class_names
-        ]
+    label_classes = []
+    for cn in class_names:
+        cn_validated = validate_class_name(cn, _classes, label_field)
+        if cn_validated is not None:
+            label_classes.append(cn_validated)
+        elif sm_flag:
+            ## try semantic matching
+            sm_classes = semantically_match_class_name(cn, _classes)
+            label_classes.extend(sm_classes)
     
     return label_classes
 
