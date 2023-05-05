@@ -25,7 +25,22 @@ def reformat_query(examples, label_classes):
 
     example_lines[-2] = query
     return '\n'.join(example_lines)
-    # return examples
+
+def format_label_classes(label_classes):
+    label_fields = list(label_classes.keys())
+    lcls = {}
+    for field in label_fields:
+        field_list = []
+        lcl = label_classes[field]
+        for el in lcl:
+            el_val = list(el.values())[0]
+            if type(el_val) == str:
+                field_list.append(el_val)
+            else:
+                field_list += el_val
+        lcls[field] = field_list
+    return lcls
+
 
 def get_gpt_view_text(dataset, query):
     #### Validate media type
@@ -58,7 +73,9 @@ def get_gpt_view_text(dataset, query):
         return "_CONFUSED_"
     lens = [len(v) for v in label_classes.values()]
     if any([l > 0 for l in lens]):
-        print(f"Identified label classes: {label_classes}")
+        print(
+            f"Identified label classes: {format_label_classes(label_classes)}"
+            )
     else:
         print(f"Did not identify any relevant label classes")
     
