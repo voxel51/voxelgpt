@@ -153,8 +153,8 @@ class EvaluationRunSelector(RunSelector):
         self.run_type = "evaluation"
 
     def generate_compute_run_message(self):
-        base_message =  "No evaluation runs found.\n\n"
-        return base_message
+        return "No evaluation runs found."
+        # base_message =  "No evaluation runs found.\n\n"
         # detection_message = "If you want to compute detection evaluation, please run the following command:\n"
         # detection_command = """
         # ```

@@ -200,8 +200,11 @@ def remove_whitespace(stage_str):
         stage_str
         )
 
+def print_stages(stages):
+    for i, stage in enumerate(stages):
+        print(f"Stage {i+1}: {stage}")
+
 def split_into_stages(stages_text):
-    print("splitting into stages")
     with open("view_stages_list.txt", "r") as f:
         view_stages = f.read().splitlines()
     pattern = ','+'|,'.join(view_stages)[:-1]
@@ -228,6 +231,7 @@ def split_into_stages(stages_text):
 
     stages = stages[::-1]
     stages = [remove_whitespace(stage) for stage in stages]
+    print_stages(stages)
     return stages
 
 def get_gpt_view_stage_strings(
