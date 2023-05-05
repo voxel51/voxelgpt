@@ -154,27 +154,28 @@ class EvaluationRunSelector(RunSelector):
 
     def generate_compute_run_message(self):
         base_message =  "No evaluation runs found.\n\n"
-        detection_message = "If you want to compute detection evaluation, please run the following command:\n"
-        detection_command = """
-        ```
-        dataset.evaluate_detections(
-            "<det_predictions>",
-            eval_key="eval_det",
-        )
-        ```
-        """
+        return base_message
+        # detection_message = "If you want to compute detection evaluation, please run the following command:\n"
+        # detection_command = """
+        # ```
+        # dataset.evaluate_detections(
+        #     "<det_predictions>",
+        #     eval_key="eval_det",
+        # )
+        # ```
+        # """
 
-        classification_message = "If you want to compute classification evaluation, please run the following command:\n"
-        classification_command = """
-        ```
-        dataset.evaluate_classifications(
-            "<classif_predictions>",
-            eval_key="eval_classif",
-        )
-        ```
-        """
-        message = base_message + detection_message + detection_command + classification_message + classification_command
-        return message
+        # classification_message = "If you want to compute classification evaluation, please run the following command:\n"
+        # classification_command = """
+        # ```
+        # dataset.evaluate_classifications(
+        #     "<classif_predictions>",
+        #     eval_key="eval_classif",
+        # )
+        # ```
+        # """
+        # message = base_message + detection_message + detection_command + classification_message + classification_command
+        # return message
         
     def get_run_info(self, run):
         key = run.key
