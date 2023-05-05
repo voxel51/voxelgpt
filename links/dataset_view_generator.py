@@ -206,8 +206,10 @@ def split_into_stages(stages_text):
         view_stages = f.read().splitlines()
     pattern = ','+'|,'.join(view_stages)[:-1]
 
-    st = stages_text[1:-1].replace(', ', ',').replace('\n', '').replace('\r', '')
+    st = stages_text[1:-1].replace(', ', ',').replace('\n', '')
+    st = st.replace('\r', '').replace('\'', "\"")
     x = re.finditer(pattern, st)
+    
     stages = []
     spans = []
     for match in x:
