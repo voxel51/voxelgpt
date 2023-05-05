@@ -45,4 +45,8 @@ def get_gpt_view_text(dataset, query):
         view_stage_descriptions,
         examples
     )
+
+    if "metadata" in ''.join(response) and "metadata" not in list(run_keys.keys()):
+        return "_NEED_METADATA_"
+    
     return response
