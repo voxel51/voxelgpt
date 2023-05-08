@@ -70,7 +70,6 @@ def get_gpt_view_text(dataset, query, chat_history):
         return '_CONFUSED_'
     
     examples_query_text = f"Finding similar examples for query: {query}"
-    # log_and_print_chat_history(examples_query_text, "GPT", chat_history)
     print(f"Finding similar examples for query: {query}")
     examples = generate_view_stage_examples_prompt(
         dataset, query
@@ -78,24 +77,19 @@ def get_gpt_view_text(dataset, query, chat_history):
     view_stages = get_most_relevant_view_stages(examples)
     likely_view_stages_text = f"Identified likely view stages: {view_stages}"
     log_and_print_chat_history(likely_view_stages_text, "GPT", chat_history)
-    # print(f"Identified likely view stages: {view_stages}")
     view_stage_descriptions = generate_view_stage_descriptions_prompt(examples)
     algorithms = select_algorithms(query)
     if len(algorithms) > 0:
         algs_text = f"Identified algorithms: {algorithms}"
         log_and_print_chat_history(algs_text, "GPT", chat_history)
-        # print(f"Identified algorithms: {algorithms}")
     runs = select_runs(dataset, query, algorithms)
     run_keys = {k: v["key"] for k, v in runs.items()}
     if len(runs) > 0:
         runs_text = f"Identified runs: {run_keys}"
         log_and_print_chat_history(runs_text, "GPT", chat_history)
-        # print(f"Identified runs: {run_keys}")
     fields = select_fields(dataset, query)
     print(f"Identified potentially relevant fields: {fields}")
     label_classes = select_label_classes(dataset, query, fields)
-    # label_classes_text = f"Identified label classes: {format_label_classes(label_classes)}"
-    # log_and_print_chat_history(label_classes_text, "GPT", chat_history)
     if label_classes == "_CONFUSED_":
         return "_CONFUSED_"
     lens = [len(v) for v in label_classes.values()]
@@ -103,13 +97,13 @@ def get_gpt_view_text(dataset, query, chat_history):
         label_classes_text = f"Identified label classes: {format_label_classes(label_classes)}"
         log_and_print_chat_history(label_classes_text, "GPT", chat_history)
         
-        # print(
-        #     f"Identified label classes: {format_label_classes(label_classes)}"
-        #     )
+        print(
+            f"Identified label classes: {format_label_classes(label_classes)}"
+            )
     else:
         label_classes_text = f"Did not identify any relevant label classes"
         log_and_print_chat_history(label_classes_text, "GPT", chat_history)
-        # print(f"Did not identify any relevant label classes")
+        print(f"Did not identify any relevant label classes")
     
     examples = reformat_query(examples, label_classes)
 
@@ -127,11 +121,17 @@ def get_gpt_view_text(dataset, query, chat_history):
     
     return response
 
-def create_view_from_stages(stages, dataset):
+def create_view_from_stages(stages, dataset, session, chat_history):
+    print(stages)
     view = dataset.view()
     code = 'view.' + '.'.join(stages)
-    view = eval(code)
-    return view
+    try:
+        view = eval(code)
+        session.view = view
+    except:
+        view = None
+        invalid_view_text = f"Attempted to create view from stages, but resulted in invalid view. Please try again."
+        log_and_print_chat_history(invalid_view_text, "GPT", chat_history)
 
 from IPython.display import clear_output
 
@@ -149,11 +149,12 @@ def gpt(dataset):
             break
         if query == "reset":
             chat_history = []
+            continue
         
         print(query)
         if len(chat_history) != 2:
             query = generate_effective_query(chat_history)
-        print(query)
+            print(f"Effective query: {query}")
         stages = get_gpt_view_text(dataset, query, chat_history)
 
         if stages == "_MORE_":
@@ -167,9 +168,6 @@ def gpt(dataset):
             continue
 
         log_chat_history(format_stages(stages), "GPT", chat_history)
-        # log_and_print_chat_history(f"stages: {stages}", "GPT", chat_history)
-        print(stages)
-        view = create_view_from_stages(stages, dataset)
-        session.view = view
+        create_view_from_stages(stages, dataset, session, chat_history)
         
     return
