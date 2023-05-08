@@ -12,6 +12,7 @@ Don't show me the fifth and sixth samples,"[exclude([dataset.skip(4).first().id,
 exclude the 8th image,[exclude([dataset.skip(7).first().id)],Jacob,all
 image with model1 confidences,[exists('model1.confidence')],Jacob,all
 Only show samples with field 'my_field',[exists('my_field')],Jacob,all
+Find my 8 biggest flaws,"[sort_by(""mistakenness"", reverse=True), limit(8)]",Leila,all
 Only include samples that have a value in their `predictions`,[exists('predictions')],Jacob,all
 samples that do NOT have a value in some_field,"[exists('some_field', False)]",Jacob,all
 "filter the 'my_field' field for negative values, but show me all images, even those that aren't matches","[filter_field('my_field', F() < 0), only_matches = False]",Jacob,all
