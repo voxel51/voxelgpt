@@ -18,13 +18,8 @@ samples that do NOT have a value in some_field,"[exists('some_field', False)]",J
 Only include samples whose `numeric_field` value is positive,"[filter_field('numeric_field', F() > 0)]",Jacob,all
 Just show classifications in the `pred_classif` field with label 'mug',"[filter_field('pred_classif', F('label') == 'mug')]",Jacob,all
 "i only want to see the detections with a validation tag, and only show me the images that have detections matching this filter","[filter_field('tags', F().contains('validation'), only_matches = True)]",Jacob,all
-Label contains string 'be',"[filter_labels(
-    'ground_truth',
-    F('label').contains_str('be'),
-)]",Jacob,all
-filter classifications in the 'my_model' field down to those with label hat or hair,"[filter_labels(
-    'my_model', F('label').is_in(['hat', 'hair'])
-)]",Jacob,all
+Label contains string 'be',"[filter_labels('ground_truth', F('label').contains_str('be'))]",Jacob,all
+filter classifications in the 'my_model' field down to those with label hat or hair,"[filter_labels('my_model', F('label').is_in(['hat', 'hair']))]",Jacob,all
 Predictions with confidence > 0.95,"[filter_labels('predictions', F('confidence') > 0.95)]",Jacob,all
 resnet predictions with 70+% confidence,"[filter_labels('resnet', F('confidence') > 0.75)]",Jacob,all
 Within 5km of Times Square,"[geo_near([-73.9855, 40.7580], max_distance=5000)]",Jacob,all
@@ -43,9 +38,7 @@ Only include samples that do not have the 'A' or 'B' tags,"[match_tags(['A', 'B'
 Only include samples that have the 'test' and 'train' tags,"[match_tags(['test', 'train'], all=True)]",Jacob,all
 Only include samples that have the 'test' or 'train' tags,"[match_tags(['test', 'train'])]",Jacob,all
 Only include samples that do not have the 'this' and 'that' tags,"[match_tags(['this', 'that'], bool=False, all=True)]",Jacob,all
-Images that only contain dogs,"[match(
-    F('ground_truth.detections.label').is_subset(['dog'])
-)]",Jacob,all
+Images that only contain dogs,[match(F('ground_truth.detections.label').is_subset(['dog']))],Jacob,all
 Get samples that do NOT have a value for `new_field`,[match(~F('new_field').exists())],Jacob,all
 "Only contains samples with `uniqueness` in [0.25, 0.75]",[match(abs(F('uniqueness') - 0.5) < 0.25)],Jacob,all
 Samples with odd seconds,[match(F('created_at').second() % 2 != 0)],Jacob,all
@@ -69,30 +62,14 @@ images where sinh of my_numeric_field is greater than 0.6,[match(F('my_numeric_f
 Uniqueness > 0.9,[match(F('uniqueness') > 0.9)],Jacob,all
 Create view that only contains samples with uniqueness = None,[match(F('uniqueness').is_null())],Jacob,all
 Only include samples whose `weather` field is 'sunny',[match(F('weather').label == 'sunny')],Jacob,all
-"Create a view containing samples whose `str` field have the given: ['1', '51', '11', '41', '21', '31'], in order","[select_by(
-    'str', ['1', '51', '11', '41', '21', '31'], ordered=True
-)]",Jacob,all
+"Create a view containing samples whose `str` field have the given: ['1', '51', '11', '41', '21', '31'], in order","[select_by('str', ['1', '51', '11', '41', '21', '31'], ordered=True)]",Jacob,all
 "Create a view containing samples whose `int` field have 1, 51, or 33","[select_by('int', [1, 51, 33])]",Jacob,all
 Only show 'mistakenness',[select_fields('mistakenness')],Jacob,all
 Include only the `uniqueness` field,[select_fields('uniqueness')],Jacob,all
 Get all labels with the test tag,[select_labels(tags='test')],Jacob,all
-Map numeric `my_field` values to 1 and null values to 0,"[set_field(
-    'my_field',
-    F('my_field').type().cases({'double': 1, 'null': 0}),
-)]",Jacob,all
-Replace all values of the `uniqueness` field that are less than 0.5 with `None`,"[set_field(
-    'uniqueness',
-    (F('uniqueness') >= 0.5).if_else(F('uniqueness'), None)
-)]",Jacob,all
-Round `uniqueness` values to either 0.25 or 0.75,"[set_field(
-    'uniqueness',
-    F('uniqueness').switch(
-        {
-            (0.0 < F()) & (F() <= 0.5): 0.25,
-            (0.5 < F()) & (F() <= 1.0): 0.75,
-        },
-    )
-)]",Jacob,all
+Map numeric `my_field` values to 1 and null values to 0,"[set_field('my_field', F('my_field').type().cases(LEFTBRACKET'double': 1, 'null': 0RIGHTBRACKET))]",Jacob,all
+Replace all values of the `uniqueness` field that are less than 0.5 with `None`,"[set_field('uniqueness', (F('uniqueness') >= 0.5).if_else(F('uniqueness'), None))]",Jacob,all
+Round `uniqueness` values to either 0.25 or 0.75,"[set_field('uniqueness', F('uniqueness').switch(LEFTBRACKET(0.0 < F()) & (F() <= 0.5): 0.25, (0.5 < F()) & (F() <= 1.0): 0.75RIGHTBRACKET))]",Jacob,all
 exclude the tag 'my_tag',"[set_field('tags', F('tags').difference(['my_tag']))]",Jacob,all
 create a view that only shows the 'cvat' and 'labelbox' tags,"[set_field('tags', F('tags').intersection(['cvat', 'labelbox']))]",Jacob,all
 select the train and test tags,"[set_field('tags', F('tags').intersection(['train', 'test']))]",Jacob,all
@@ -121,25 +98,12 @@ samples 40-70,"[skip(40), limit(30)]",Jacob,all
 Only include samples that have prediction confidences,[exists('predictions.confidence')],Jacob,image
 Only include classifications in the `predictions` field whose label is camel,"[filter_field('predictions', F('label') == 'camel')]",Jacob,image
 Remove tags from samples that don't include the 'validation' tag,"[filter_field('tags', F().contains('validation'))]",Jacob,image
-Only include keypoints in the `predictions` field whose `confidence` is greater than 0.9,"[filter_keypoints(
-    'predictions', filter=F('confidence') > 0.9
-)]",Jacob,image
-keypoints in the `predictions` field with label 'left eye' or 'right eye',"[filter_keypoints(
-    'predictions', labels=['left eye', 'right eye']
-)]",Jacob,image
-Only include samples whose ground truth `label` is 'slug' or 'conch',"[filter_labels(
-    'ground_truth', (F('label') == 'slug') | (F('label') == 'conch')
-)]",Jacob,image
-Only contains predictions with label 'cat' and confidence > 0.9,"[filter_labels(
-    'predictions',
-    (F('label') == 'cat') & (F('confidence') > 0.9)
-)]",Jacob,image
-Discard all predictions with confidence below 0.3,"[filter_labels(
-    'predictions', F('confidence') > 0.3, only_matches=False
-)]",Jacob,image
-Only include classifications in the `predictions` field whose label is 'frog' or 'turtle',"[filter_labels(
-    'predictions', F('label').is_in(['frog', 'turtle'])
-)]",Jacob,image
+Only include keypoints in the `predictions` field whose `confidence` is greater than 0.9,"[filter_keypoints('predictions', filter=F('confidence') > 0.9)]",Jacob,image
+keypoints in the `predictions` field with label 'left eye' or 'right eye',"[filter_keypoints('predictions', labels=['left eye', 'right eye'])]",Jacob,image
+Only include samples whose ground truth `label` is 'slug' or 'conch',"[filter_labels('ground_truth', (F('label') == 'slug') | (F('label') == 'conch'))]",Jacob,image
+Only contains predictions with label 'cat' and confidence > 0.9,"[filter_labels('predictions', (F('label') == 'cat') & (F('confidence') > 0.9))]",Jacob,image
+Discard all predictions with confidence below 0.3,"[filter_labels('predictions', F('confidence') > 0.3, only_matches=False)]",Jacob,image
+Only include classifications in the `predictions` field whose label is 'frog' or 'turtle',"[filter_labels('predictions', F('label').is_in(['frog', 'turtle']))]",Jacob,image
 Only include polylines in the `faster-rcnn` field whose `label` is 'lane',"[filter_labels('faster-rcnn', F('label') == 'lane')]",Jacob,image
 Only contains predictions whose bounding boxes' upper left corner is a Manhattan distance of at least 1 from the origin,"[filter_labels('predictions, F('bounding_box')[0] + F('bounding_box')[1] > 1)]",Jacob,image
 "Create a view that only contains predictions whose bounding boxes
@@ -152,88 +116,33 @@ Only include keypoints in the `predictions` field with less than four points,"[f
 Only include polylines in the `fine-tuned` field with at least 3 vertices,"[filter_labels('predictions', F('points').map(F().length()).sum() >= 3)]",Jacob,image
 limit 'ground_truth' classifications to the first four,"[limit_labels('ground_truth', 4)]",Jacob,image
 Only include the first detection in the `predictions` field of each sample,"[limit_labels('predictions', 1)]",Jacob,image
-map the cat and dog animal labels to pet and shark to wild,"[map_labels(
-    'animal', {'cat': 'pet', 'dog': 'pet', 'shark':'wild'}
-)]",Jacob,image
-10 most likely annotation mistakes in training set,"[match_tags('train'), sort_by(
-    'mistakenness, reverse=True
-), limit(10)]",Jacob,image
-Images that do not contain giraffes,"[match(
-    ~F('ground_truth.detections.label').contains('giraffe')
-)]",Jacob,image
-At least one dog,"[match(
-    F('ground_truth.detections.label').contains('dog')
-)]",Jacob,image
-the first 30 samples with a plant,"[match(
-    F('ground_truth.detections.label').contains('plant')
-), limit(30)]",Jacob,image
-10 random images with tables,"[match(
-    F('ground_truth.detections.label').contains('table')
-), take(10)]",Jacob,image
-Contains a rabbit and a tortoise prediction,"[match(
-    F('predictions.detections.label').contains(
-        ['rabbit', 'tortoise'], all=True
-    )
-)]",Jacob,image
-Contains a cat or mouse but not both,"[match(
-    F('predictions.detections.label').contains(['cat', 'mouse']) & 
-   ~F('predictions.detections.label').contains(['cat', 'mouse'], all=True))
-]",Jacob,image
-Only contains samples whose first and last prediction have the same label,"[match(
-    F('predictions.detections')[0].apply(F('label')) == F('predictions.detections').reverse()[0].apply(F('label'))
-)]
+map the cat and dog animal labels to pet and shark to wild,"[map_labels('animal', LEFTBRACKET'cat': 'pet', 'dog': 'pet', 'shark':'wild'RIGHTBRACKET)]",Jacob,image
+10 most likely annotation mistakes in training set,"[match_tags('train'), sort_by('mistakenness, reverse=True), limit(10)]",Jacob,image
+Images that do not contain giraffes,[match(~F('ground_truth.detections.label').contains('giraffe'))],Jacob,image
+At least one dog,[match(F('ground_truth.detections.label').contains('dog'))],Jacob,image
+the first 30 samples with a plant,"[match(F('ground_truth.detections.label').contains('plant')), limit(30)]",Jacob,image
+10 random images with tables,"[match(F('ground_truth.detections.label').contains('table')), take(10)]",Jacob,image
+Contains a rabbit and a tortoise prediction,"[match(F('predictions.detections.label').contains(['rabbit', 'tortoise'], all=True))]",Jacob,image
+Contains a cat or mouse but not both,"[match(F('predictions.detections.label').contains(['cat', 'mouse']) & ~F('predictions.detections.label').contains(['cat', 'mouse'], all=True))]",Jacob,image
+Only contains samples whose first and last prediction have the same label,"[match(F('predictions.detections')[0].apply(F('label')) == F('predictions.detections').reverse()[0].apply(F('label')))]
 ",Jacob,image
-unique and wrong,"[match(
-    F('predictions.label') != F('ground_truth.label')
-), sort_by('uniqueness', reverse=True)]",Jacob,image
+unique and wrong,"[match(F('predictions.label') != F('ground_truth.label')), sort_by('uniqueness', reverse=True)]",Jacob,image
 fewer than 4 ground truth detections,[match(F('ground_truth.detections').length() < 10)],Jacob,image
 Exactly 10 ground truth detections,[match(F('ground_truth.detections').length() == 10)],Jacob,image
 at least one object,[match(F('ground_truth.detections').length() > 0)],Jacob,image
 Get samples whose ground truth `label` is NOT 'airplane',[match(F('ground_truth.label') != 'airplane')],Jacob,image
 Only include samples whose `predictions` field contains at least one object with area smaller than 0.2,[match(F('predictions.detections').filter(F('bounding_box')[2] * F('bounding_box')[3] < 0.2).length() > 0)],Jacob,image
 Include only the `mood` attribute (and the default attributes) of each `Detection` in the `ground_truth` field,[select_fields('ground_truth.detections.mood')],Jacob,image
-Only contains predictions whose bounding box center is a distance of at most 0.02 from the center of the image,"[select_fields('predictions'), filter_labels(
-    'predictions', (
-    (F('bounding_box')[0] + 0.5 * F('bounding_box')[2] - 0.5) ** 2 +
-    (F('bounding_box')[1] + 0.5 * F('bounding_box')[3] - 0.5) ** 2
-).sqrt() < 0.02)]",Jacob,image
-Only contains predictions whose bounding boxes are within 1 pixel of being square,"[select_fields('predictions'), filter_labels('predictions', abs(
-    F('$metadata.width') * F('bounding_box')[2] -
-    F('$metadata.height') * F('bounding_box')[3]
-) <= 1)]",Jacob,image
+Only contains predictions whose bounding box center is a distance of at most 0.02 from the center of the image,"[select_fields('predictions'), filter_labels('predictions', ((F('bounding_box')[0] + 0.5 * F('bounding_box')[2] - 0.5) ** 2 +(F('bounding_box')[1] + 0.5 * F('bounding_box')[3] - 0.5) ** 2).sqrt() < 0.02)]",Jacob,image
+Only contains predictions whose bounding boxes are within 1 pixel of being square,"[select_fields('predictions'), filter_labels('predictions', abs(F('$metadata.width') * F('bounding_box')[2] - F('$metadata.height') * F('bounding_box')[3]) <= 1)]",Jacob,image
 prediction bounding boxes with aspect ratio 2 or higher,"[select_fields('predictions'), filter_labels('predictions', aspect_ratio > 2)]",Jacob,image
-Sort the model3 predictions in each sample of a dataset by `confidence`,"[set_field(
-    'model3.detections',
-    F('detections').sort(key='confidence', numeric=True, reverse=True)
-)]",Jacob,image
-Lower bound all object confidences in the `predictions` field at 0.5,"[set_field(
-    'predictions.detections.confidence', F('confidence').max(0.5)
-)]",Jacob,image
-"Replace the `label` attritubes of the objects in the `predictions` field according to the following rule: If the `label` starts with `b`, replace it with `b`. Otherwise, replace it with 'other'","[set_field(
-    'predictions.detections',
-    F('detections').map(
-        F().set_field(
-            'label',
-            F('label').re_match('^b').if_else('b', 'other'),
-        )
-    )
-)]",Jacob,image
-Truncate the `label` of each prediction to 3 characters,"[set_field(
-    'predictions.detections',
-    F('detections').map(F().set_field('label', F('label').substr(count=3))),
-)]",Jacob,image
-Add a `min_area` property to the `predictions` field that records the minimum prediction area in that sample,"[set_field(
-    'predictions.min_area',
-    F('detections').map(F('bounding_box')[2] * F('bounding_box')[3]).min()
-)]",Jacob,image
-Add a `num_predictions` property to the `predictions` field that contains the number of objects in the field,"[set_field(
-    'predictions.num_predictions',
-    F('$predictions.detections').length(),
-)]",Jacob,image
-Add a field to each `predictions` object that records the total confidence of the predictions,"[set_field(
-    'predictions.total_conf',
-    F('detections').map(F('confidence')).sum()
-)]",Jacob,image
+Sort the model3 predictions in each sample of a dataset by `confidence`,"[set_field('model3.detections', F('detections').sort(key='confidence', numeric=True, reverse=True))]",Jacob,image
+Lower bound all object confidences in the `predictions` field at 0.5,"[set_field('predictions.detections.confidence', F('confidence').max(0.5))]",Jacob,image
+"Replace the `label` attritubes of the objects in the `predictions` field according to the following rule: If the `label` starts with `b`, replace it with `b`. Otherwise, replace it with 'other'","[set_field('predictions.detections', F('detections').map(F().set_field('label', F('label').re_match('^b').if_else('b', 'other'))))]",Jacob,image
+Truncate the `label` of each prediction to 3 characters,"[set_field('predictions.detections', F('detections').map(F().set_field('label', F('label').substr(count=3))))]",Jacob,image
+Add a `min_area` property to the `predictions` field that records the minimum prediction area in that sample,"[set_field('predictions.min_area', F('detections').map(F('bounding_box')[2] * F('bounding_box')[3]).min())]",Jacob,image
+Add a `num_predictions` property to the `predictions` field that contains the number of objects in the field,"[set_field('predictions.num_predictions', F('$predictions.detections').length())]",Jacob,image
+Add a field to each `predictions` object that records the total confidence of the predictions,"[set_field('predictions.total_conf', F('detections').map(F('confidence')).sum())]",Jacob,image
 a child holding a baseball bat,"[sort_by_similarity('a child holding a baseball bat', k = 15, brain_key = 'qdrant')]",Jacob,image
 kites high in the air,"[sort_by_similarity('kites high in the air', k=15, brain_key='img_sim')]",Jacob,image
 "show me the 50 images that most resemble night-time, and return the similarity scores","[sort_by_similarity('night time', k=50, brain_key='clip', dist_field = True)]",Jacob,image
@@ -241,32 +150,24 @@ Sort samples by their similarity to sample with ID uigweuyf and give me the top 
 show me the 20 most similar imagages to the first image,"[sort_by_similarity(dataset.first().id, k=20)]",Jacob,image
 sort by similarity to the first image with a cat,[sort_by_similarity(dataset.match(F('ground_truth.detections.label').contains('cat')).first()],Jacob,image
 sort by similarity to image 10,[sort_by_similarity(dataset.skip(9).id)],Jacob,image
-"first sort images in descending order by number of detections. For samples with the same number of predictions, sort in ascending order by uniqueness","[sort_by(
-    [
-        (F('predictions.detections').length(), -1),
-        ('uniqueness', 1),
-    ]
-)]",Jacob,image
+"first sort images in descending order by number of detections. For samples with the same number of predictions, sort in ascending order by uniqueness","[sort_by([(F('predictions.detections').length(), -1),('uniqueness', 1),])]",Jacob,image
 sort predictions by number of detections,[sort_by( F('ground_truth.detections').length())],Jacob,image
 Sort the samples in descending order by the number of detections in their `predictions` field whose bounding box area is less than 0.2,"[sort_by(F('predictions.detections').filter(F('bounding_box')[2] * F('bounding_box')[3] < 0.2).length(), reverse=True)]",Jacob,image
 Create a patches view for the evaluation results,[to_evaluation_patches('eval')],Jacob,image
 Create a view containing the ground truth patches,[to_patches('ground_truth')],Jacob,image
-Now extract patches for confident person predictions,"[filter_labels(
-        'predictions',
-        (F('label') == 'person') & (F('confidence') > 0.9)
-    ), to_patches('predictions')]",Jacob,image
-show me high confidence false positives,[to_evaluation_patches('eval'), match(F('type')=='fp')],Allen,image
-find false positives with confidence greater than 0.8,"[to_evaluation_patches('eval'), match(F('type')=='fp'), filter_labels('predictions',F('confidence')>0.8)]",Allen,image
-low confidence true positives,"[to_evaluation_patches('eval'), match(F('type')=='tp'), filter_labels('predictions',F('confidence')<0.4)]",Allen,image
-show me all false negatives,[to_evaluation_patches('eval'), match(F('type')=='fn')],Allen,image
-all false negatives involving cats,"[to_evaluation_patches('eval'), match(F('type')=='fn'), filter_labels('ground_truth',F('label')=='cat')]",,image
-what are all the missed detections,[to_evaluation_patches('eval'), match(F('type')=='fn')],Allen,image
-find all the missed license plates,"[to_evaluation_patches('eval'), match(F('type')=='fn'), filter_labels('ground_truth',F('label')=='license plate')]",Allen,image
+Now extract patches for confident person predictions,"[filter_labels('predictions',(F('label') == 'person') & (F('confidence') > 0.9)), to_patches('predictions')]",Jacob,image
+show me high confidence false positives,[to_evaluation_patches('eval').match(F('type')=='fp')],Allen,image
+find false positives with confidence greater than 0.8,"[to_evaluation_patches('eval').match(F('type')=='fp').filter_labels('predictions',F('confidence')>0.8)]",Allen,image
+low confidence true positives,"[to_evaluation_patches('eval').match(F('type')=='tp').filter_labels('predictions',F('confidence')<0.4)]",Allen,image
+show me all false negatives,[to_evaluation_patches('eval').match(F('type')=='fn')],Allen,image
+all false negatives involving cats,"[to_evaluation_patches('eval').match(F('type')=='fn').filter_labels('ground_truth',F('label')=='cat')]",,image
+what are all the missed detections,[to_evaluation_patches('eval').match(F('type')=='fn')],Allen,image
+find all the missed license plates,"[to_evaluation_patches('eval').match(F('type')=='fn').filter_labels('ground_truth',F('label')=='license plate')]",Allen,image
 show me all misclassified examples,[match(F('eval')==False)],Allen,image
-show me high confidence misclassifications,"[match(F('eval')==False), filter_labels('prediction',F('confidence')>0.8)]",Allen,image
-show me all misclassifications with a low confidence ,"[match(F('eval')==False), filter_labels('prediction',F('confidence')<0.4)]",Allen,image
-give me all vehicles that were misclassified ,"[match(F('eval')==False), filter_labels('ground_truth',F('label')=='vehicle')]",Allen,image
-find all cars that were misclassified as trucks,"[match(F('eval')==False), filter_labels('ground_truth',F('label')=='car'), filter_labels('prediction',F('label')=='truck')]",Allen,image
+show me high confidence misclassifications,"[match(F('eval')==False).filter_labels('prediction',F('confidence')>0.8)]",Allen,image
+show me all misclassifications with a low confidence ,"[match(F('eval')==False).filter_labels('prediction',F('confidence')<0.4)]",Allen,image
+give me all vehicles that were misclassified ,"[match(F('eval')==False).filter_labels('ground_truth',F('label')=='vehicle')]",Allen,image
+find all cars that were misclassified as trucks,"[match(F('eval')==False).filter_labels('ground_truth',F('label')=='car').filter_labels('prediction',F('label')=='truck')]",Allen,image
 all examples where the correct label is not in the top 5 predictions,[match(F('eval_topk')==False)],Allen,image
 all false positives in the `predictions` field,"[filter_labels(""det_model"", F(""eval_det"") == 'fp')]",Allen,image
 show me all false positives in the open images evaluation,"[filter_labels(""predictions"", F(""eval_det_oi"") == 'fp')]",Allen,image
@@ -314,6 +215,9 @@ images with <5 FPs and >=3 FNs for model1,"[match(F(""eval_m1_fp"") < 5), match(
 just show the false pos preds,"[filter_labels(""preds"", F(""eval"") == 'fp')]",Jacob,image
 only display the bounding boxes for objects incorrectly predicted to be planets,"[filter_labels(""predictions"", F(""eval_detection"") == 'fp'), filter_labels(""predictions"", F(""label"") == 'Planet')]",Jacob,image
 It's too crowded. I only want to see the first 10 objects in gt or pd field,"[limit_labels(""gt"", 10), limit_labels(""pd"", 10)]",Jacob,image
+show me similar samples to my currently selected images,"[sort_by_similarity(session.selected, k = 25)]",Jacob,image
+map dog to DOG for gt detections,"[map_labels('ground_truth', LEFTBRACKET'dog': 'DOG'RIGHTBRACKET)]",Jacob,image
+"map ""sky"" and ""ground"" to ""background"" for all detections","[map_labels('ground_truth', LEFTBRACKET'sky': 'background', 'ground':'background'RIGHTBRACKET), map_labels('predictions', LEFTBRACKET'sky': 'background', 'ground':'background'RIGHTBRACKET)]",Jacob,image
 Exclude frame with id 'kbdskajdvfef',[exclude_frames(['kbdskajdvfef'])],Jacob,video
 clip view with one clip per meeting,"[filter_labels('events', F('label') == 'meeting'), to_clips('events')]",Jacob,video
 Create a clips view that contains one clip for each contiguous segment that contains at least one road sign in every frame,"[filter_labels('frames.detections', F('label') == 'road sign'), to_clips('frames.detections')]",Jacob,video
@@ -322,10 +226,7 @@ Create a trajectories view for the vehicles in the dataset,"[filter_labels('fram
 show 'vehicle' detections in the 'detections' field,"[filter_labels('frames.detections', F('label') == 'vehicle')]",Jacob,video
 "Create a frames view that only contains frames with at least 10 objects, sampled at a maximum frame rate of 1fps","[match_frames(F('detections.detections').length() > 10), to_frames(max_fps=1)]",Jacob,video
 Frames with at least 10 detections,[match_frames(F('detections.detections').length() > 10)],Jacob,video
-select just the first and last frames in the first sample,"[select_frames([
-    dataset.first().frames.first().id,
-    dataset.last().frames.last().id,
-])]",Jacob,video
+select just the first and last frames in the first sample,"[select_frames([dataset.first().frames.first().id, dataset.last().frames.last().id])]",Jacob,video
 Create a clips view with one clip per event,[to_clips('events')],Jacob,video
 Create a clips view that contains one clip for each contiguous segment that contains at least two road signs in every frame,[to_clips(F('detections.detections').filter(F('label') == 'road sign').length() >= 2)],Jacob,video
 frames with set filepath,[to_frames()],Jacob,video
