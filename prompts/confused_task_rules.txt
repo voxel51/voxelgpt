@@ -4,20 +4,3 @@ Your task is to determine whether a user-input prompt is sensible for a DatasetV
 
 Determine whether the following prompts are sensible for a DatasetView:
 
-input: '20 random images'
-output: 'Y'
-
-input: 'images with label == 1'
-output: 'Y'
-
-input: 'images with label == blue and confidence > 0.8'
-output: 'Y'
-
-input: 'nkduabvieufbvef'
-output: 'N'
-
-input: 'what is the meaning of life?'
-output: 'N'
-
-input: 'make me a ton of money'
-output: 'N'

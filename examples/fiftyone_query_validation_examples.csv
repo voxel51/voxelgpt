@@ -1,0 +1,20 @@
+input,is_valid,added_by
+20 random images,Y,Jacob
+images with label == 1,Y,Jacob
+images with label == blue and confidence > 0.8,Y,Jacob
+nkduabvieufbvef,N,Jacob
+what is the meaning of life?,N,Jacob
+make me a ton of money,N,Jacob
+15 most wrong predictions,Y,Jacob
+show me similar samples to my currently selected images,Y,Jacob
+map the cat and dog animal labels to pet and shark to wild,Y,Jacob
+"map ""plant"" to ""Plant"" for gt detections",Y,Jacob
+all images with exactly 3 Lions and 1 Zebra,Y,Jacob
+Create a clips view that contains one clip for each contiguous segment that contains at least one road sign in every frame,Y,Jacob
+Exclude frame with id 'kbdskajdvfef',Y,Jacob
+Create a frame patches view,Y,Jacob
+4+12**2,N,Jacob
+I like images and videos,N,Jacob
+Show me the label mapping,N,Jacob
+images of dogs,Y,Jacob
+videos containing birds,Y,Jacob
