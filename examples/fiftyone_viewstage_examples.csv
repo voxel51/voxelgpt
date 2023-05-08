@@ -13,6 +13,7 @@ exclude the 8th image,[exclude([dataset.skip(7).first().id)],all
 image with model1 confidences,"[exists(""model1.confidence"")]",all
 "Only show samples with field ""my_field""","[exists(""my_field"")]",all
 Only include samples that have a value in their `predictions`,"[exists(""predictions"")]",all
+Find my 8 biggest flaws,"[sort_by(""mistakenness"", reverse=True), limit(8)]",all
 samples that do NOT have a value in some_field,"[exists(""some_field"", False)]",all
 "filter the 'my_field' field for negative values, but show me all images, even those that aren't matches","[filter_field(""my_field"", F() < 0), only_matches = False]",all
 Only include samples whose `numeric_field` value is positive,"[filter_field(""numeric_field"", F() > 0)]",all
