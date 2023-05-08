@@ -76,7 +76,7 @@ def get_or_create_embeddings(queries):
 def create_chroma_collection():
     collection = client.create_collection(COLLECTION_NAME, embedding_function=ada_002)
 
-    examples = pd.read_csv("examples/fiftyone_viewstage_examples.csv")
+    examples = pd.read_csv("examples/fiftyone_viewstage_examples.csv", on_bad_lines='skip')
     queries = examples["query"].tolist()
     media_types = examples["media_type"].tolist()
     stages_lists = examples["stages"].tolist()
