@@ -122,11 +122,11 @@ def get_gpt_view_text(dataset, query, chat_history):
     return response
 
 def create_view_from_stages(stages, dataset, session, chat_history):
-    print(stages)
     view = dataset.view()
     code = 'view.' + '.'.join(stages)
     try:
         view = eval(code)
+        log_chat_history(format_stages(stages), "GPT", chat_history)
         session.view = view
     except:
         view = None
@@ -167,7 +167,6 @@ def gpt(dataset):
             print("Please compute metadata first")
             continue
 
-        log_chat_history(format_stages(stages), "GPT", chat_history)
         create_view_from_stages(stages, dataset, session, chat_history)
         
     return
