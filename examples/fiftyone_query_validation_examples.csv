@@ -18,3 +18,6 @@ I like images and videos,N,Jacob
 Show me the label mapping,N,Jacob
 images of dogs,Y,Jacob
 videos containing birds,Y,Jacob
+fp predictions, Y, Jacob
+shuffle the data, Y, Jacob
+take 20, Y, Jacob
