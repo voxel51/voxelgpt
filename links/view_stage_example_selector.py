@@ -120,7 +120,7 @@ def get_similar_examples(dataset, query):
 
     res = collection.query(
         query_texts=[query],
-        n_results=10,
+        n_results=20,
         where=_filter,
         include=["metadatas"]
     )["metadatas"][0]
