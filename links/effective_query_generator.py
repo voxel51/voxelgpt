@@ -19,6 +19,5 @@ def generate_dataset_view_prompt(chat_history):
 
 def generate_effective_query(chat_history):
     prompt = generate_dataset_view_prompt(chat_history)
-    print(prompt)
     response = llm.call_as_llm(prompt)
     return response.strip()
