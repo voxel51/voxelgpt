@@ -29,8 +29,7 @@ first 100 samples,[limit(100)],Jacob,all
 Limit the view to 35,[limit(35)],Jacob,all
 Only include samples that contain predictions with > 99% confidence,"[match_labels(filter=F('confidence') > 0.99, fields='predictions')]",Jacob,all
 Only include samples that contain labels with ids hofwihuf or abxjhbvcie,"[match_labels(ids=[hofwihuf, abxjhbvcie])]",Jacob,all
-get samples with labels with the 'test tag,"[match_labels(tags='test')]
-",Jacob,all
+get samples with labels with the 'test tag,"[match_labels(tags='test')]",Jacob,all
 Only include samples that have the 'mistake' tag,[match_tags('mistake')],Jacob,all
 Only include samples that do not have the 'validation' tag,"[match_tags('validation', bool=False)]",Jacob,all
 Union of the validation and test splits,"[match_tags(('validation', 'test'))]",Jacob,all
@@ -232,3 +231,20 @@ Create a clips view that contains one clip for each contiguous segment that cont
 frames with set filepath,[to_frames()],Jacob,video
 Create a frame patches view,"[to_frames(sample_frames=True), to_patches('detections')]",Jacob,video
 Frames view,[to_frames(sample_frames=True)],Jacob,video
+I want to see the samples whose predicted price is > 60,"[match(F(""predicted_price.value"") < 60.)]",Jacob,all
+give me all images whose predictions have at least one dining table and at least 3 detections ,"[match((F(""det_model.detections.label"").contains(""dining table""))), match(F(""det_model.detections"").length() > 2)]",Jacob,image
+show me the samples with at least 4 predicted detections and 2 ground truth detections,"[match((F(""predictions.detections"").length() > 4)), match(F(""ground_truth.detections"").length() > 2)]",Jacob,image
+"any image with at least 4 ground truth detections, but just the people in these images","[match((F(""ground_truth.detections"").length() > 4)), filter_labels(""ground_truth"", F(""label"") == ""person"")]",Jacob,image
+just the images where modelA and modelB both predict at least 1 salamander,"[match((F(""modelA.detections.label"").contains(""salamander""))), match((F(""modelB.detections.label"").contains(""salamander"")))]",Jacob,image
+map animal class names for yolov8 field from lowercase to capital-case,"[map_labels('yolob8', LEFTBRACKET'zebra': 'Zebra', 'lion':'Lion', 'giraffe':'Giraffe', 'gorilla':'Gorilla'RIGHTBRACKET)]",Jacob,image
+only the high confidence predictions in images that have just cats and dogs,"[match(F(""gt.detections.label"").is_subset([""cat"", ""dog""])), filter_field(""predictions"", F(""detections.confidence"") > 0.9)]",Jacob,image
+images that do not only contain elephants,"[match(~F(""ground_truth.detections.label"").is_subset([""Elephant""]))]",Jacob,image
+samples of digits 1 and 3,"[match(F(""cls_gt.label"").is_in([""1"", ""3""]))]",Jacob,image
+show me the images classified as anything except 'night',"[match(F(""classification.label"") != ""night"")]",Jacob,image
+i just want the images that only have popcorn predictions,"[match(F(""pred.detections.label"").is_subset([""popcorn""])).match(F(""pred.detections"").length() > 0)]",Jacob,image
+all images with at least 10 cars and 5 bike predictions,"[match(F(""model.detections"").filter(F(""label"") == ""Car"").length() >= 10), match(F(""model.detections"").filter(F(""label"") == ""Bicycle"").length() >= 5)]",Jacob,image
+just show the Detection labels,"[select_fields([""gt_det"", ""pred_det""])]",Jacob,image
+hide all the fields that aren't the keypoint labels,"[select_fields([""points""])]",Jacob,image
+exclude all of the label fields,"[exclude_fields([""detections"", ""classifications"", ""points"", ""segmentation""])]",Jacob,image
+just show me the polylines without a label,"[filter_labels(""polylines"", ~F(""label""))]",Jacob,image
+filter the polylines to only the ones that have confidence scores,"[filter_labels(""polylines"", F(""confidence""))]",Jacob,image

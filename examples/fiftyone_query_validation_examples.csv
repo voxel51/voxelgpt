@@ -21,8 +21,42 @@ videos containing birds,Y,Jacob
 fp predictions,Y,Jacob
 shuffle the data,Y,Jacob
 take 20,Y,Jacob
-Only include polylines in the `faster-rcnn` field whose `label` is 'lane',Y,Jacob
-a child holding a baseball bat,Y,Jacob
+just show the Detection labels,Y,Jacob
+samples of digits 1 and 3,Y,Jacob
+images that do not only contain elephants,Y,Jacob
+only display the bounding boxes for objects incorrectly predicted to be planets,N,Jacob
+a random selection of samples that were predicted as 'building' by modelA or modelB ,N,Jacob
+samples predicted as blue or green,N,Jacob
+dinner time images with a pizza,Y,Jacob
+all images with a potentially spurious gt label,Y,Jacob
+get the images with segmentation masks,Y,Jacob
+positive keypoints,Y,Jacob
+all the images that are at least 1.5 times as tall as they are wide,Y,Jacob
+images that don't have 3 color channels,Y,Jacob
+"sort by image width, with longest images first",Y,Jacob
+images with at least 10 people but no baseball bat,Y,Jacob
+"sort images by the difference in number of detections between ""gt"" and ""model""",N,Jacob
+find all incorrect detections using evaluation with iou threshold 0.8,N,Jacob
+show me all false positives in the open images evaluation,N,Jacob
+give me all vehicles that were misclassified ,Y,Jacob
+all false negatives involving cats,Y,Jacob
+low confidence true positives,Y,Jacob
+Now extract patches for confident person predictions,Y,Jacob
+sort by similarity to the first image with a cat,Y,Jacob
+"show me the 50 images that most resemble night-time, and return the similarity scores",Y,Jacob
 kites high in the air,Y,Jacob
-show me the 20 most similar imagages to the first image,Y,Jacob
-"first sort images in descending order by number of detections. For samples with the same number of predictions, sort in ascending order by uniqueness",Y,Jacob
+Lower bound all object confidences in the `predictions` field at 0.5,Y,Jacob
+Include only the `mood` attribute (and the default attributes) of each `Detection` in the `ground_truth` field,N,Jacob
+exclude the tag 'my_tag',N,Jacob
+create a view that only shows the 'cvat' and 'labelbox' tags,N,Jacob
+Round `uniqueness` values to either 0.25 or 0.75,Y,Jacob
+"Create a view containing samples whose `int` field have 1, 51, or 33",Y,Jacob
+Samples whose image is less than 48 KB,Y,Jacob
+get the filepaths that are strings,Y,Jacob
+a view of all samples with arccos('field_to_apply_to') less than 0.2,Y,Jacob
+In september,Y,Jacob
+2022,Y,Jacob
+With minute not equal to 0,Y,Jacob
+view of samples with non-None 'data_field',N,Jacob
+On the 24th of the month,N,Jacob
+Union of the validation and test splits,N,Jacob
