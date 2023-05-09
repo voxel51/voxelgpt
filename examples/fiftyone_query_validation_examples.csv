@@ -18,6 +18,11 @@ I like images and videos,N,Jacob
 Show me the label mapping,N,Jacob
 images of dogs,Y,Jacob
 videos containing birds,Y,Jacob
-fp predictions, Y, Jacob
-shuffle the data, Y, Jacob
-take 20, Y, Jacob
+fp predictions,Y,Jacob
+shuffle the data,Y,Jacob
+take 20,Y,Jacob
+Only include polylines in the `faster-rcnn` field whose `label` is 'lane',Y,Jacob
+a child holding a baseball bat,Y,Jacob
+kites high in the air,Y,Jacob
+show me the 20 most similar imagages to the first image,Y,Jacob
+"first sort images in descending order by number of detections. For samples with the same number of predictions, sort in ascending order by uniqueness",Y,Jacob

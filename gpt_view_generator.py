@@ -69,8 +69,6 @@ def get_gpt_view_text(dataset, query, chat_history):
     if not valid:
         return '_CONFUSED_'
     
-    examples_query_text = f"Finding similar examples for query: {query}"
-    print(f"Finding similar examples for query: {query}")
     examples = generate_view_stage_examples_prompt(
         dataset, query
         )
@@ -103,7 +101,6 @@ def get_gpt_view_text(dataset, query, chat_history):
     else:
         label_classes_text = f"Did not identify any relevant label classes"
         log_and_print_chat_history(label_classes_text, "GPT", chat_history)
-        print(f"Did not identify any relevant label classes")
     
     examples = reformat_query(examples, label_classes)
 
@@ -122,11 +119,11 @@ def get_gpt_view_text(dataset, query, chat_history):
     return response
 
 def create_view_from_stages(stages, dataset, session, chat_history):
+    log_and_print_chat_history(format_stages(stages), "GPT", chat_history)
     view = dataset.view()
     code = 'view.' + '.'.join(stages)
     try:
         view = eval(code)
-        log_chat_history(format_stages(stages), "GPT", chat_history)
         session.view = view
     except:
         view = None
@@ -151,10 +148,12 @@ def gpt(dataset):
             chat_history = []
             continue
         
-        print(query)
         if len(chat_history) != 2:
-            query = generate_effective_query(chat_history)
-            print(f"Effective query: {query}")
+            new_query = generate_effective_query(chat_history)
+            if validate_query(new_query):
+                query = new_query
+                print(f"Effective query: {query}")
+        
         stages = get_gpt_view_text(dataset, query, chat_history)
 
         if stages == "_MORE_":
