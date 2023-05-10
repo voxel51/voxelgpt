@@ -13,8 +13,16 @@ from gpt_view_generator import get_gpt_view_text
 
 def create_view_from_stages(text, dataset):
     view = dataset.view()
-    code = 'dataset.' + text.strip()[1:-1]
-    view = eval(code)
+    all_text = ""
+    for element in text[:-1]:
+        all_text += element + "."
+    all_text += text[-1]
+    code = 'dataset.' + all_text
+    try:
+        view = eval(code)
+    except:
+        print("Bad View.")
+        view = dataset.view()
     return view
 
 def compute_hardness_for_test(dataset):
@@ -48,33 +56,50 @@ class TestClassSimpleFunctions:
         prompt = "Find the 23 most difficult images in my dataset"
         dataset = foz.load_zoo_dataset("quickstart")
         compute_hardness_for_test(dataset)
-        #expected_view = create_view_from_stages("[exclude_by('my_field', ['a', 'b', 'e', '1'])]", dataset)
+        expected_view = create_view_from_stages(['sort_by("hardness",reverse=True)', 'limit(23)'], dataset)
         gpt_response = get_gpt_view_text(dataset, prompt)
-        view = create_view_from_stages(gpt_response, dataset)
-        #assert self.EvaluateResults(expected_view, view)
-        print("the end")
+        if type(gpt_response) == list:
+            view = create_view_from_stages(gpt_response, dataset)
+            assert self.EvaluateResults(expected_view, view)
+        else:
+            print("Response failed. Returned " + str(gpt_response))
+            assert False
         
     def test_uniqueness(self):
         prompt = "Find the 19 most distinct samples in my dataset"
         dataset = foz.load_zoo_dataset("quickstart")
         fob.compute_uniqueness(dataset)
+        expected_view = create_view_from_stages(['sort_by("uniqueness",reverse=True)', 'limit(19)'], dataset)
         gpt_response = get_gpt_view_text(dataset, prompt)
-        print(gpt_response)
-        print("the end")
+        if type(gpt_response) == list:
+            view = create_view_from_stages(gpt_response, dataset)
+            assert self.EvaluateResults(expected_view, view)
+        else:
+            print("Response failed. Returned " + str(gpt_response))
+            assert False
         
     def test_mistakenness(self):
-        prompt = "Find my 8 biggest flaws"
-        #prompt = "Find the 8 samples with the most mistakes"
+        prompt = "find my 8 biggest flaws"
         dataset = foz.load_zoo_dataset("quickstart")
         fob.compute_mistakenness(dataset, "predictions", label_field="ground_truth")
+        expected_view = create_view_from_stages(['sort_by("mistakenness",reverse=True)', 'limit(8)'], dataset)
         gpt_response = get_gpt_view_text(dataset, prompt)
-        print(gpt_response)
-        print("the end")
+        if type(gpt_response) == list:
+            view = create_view_from_stages(gpt_response, dataset)
+            assert self.EvaluateResults(expected_view, view)
+        else:
+            print("Response failed. Returned " + str(gpt_response))
+            assert False
         
     def test_similarity(self):
-        prompt = "Find the 19 most similar samples to a cat in my dataset"
+        prompt = "Find the 19 most similar samples to a lion in my dataset"
         dataset = foz.load_zoo_dataset("quickstart")
         fob.compute_similarity(dataset, model="clip-vit-base32-torch", brain_key="test_sim")
+        expected_view = create_view_from_stages(['sort_by_similarity("lion", k=19)'], dataset)
         gpt_response = get_gpt_view_text(dataset, prompt)
-        print(gpt_response)
-        print("the end")
+        if type(gpt_response) == list:
+            view = create_view_from_stages(gpt_response, dataset)
+            assert self.EvaluateResults(expected_view, view)
+        else:
+            print("Response failed. Returned " + str(gpt_response))
+            assert False
