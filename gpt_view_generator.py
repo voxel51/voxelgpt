@@ -72,6 +72,7 @@ def get_gpt_view_text(dataset, query, chat_history):
     examples = generate_view_stage_examples_prompt(
         dataset, query
         )
+
     view_stages = get_most_relevant_view_stages(examples)
     likely_view_stages_text = f"Identified likely view stages: {view_stages}"
     log_and_print_chat_history(likely_view_stages_text, "GPT", chat_history)
@@ -88,8 +89,6 @@ def get_gpt_view_text(dataset, query, chat_history):
     fields = select_fields(dataset, query)
     print(f"Identified potentially relevant fields: {fields}")
     label_classes = select_label_classes(dataset, query, fields)
-    if label_classes == "_CONFUSED_":
-        return "_CONFUSED_"
     lens = [len(v) for v in label_classes.values()]
     if any([l > 0 for l in lens]):
         label_classes_text = f"Identified label classes: {format_label_classes(label_classes)}"
