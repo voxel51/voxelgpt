@@ -12,7 +12,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@mui/material": "^5.12.3",
+    "@emotion/react": "^11.11.0",
+    "@emotion/styled": "^11.11.0",
+    "@mui/material": "^5.13.0",
     "@mui/styled-engine": "^5.12.3",
     "@rollup/plugin-node-resolve": "^15.0.2",
     "@vitejs/plugin-react": "^4.0.0",
@@ -28,5 +30,6 @@
   },
   "resolutions": {
     "@mui/styled-engine": "npm:@mui/styled-engine-sc@latest"
-  }
+  },
+  "packageManager": "yarn@3.5.1"
 }
