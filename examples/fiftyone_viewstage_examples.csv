@@ -95,6 +95,43 @@ delete first tag from each image,"[set_field(""tags"", F('tags')[1:])]",Jacob,al
 sort samples by number of tags,"[sort_by(F(""tags"").length())]",Jacob,all,FALSE
 show me samples with more than one tag,"[match(F(""tags"").length() > 1)]",Jacob,all,FALSE
 samples 40-70,"[skip(40), limit(30)]",Jacob,all,FALSE
+I want to see the samples whose predicted price is > 60,"[match(F(""predicted_price.value"") < 60.)]",Jacob,all,FALSE
+Find my 8 biggest flaws,"[sort_by(""""mistakenness"""", reverse=True), limit(8)]",Leila,all,FALSE
+Sort images by hardness,"[sort_by(""""hardness"""", reverse=True)]",Leila,all,FALSE
+Exclude frame with id 'kbdskajdvfef',[exclude_frames(['kbdskajdvfef'])],Jacob,video,FALSE
+clip view with one clip per meeting,"[filter_labels('events', F('label') == 'meeting'), to_clips('events')]",Jacob,video,FALSE
+Create a clips view that contains one clip for each contiguous segment that contains at least one road sign in every frame,"[filter_labels('frames.detections', F('label') == 'road sign'), to_clips('frames.detections')]",Jacob,video,FALSE
+Create a trajectories view for the vehicles in the dataset,"[filter_labels('frames.detections', F('label') == 'vehicle'),
+ to_trajectories('frames.detections')]",Jacob,video,FALSE
+show 'vehicle' detections in the 'detections' field,"[filter_labels('frames.detections', F('label') == 'vehicle')]",Jacob,video,FALSE
+"Create a frames view that only contains frames with at least 10 objects, sampled at a maximum frame rate of 1fps","[match_frames(F('detections.detections').length() > 10), to_frames(max_fps=1)]",Jacob,video,FALSE
+Frames with at least 10 detections,[match_frames(F('detections.detections').length() > 10)],Jacob,video,FALSE
+select just the first and last frames in the first sample,"[select_frames([dataset.first().frames.first().id, dataset.last().frames.last().id])]",Jacob,video,FALSE
+Create a clips view with one clip per event,[to_clips('events')],Jacob,video,FALSE
+Create a clips view that contains one clip for each contiguous segment that contains at least two road signs in every frame,[to_clips(F('detections.detections').filter(F('label') == 'road sign').length() >= 2)],Jacob,video,FALSE
+frames with set filepath,[to_frames()],Jacob,video,FALSE
+Create a frame patches view,"[to_frames(sample_frames=True), to_patches('detections')]",Jacob,video,FALSE
+Frames view,[to_frames(sample_frames=True)],Jacob,video,FALSE
+sort by width,"[sort_by(F(""metadata.frame_width""))]",Jacob,video,FALSE
+"sort by frame width, with widest frames first","[sort_by(F(""metadata.frame_width"", reverse = True))]",Jacob,video,FALSE
+sort by height of the videos,"[sort_by(F(""metadata.frame_height""))]",Jacob,video,FALSE
+sort video by size,"[sort_by(F(""metadata.size_bytes""))]",Jacob,video,FALSE
+10 largest videos,"[sort_by(F(""metadata.size_bytes"", reverse = True)), limit(10)]",Jacob,video,FALSE
+videos with frame rate higher than 30 fps,"[match(F(""metadata.frame_rate"") > 30)]",Jacob,video,FALSE
+"sort the movies by frame rate, with fastest first","[sort_by(F(""metadata.frame_rate"", reverse = True))]",Jacob,video,FALSE
+videos that are wider than they are tall,"[match(F(""metadata.frame_width"")>F(""metadata.frame_height""))]",Jacob,video,FALSE
+videos that are approximately square,"[match(abs(F(""metadata.frame_width"")-F(""metadata.frame_height""))<1)]",Jacob,video,FALSE
+all the videos whose frames are at least 1.5 times as tall as they are wide,"[match(1.5*F(""metadata.frame_width"")<F(""metadata.frame_height""))]",Jacob,video,FALSE
+retrieve all movies that have between 50 and 100 frames,"[match(F(""metadata.total_frame_count"") > 50), match(F(""metadata.total_frame_count"") < 50)]",Jacob,video,FALSE
+show me the videos with more than 75 frames,"[match(F(""metadata.total_frame_count"") > 75)]",Jacob,video,FALSE
+only show videos that are longer than 4 seconds,"[match(F(""metadata.duration"") > 4)]",Jacob,video,FALSE
+give me the 10 longest videos,"[sort_by(""metadata.duration"", reverse=True), limit(10)]",Jacob,video,FALSE
+"Restrict to frames which have field ""my_field""","[dataset.match_frames(F(""my_field""))]",Jacob,video,FALSE
+Sort by the total number of false positives across all frames in the video,"[sort_by(""eval_fp"")]",Jacob,video,FALSE
+Give me all vids with at least 1k total false negatives,"[match(F(""eval_fn"")>1000)]",Jacob,video,FALSE
+show all frames with more than 5 TP predictions,"[match_frames(F(""eval_tp"") > 5)]",Jacob,video,FALSE
+any frames with 2 or more FPs and 3 or more FNs,"[match_frames(F(""eval_fp"") > 2), match_frames(F(""eval_fn"") > 3)]",Jacob,video,FALSE
+Give me the 5 frames that look most like it is raining out,"[to_frames(), sort_by_similarity(""rainy"", brain_key=""clip"", k = 5)]",Jacob,video,FALSE
 Only include samples that have prediction confidences,[exists('predictions.confidence')],Jacob,image,FALSE
 Only include classifications in the `predictions` field whose label is camel,"[filter_field('predictions', F('label') == 'camel')]",Jacob,image,FALSE
 Remove tags from samples that don't include the 'validation' tag,"[filter_field('tags', F().contains('validation'))]",Jacob,image,FALSE
@@ -218,21 +255,6 @@ It's too crowded. I only want to see the first 10 objects in gt or pd field,"[li
 show me similar samples to my currently selected images,"[sort_by_similarity(session.selected, k = 25)]",Jacob,image,FALSE
 map dog to DOG for gt detections,"[map_labels('ground_truth', LEFTBRACKET'dog': 'DOG'RIGHTBRACKET)]",Jacob,image,FALSE
 "map ""sky"" and ""ground"" to ""background"" for all detections","[map_labels('ground_truth', LEFTBRACKET'sky': 'background', 'ground':'background'RIGHTBRACKET), map_labels('predictions', LEFTBRACKET'sky': 'background', 'ground':'background'RIGHTBRACKET)]",Jacob,image,FALSE
-Exclude frame with id 'kbdskajdvfef',[exclude_frames(['kbdskajdvfef'])],Jacob,video,FALSE
-clip view with one clip per meeting,"[filter_labels('events', F('label') == 'meeting'), to_clips('events')]",Jacob,video,FALSE
-Create a clips view that contains one clip for each contiguous segment that contains at least one road sign in every frame,"[filter_labels('frames.detections', F('label') == 'road sign'), to_clips('frames.detections')]",Jacob,video,FALSE
-Create a trajectories view for the vehicles in the dataset,"[filter_labels('frames.detections', F('label') == 'vehicle'),
- to_trajectories('frames.detections')]",Jacob,video,FALSE
-show 'vehicle' detections in the 'detections' field,"[filter_labels('frames.detections', F('label') == 'vehicle')]",Jacob,video,FALSE
-"Create a frames view that only contains frames with at least 10 objects, sampled at a maximum frame rate of 1fps","[match_frames(F('detections.detections').length() > 10), to_frames(max_fps=1)]",Jacob,video,FALSE
-Frames with at least 10 detections,[match_frames(F('detections.detections').length() > 10)],Jacob,video,FALSE
-select just the first and last frames in the first sample,"[select_frames([dataset.first().frames.first().id, dataset.last().frames.last().id])]",Jacob,video,FALSE
-Create a clips view with one clip per event,[to_clips('events')],Jacob,video,FALSE
-Create a clips view that contains one clip for each contiguous segment that contains at least two road signs in every frame,[to_clips(F('detections.detections').filter(F('label') == 'road sign').length() >= 2)],Jacob,video,FALSE
-frames with set filepath,[to_frames()],Jacob,video,FALSE
-Create a frame patches view,"[to_frames(sample_frames=True), to_patches('detections')]",Jacob,video,FALSE
-Frames view,[to_frames(sample_frames=True)],Jacob,video,FALSE
-I want to see the samples whose predicted price is > 60,"[match(F(""predicted_price.value"") < 60.)]",Jacob,all,FALSE
 give me all images whose predictions have at least one dining table and at least 3 detections ,"[match((F(""det_model.detections.label"").contains(""dining table""))), match(F(""det_model.detections"").length() > 2)]",Jacob,image,FALSE
 show me the samples with at least 4 predicted detections and 2 ground truth detections,"[match((F(""predictions.detections"").length() > 4)), match(F(""ground_truth.detections"").length() > 2)]",Jacob,image,FALSE
 "any image with at least 4 ground truth detections, but just the people in these images","[match((F(""ground_truth.detections"").length() > 4)), filter_labels(""ground_truth"", F(""label"") == ""person"")]",Jacob,image,FALSE
@@ -250,3 +272,35 @@ exclude all of the label fields,"[exclude_fields([""detections"", ""classificati
 just show me the polylines without a label,"[filter_labels(""polylines"", ~F(""label""))]",Jacob,image,FALSE
 filter the polylines to only the ones that have confidence scores,"[filter_labels(""polylines"", F(""confidence""))]",Jacob,image,FALSE
 show me some images with a Fork or a Knife detected,"[match(F(""ground_truth.detections.label"").contains([""Fork"",""Train""]))]",Jacob,image,FALSE
+any scene that resembles a birthday party,"[sort_by_similarity('birthday party', k = 25, brain_key = 'my_key')]",Jacob,image,FALSE
+"sorty images by how similar they are to a classroom, and show me the top 10","[sort_by_similarity('a classroom', k=10, brain_key='clip_sim')]",Jacob,image,FALSE
+"100 images that resemble a Gameboy Advance, with distances, evaluated with 'pinecone' key","[sort_by_similarity('a Game Boy Advance', k=100, brain_key='pinecone', dist_field = True)]",Jacob,image,FALSE
+3 images that look the most like sample with ID uigweuyf,"[sort_by_similarity('uigweuyf', k=3)]",Jacob,image,FALSE
+show me the 13 most similar images to the 4th image,"[sort_by_similarity(dataset.skip(3).first().id, k=13)]",Jacob,image,FALSE
+"sort by similarity to the last image with a table, with key 'text_sim'","[sort_by_similarity(dataset.match(F('ground_truth.detections.label').contains('table')).last(), brain_key='text_sim']",Jacob,image,FALSE
+sort the samples with a car prediction by how gloomy the scene is,"[match(F('pred.detections.label').contains('Car')), sort_by_similarity('gloomy', k = 25)]",Jacob,image,FALSE
+take the images of buildings and find the ones that are most run down,"[match(F('classif.label') =='Building'), sort_by_similarity('run down', k = 10)]",Jacob,image,FALSE
+get 50 random samples and find the one that is brightest,"[take(50), sort_by_similarity('bright', k = 50, brain_key = 'clip_sim')]",Jacob,image,FALSE
+I want to see the bluest images,"[sort_by_similarity('blue', k = 25, brain_key = 'sim_key')]",Jacob,image,FALSE
+10 images with a lot of green or grass,"[sort_by_similarity('green and grassy', k = 10, brain_key = 'my_key')]",Jacob,image,FALSE
+show me all images with food,"[match(F(""ground_truth.detections.label"").contains([""apple"",""banana"",""broccoli"",""cake"",""carrot"",""donut"",""hot dog"",""orange"",""pizza"",""sandwich""]))]",Jacob,image,FALSE
+images with only household objects,"[match(F(""ground_truth.detections.label"").is_subset([""knife"",""fork"",""dining table"",""scissors"",""door"",""sink"",""chair"", ""plate"",""lamp"",""desk""]))]",Jacob,image,FALSE
+patches for bikes and bike-related gear,"[filter_labels(""ground_truth"", F(""label"").is_in(['Bicycle', 'Bicycle helmet', 'Bicycle wheel'])), to_patches(""ground_truth"")]",Jacob,image,FALSE
+filter for detections of junk food,"[filter_labels(""ground_truth"", F(""label"").is_in([""Ice cream"", ""Hamburger"", ""French fries"", ""Dessert"", ""Cookie"", ""Candy"", ""Baked goods""]))]",Jacob,image,FALSE
+all utensil patches in any image with a plate or a bowl,"[match(F(""ground_truth.detections.label"").contains([""Plate"", ""Bowl""])), filter_labels(""ground_truth"", F(""label"").is_in([""Fork"", ""Spoon"", ""Knife"", 'Chopsticks'])), to_patches(""ground_truth"")]",Jacob,image,FALSE
+show me the object patches for the 10 images with the most objects,"[sort_by(F(""detections.detections"").length(), reverse=True), limit(10), to_patches(""detections"")]",Jacob,image,FALSE
+"find the 10 objects that most fit ""musical instrument""","[to_patches(""detections""), sort_by_similarity(""musical instrument"", k = 10)]",Jacob,image,FALSE
+get the 3 prediction patches that look most like a kitchen table,"[to_patches(""pred"").sort_by_similarity(""kitchen table"", k = 3, brain_key=""patch_sim"")]",Jacob,image,FALSE
+find the 5 men who look most like they could be personal trainers,"[filter_labels(""detections"", F(""label"") == ""Man""), to_patches(""detections""), sort_by_similarity(""personal trainer"", k = 5, brain_key=""clip_patch"")]",Jacob,image,FALSE
+"retrieve the 20 detections from model A that are the cutest puppies, with similarity computed with my_sim_key","[to_patches(""modelA_det""), sort_by_similarity(""cute puppy"", k = 20, brain_key=""my_sim_key"")]",Jacob,image,FALSE
+patches for large objects in gt detections field,"[filter_labels(""gt"", F(""bounding_box"")[2] * F(""bounding_box"")[3] > 0.8).to_patches(""gt"")]",Jacob,image,FALSE
+isolate the small car predictions,"[filter_labels(""pred"", F(""bounding_box"")[2] * F(""bounding_box"")[3] < 0.2), filter_labels(""pred"", F(""label"") == ""Car""), to_patches(""pred"")]",Jacob,image,FALSE
+Show me evaluation patches,"[to_evaluation_patches(""eval"")]",Jacob,image,FALSE
+Display the evaluation patches for the first images in the dataset,"[limit(1), to_evaluation_patches(""eval"")]",Jacob,image,FALSE
+Eval patches for model1,"[to_evaluation_patches(""model1_eval"")]",Jacob,image,FALSE
+show all TP predictions,"[to_evaluation_patches(""eval""), match(F(""type"") == ""tp"")]",Jacob,image,FALSE
+Any object detections that were wrong,"[to_evaluation_patches(""eval""), match(F(""type"").is_in([""fp"",""fn""]))]",Jacob,image,FALSE
+Retrieve the detection predictions with IoU > 80%,"[to_evaluation_patches(""det_eval""), match(F(""iou"") > 0.8)]",Jacob,image,FALSE
+Show me the evaluation patches sorted by IoU,"[to_evaluation_patches(""det_eval""), sort_by(""iou"")]",Jacob,image,FALSE
+Just show me false positive predictions,"[filter_labels(""predictions"", F(""eval_det"") == ""fp"")]",Jacob,image,FALSE
+Give me 10 random images with a false positive prediction,"[match(F(""eval_det_fp"")>0), take(10)]",Jacob,image,FALSE
