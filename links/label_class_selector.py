@@ -162,8 +162,6 @@ def validate_class_name(class_name, label_classes):
 def select_label_field_classes(dataset, query, label_field):
     class_names = identify_named_classes(query, label_field)
 
-    if len(' '.join(class_names)) > len(query):
-        return '_CONFUSED_'
     if len(class_names) == 0:
         return []
     _classes = get_dataset_label_classes(dataset, label_field)
