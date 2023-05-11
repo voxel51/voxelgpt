@@ -87,9 +87,7 @@ def create_chroma_collection():
         {"input": query, "output": sl, "media_type": mt, "geo": geo}
         for query, sl, mt, geo in zip(queries, stages_lists, media_types, geos)
         ]
-    
-    print(metadatas[0])
-    
+        
     embeddings = get_or_create_embeddings(queries)
     collection.add(
         embeddings=embeddings,
