@@ -114,6 +114,10 @@ def ask_gpt_generator(dataset, query, chat_history=None):
 
     # Label classes
     label_classes = select_label_classes(dataset, query, fields)
+    if label_classes == "_CONFUSED_":
+        yield _logh("I'm sorry, I don't understand")
+        return
+
     if any(len(v) > 0 for v in label_classes.values()):
         _label_classes = format_label_classes(label_classes)
         yield _logh(f"Identified label classes: {_label_classes}")
