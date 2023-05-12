@@ -60,3 +60,10 @@ With minute not equal to 0,Y,Jacob
 view of samples with non-None 'data_field',N,Jacob
 On the 24th of the month,N,Jacob
 Union of the validation and test splits,N,Jacob
+I want to see the bluest images,Y,Jacob
+10 images with a lot of green or grass,Y,Jacob
+take the images of buildings and find the ones that are most run down,Y,Jacob
+sort the samples with a car prediction by how gloomy the scene is,Y,Jacob
+"sort by similarity to the last image with a table, with key 'text_sim'",Y,Jacob
+a winter wonderland,Y,Jacob
+a dark and stormy scene,Y,Jacob

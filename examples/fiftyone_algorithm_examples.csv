@@ -63,3 +63,17 @@ find all cars that were misclassified as trucks,N,N,N,Y,Y,Y,N,Allen
 show all images where the zipcode is in 07920 or 07923,N,N,N,N,N,N,N,Allen
 samples where `prediction1` and `prediction2` differ,N,N,N,N,N,Y,N,Allen
 show me all overly bright images,N,N,Y,N,N,N,N,Allen
+Samples whose image is less than 48 KB,N,N,N,N,N,N,Y,Jacob
+Images with width > 500 pixels,N,N,N,N,N,N,Y,Jacob
+Only contains predictions whose bounding boxes are within 1 pixel of being square,N,N,N,N,N,N,Y,Jacob
+any scene that resembles a birthday party,N,N,Y,N,N,N,N,Jacob
+"sorty images by how similar they are to a classroom, and show me the top 10",N,N,Y,N,N,N,N,Jacob
+"100 images that resemble a Gameboy Advance, with distances, evaluated with 'pinecone' key",N,N,Y,N,N,N,N,Jacob
+3 images that look the most like sample with ID uigweuyf,N,Y,N,N,N,N,N,Jacob
+show me the 13 most similar images to the 4th image,N,Y,N,N,N,N,N,Jacob
+"sort by similarity to the last image with a table, with key 'text_sim'",N,Y,N,N,N,N,N,Jacob
+sort the samples with a car prediction by how gloomy the scene is,N,N,Y,N,N,N,N,Jacob
+take the images of buildings and find the ones that are most run down,N,N,Y,N,N,N,N,Jacob
+get 50 random samples and find the one that is brightest,N,N,Y,N,N,N,N,Jacob
+I want to see the bluest images,N,N,Y,N,N,N,N,Jacob
+10 images with a lot of green or grass,N,N,Y,N,N,N,N,Jacob

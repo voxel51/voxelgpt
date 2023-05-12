@@ -79,13 +79,15 @@ def create_chroma_collection():
     examples = pd.read_csv("examples/fiftyone_viewstage_examples.csv", on_bad_lines='skip')
     queries = examples["query"].tolist()
     media_types = examples["media_type"].tolist()
+    geos = examples["geo"].tolist()
+    geos = [str(int(g)) for g in geos]
     stages_lists = examples["stages"].tolist()
     ids = [f"{i}" for i in range(len(queries))]
     metadatas = [
-        {"input": query, "output": sl, "media_type": mt}
-        for query, sl, mt in zip(queries, stages_lists, media_types)
+        {"input": query, "output": sl, "media_type": mt, "geo": geo}
+        for query, sl, mt, geo in zip(queries, stages_lists, media_types, geos)
         ]
-    
+        
     embeddings = get_or_create_embeddings(queries)
     collection.add(
         embeddings=embeddings,
@@ -93,6 +95,10 @@ def create_chroma_collection():
         ids=ids
     )
 
+def has_geo_field(dataset):
+    types = list(dataset.get_field_schema(flat=True).values())
+    types = [type(t) for t in types]
+    return any(["Geo" in t.__name__ for t in types])
 
 def get_similar_examples(dataset, query):
     load_chroma_db()
@@ -102,21 +108,38 @@ def get_similar_examples(dataset, query):
         )
     
     media_type = dataset.media_type
+    geo = has_geo_field(dataset)
 
-    _filter = {
-        "$or": [
-            {
-                "media_type": {
-                    "$eq": "all"
+    _media_filter = {
+            "$or": [
+                {
+                    "media_type": {
+                        "$eq": "all"
+                    }
+                },
+                {
+                    "media_type": {
+                        "$eq": media_type
+                    }
                 }
-            },
-            {
-                "media_type": {
-                    "$eq": media_type
+            ]
+        }
+
+
+    if geo:
+        _filter = _media_filter
+    else:
+        _filter = {
+            "$and": [
+                _media_filter,
+                {
+                    "geo": {
+                        "$eq": '0'
+                    }
                 }
-            }
-        ]
-    }
+            ]
+        }
+
 
     res = collection.query(
         query_texts=[query],
