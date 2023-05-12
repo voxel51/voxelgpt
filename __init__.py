@@ -176,7 +176,9 @@ class CreateViewWithGPT(foo.Operator):
             "message": "OK now lets see 10 random samples!"
         })
         yield ctx.trigger("set_view", params={"view": ctx.dataset.take(10)._serialize()})
-
+        yield ctx.trigger(f"{self.plugin_name}/show_message", params={
+            "done": True
+        })
 def register(p):
     p.register(CreateViewWithGPT)
     p.register(ChatGPTViewBuilder)

@@ -7,7 +7,7 @@ import {Button} from '@fiftyone/components'
 import { Grid, Paper, Typography } from '@mui/material';
 import useTypewriterEffect from './useTypewriterEffect';
 
-const Message = ({ type, avatar, content = '', button }) => {
+export const Message = ({ type, avatar, content = '', button }) => {
   const theme = useTheme();
   const animatedContent = useTypewriterEffect(type === 'incoming' ? content : '', 5);
 
@@ -27,6 +27,21 @@ const Message = ({ type, avatar, content = '', button }) => {
   }
 
   return (
+    <Typography component='div' style={{ marginLeft: theme.spacing(2) }}>
+      <ReactMarkdown>
+        {type === 'incoming' ? (animatedContent.length === content.length ? content : animatedContent) : content}
+      </ReactMarkdown>
+    </Typography>
+  );
+};
+
+
+export function MessageWrapper({index,
+  type,
+  avatar,
+  messages}) {
+  const theme = useTheme();
+  return (
     <div
       style={{
         display: 'flex',
@@ -36,14 +51,12 @@ const Message = ({ type, avatar, content = '', button }) => {
     >
       <Paper elevation={4} variant="outlined" style={{padding: '1rem', width: 500, display: 'flex', flexDirection: 'row',}}>
         <Avatar alt={type} src={avatar} />
-        <Typography component='div' style={{ marginLeft: theme.spacing(2) }}>
-          <ReactMarkdown>
-            {type === 'incoming' ? (animatedContent.length === content.length ? content : animatedContent) : content}
-          </ReactMarkdown>
-        </Typography>
+        <div>
+          {messages.map((message, index) => (
+            <Message key={index} type={message.type} avatar={message.avatar} content={message.content} button={message.button} />
+          ))}
+        </div>
       </Paper>
     </div>
-  );
-};
-
-export default Message;
+  )
+}

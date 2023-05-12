@@ -20,10 +20,16 @@ export class ShowMessage extends Operator {
   }
 
   async execute(ctx) {
-    ctx.hooks.addMessage({
-      type: 'incoming',
-      content: ctx.params.message
-    })
+    if (ctx.params.message) {
+      ctx.state.set(state.atoms.receiving, true)
+      ctx.hooks.addMessage({
+        type: 'incoming',
+        content: ctx.params.message
+      })
+    }
+    if (ctx.params.done) {
+      ctx.state.set(state.atoms.receiving, false)
+    }
   }
 }
 

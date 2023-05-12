@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { TextField } from '@mui/material';
 
-const InputBar = ({ onMessageSend }) => {
+const InputBar = ({ disabled, onMessageSend }) => {
   const [message, setMessage] = useState('');
 
   const handleKeyPress = (event) => {
@@ -21,6 +21,7 @@ const InputBar = ({ onMessageSend }) => {
         label="Type your message"
         variant="outlined"
         autofocus
+        disabled={disabled}
       />
     </div>
   );

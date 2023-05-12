@@ -10,30 +10,27 @@ import { Grid, Paper, Typography } from '@mui/material';
 import InputBar from "./InputBar";
 import { ShowMessage } from "./ShowMessage";
 import { SendMessageToGPT } from "./SendMessageToGPT";
-const examples = [
-  { type: 'incoming', content: 'Hello, **Dave**. It is nice to **meet** you.' },
-  { type: 'incoming', content: `
-\`\`\`js
-console.log('hello')
-\`\`\`
-` },
-  { type: 'incoming', content: null, button: {label: 'Click Here to let me out of Jail!'} },
-];
+import {useRecoilValue} from "recoil";
+import * as state from "./state";
+import { Actions } from "./Actions";
 
 const PLUGIN_NAME = "@voxel51/fiftyone-gpt"
 
 const ChatPanel = () => {
   const executor = useOperatorExecutor(`${PLUGIN_NAME}/send_message_to_gpt`);
-  const [messages, setMessages] = React.useState([]);
+  const messages = useRecoilValue(state.atoms.messages);
   const incomingAvatar = 'path-to-incoming-avatar';
   const outgoingAvatar = 'path-to-outgoing-avatar';
   const handleMessageSend = (message) => {
     executor.execute({ message })
   };
+  const receiving = useRecoilValue(state.atoms.receiving);
 
   return (
-    <Grid container direction="column" spacing={2}>
-      <Grid item>
+    <Grid container direction="column" spacing={2} 
+    justifyContent="flex-start"
+    alignItems="center">
+      {messages.length == 0 && <Grid item>
         <Paper elevation={3} style={{ padding: '20px', marginBottom: '16px' }}>
           <Typography variant="h6" gutterBottom>
             Examples
@@ -49,10 +46,13 @@ const ChatPanel = () => {
             - How can I integrate GPT-3 into my application?
           </Typography>
         </Paper>
-      </Grid>
-      <Grid item style={{ flexGrow: 1 }}>
+      </Grid>}
+      <Grid item>
         <Chat incomingAvatar={incomingAvatar} outgoingAvatar={outgoingAvatar} />
-        <InputBar onMessageSend={handleMessageSend} />
+      </Grid>
+      <Grid item style={{marginTop: 'auto'}}>
+        <Actions />
+        <InputBar disabled={receiving} onMessageSend={handleMessageSend} />
       </Grid>
     </Grid>
   );
