@@ -12,31 +12,58 @@ We've combined the power of [GPT-3.5](https://platform.openai.com/docs/models/gp
 - Random sampling of images where AlexNet and Inception v3 disagree
 
 ## Try it out at [gpt.fiftyone.ai](https://gpt.fiftyone.ai)!
+
 This site is hosted by [Voxel51](https://voxel51.com/), and is free to use. No OpenAI API key is required!
 
 ## Installation
 
 If you want to run this locally, you'll need to install the following:
 
-1. Clone the `fiftyone-gpt` repo
+1. Clone the `fiftyone-gpt` repo:
 
 ```shell
 git clone https://github.com/voxel51/fiftyone-gpt
+cd fiftyone-gpt
 ```
 
-2. Install the `fiftyone-gpt` package by `cd`ing into the repo and running:
+2. Install the following packages:
 
 ```shell
-pip install -e .
+pip install openai langchain chromadb
 ```
 
-3. [register an API key](https://platform.openai.com/account/api-keys). Once you have your API key, set the `OPENAI_API_KEY` environment variable to it:
+3. [Register an API key](https://platform.openai.com/account/api-keys). Once you have your API key, set the `OPENAI_API_KEY` environment variable to it:
 
 ```shell
-export OPENAI_API_KEY=<your key>
+export OPENAI_API_KEY=...
 ```
 
-4. Something about plugin?
+## Try it out!
+
+```py
+import fiftyone as fo
+import fiftyone.zoo as foz
+
+from gpt_view_generator import ask_gpt_interactive
+
+dataset = foz.load_zoo_dataset("quickstart")
+session = fo.launch_app(dataset)
+```
+
+```py
+ask_gpt_interactive(dataset, session=session)
+# How can I help you? show me 10 random samples
+```
+
+```
+Getting or creating embeddings for queries...
+Loading embeddings from file...
+Saving embeddings to file...
+Identified likely view stages: ['limit', 'skip', 'take', 'match', 'sort_by_similarity']
+Identified potentially relevant fields: ['']
+Did not identify any relevant label classes
+Stage 1: take(10)
+```
 
 ## How does it work?
 
