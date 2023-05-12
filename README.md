@@ -35,7 +35,7 @@ cd fiftyone-gpt
 2. Install some packages:
 
 ```shell
-pip install openai langchain chromadb
+pip install openai langchain chromadb pandas
 ```
 
 3. Provide your OpenAI API key
