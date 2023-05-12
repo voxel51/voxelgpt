@@ -1,6 +1,10 @@
+import os
+import sys
+
 import fiftyone.operators as foo
 import fiftyone.operators.types as types
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from gpt_view_generator import ask_gpt_generator
 
 
