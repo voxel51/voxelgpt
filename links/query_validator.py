@@ -3,25 +3,24 @@ import pandas as pd
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate, FewShotPromptTemplate
 
-llm = ChatOpenAI(temperature=0, model_name='gpt-3.5-turbo')
+llm = ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo")
 
 
 def load_query_validator_prefix():
-    with open('prompts/confused_task_rules.txt', 'r') as f:
+    with open("prompts/confused_task_rules.txt", "r") as f:
         prefix = f.read()
     return prefix
+
 
 def get_query_validation_examples():
     df = pd.read_csv("examples/fiftyone_query_validation_examples.csv")
     examples = []
 
     for _, row in df.iterrows():
-        example = {
-            "input": row.input,
-            "is_valid": row.is_valid
-        }
+        example = {"input": row.input, "is_valid": row.is_valid}
         examples.append(example)
     return examples
+
 
 def generate_query_validator_prompt(query):
     prefix = load_query_validator_prefix()
@@ -48,10 +47,11 @@ def generate_query_validator_prompt(query):
 
     return prefix + query_validator_prompt.format(input=query)
 
+
 def validate_query(query):
     prompt = generate_query_validator_prompt(query)
     res = llm.call_as_llm(prompt).strip()
-    if res == 'N':
+    if res == "N":
         return False
     else:
         return True

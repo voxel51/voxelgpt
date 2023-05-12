@@ -3,7 +3,7 @@ import pandas as pd
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate, FewShotPromptTemplate
 
-llm = ChatOpenAI(temperature=0, model_name='gpt-3.5-turbo')
+llm = ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo")
 
 #####################################################################
 
@@ -18,8 +18,10 @@ RUN_EXAMPLE_PROMPT = PromptTemplate(
     template=RUN_EXAMPLE_TEMPLATE,
 )
 
-RUN_PROMPT_PREFIX = "Return the name of the {run_type} run required to generate the DatasetView specified in the query, given available {run_type} runs:\n" 
-RUN_PROMPT_SUFFIX = "Query: {query}\nAvailable runs: {available_runs}\nSelected run:"
+RUN_PROMPT_PREFIX = "Return the name of the {run_type} run required to generate the DatasetView specified in the query, given available {run_type} runs:\n"
+RUN_PROMPT_SUFFIX = (
+    "Query: {query}\nAvailable runs: {available_runs}\nSelected run:"
+)
 RUN_PROMPT_INPUTS = ["run_type", "query", "available_runs"]
 
 TASK_RULES_FILE = {
@@ -29,7 +31,7 @@ TASK_RULES_FILE = {
     "image_similarity": "prompts/image_similarity_task_rules.txt",
     "text_similarity": "prompts/text_similarity_task_rules.txt",
     "evaluation": "prompts/evaluation_task_rules.txt",
-    "metadata": None
+    "metadata": None,
 }
 
 EXAMPLES_FILE = {
@@ -39,8 +41,9 @@ EXAMPLES_FILE = {
     "image_similarity": "examples/fiftyone_image_similarity_run_examples.csv",
     "text_similarity": "examples/fiftyone_text_similarity_run_examples.csv",
     "evaluation": "examples/fiftyone_evaluation_run_examples.csv",
-    "metadata": None
+    "metadata": None,
 }
+
 
 class RunSelector:
     """Class to select the correct run for a given query and dataset"""
@@ -53,51 +56,48 @@ class RunSelector:
 
     def set_run_type(self):
         raise NotImplementedError("set_run_type method not implemented")
-    
+
     def set_task_rules_file(self):
         raise NotImplementedError("set_task_rules_file method not implemented")
-    
+
     def set_examples_file(self):
         raise NotImplementedError("set_examples_file method not implemented")
-    
+
     def get_run_info(self, run):
         raise NotImplementedError("get_run_info method not implemented")
-    
+
     def get_available_runs(self):
         raise NotImplementedError("get_available_runs method not implemented")
-    
+
     def print_compute_run_message(self):
         message = self.generate_compute_run_message()
         print(message)
 
     def get_run(self):
         raise NotImplementedError("get_run method not implemented")
-    
+
     def get_task_rules_file(self):
         return TASK_RULES_FILE[self.run_type]
-    
+
     def get_examples_file(self):
         return EXAMPLES_FILE[self.run_type]
-    
+
     def value_error(self):
         raise ValueError(f"No {self.run_type} runs found")
-    
+
     def load_prompt_prefix(self):
         with open(self.task_rules_file, "r") as f:
-            prompt_prefix = f.read() + '\n'
+            prompt_prefix = f.read() + "\n"
         return prompt_prefix
-    
+
     def load_prompt_suffix(self, query, runs):
-        return self.prompt_suffix.format(
-            query=query,
-            runs=runs
-        )
-    
+        return self.prompt_suffix.format(query=query, runs=runs)
+
     def generate_prompt(self, query, runs):
         prefix = self.load_prompt_prefix()
         body = self.generate_examples_prompt(query, runs)
-        return (prefix + body).replace('{', '(').replace('}', ')')
-    
+        return (prefix + body).replace("{", "(").replace("}", ")")
+
     def generate_examples_prompt(self, query, available_runs):
         examples = self.get_examples()
 
@@ -109,11 +109,9 @@ class RunSelector:
             input_variables=RUN_PROMPT_INPUTS,
             example_separator="\n",
         ).format(
-            query=query, 
-            available_runs=available_runs, 
-            run_type=self.run_type
-            )
-    
+            query=query, available_runs=available_runs, run_type=self.run_type
+        )
+
     def get_examples(self):
         with open(self.examples_file, "r") as f:
             df = pd.read_csv(f)
@@ -123,11 +121,11 @@ class RunSelector:
             example = {
                 "query": row.query,
                 "available_runs": row.available_runs,
-                "selected_run": row.selected_run
+                "selected_run": row.selected_run,
             }
             examples.append(example)
         return examples
-    
+
     def select_run(self, query):
         available_runs = self.get_available_runs()
         if len(available_runs) == 0:
@@ -176,7 +174,7 @@ class EvaluationRunSelector(RunSelector):
         # """
         # message = base_message + detection_message + detection_command + classification_message + classification_command
         # return message
-        
+
     def get_run_info(self, run):
         key = run.key
         config = run.config
@@ -202,15 +200,15 @@ class EvaluationRunSelector(RunSelector):
             dict["iou"] = config.iou
         except:
             pass
-        
-       
+
         return dict
-    
+
     def get_available_runs(self):
         runs = self.dataset.list_evaluations()
         runs = [self.dataset.get_evaluation_info(run) for run in runs]
         runs = [self.get_run_info(run) for run in runs]
         return runs
+
 
 class UniquenessRunSelector(RunSelector):
     """Class to select the correct uniqueness run for a given query and dataset"""
@@ -230,19 +228,24 @@ class UniquenessRunSelector(RunSelector):
         ```
         """
         return message + command
-        
+
     def get_run_info(self, run):
         key = run.key
-        model = run.config.model.split('.')[-1]
+        model = run.config.model.split(".")[-1]
         uniqueness_field = run.config.uniqueness_field
-        return {"key": key, "model": model, "uniqueness_field": uniqueness_field}
-    
+        return {
+            "key": key,
+            "model": model,
+            "uniqueness_field": uniqueness_field,
+        }
+
     def get_available_runs(self):
-        runs = self.dataset.list_brain_runs(method = "uniqueness")
+        runs = self.dataset.list_brain_runs(method="uniqueness")
         runs = [self.dataset.get_brain_info(r) for r in runs]
         runs = [self.get_run_info(r) for r in runs]
         return runs
-    
+
+
 class MistakennessRunSelector(RunSelector):
     """Class to select the correct mistakenness run for a given query and dataset"""
 
@@ -251,7 +254,7 @@ class MistakennessRunSelector(RunSelector):
 
     def set_run_type(self):
         self.run_type = "mistakenness"
-    
+
     def generate_compute_run_message(self):
         message = "No mistakenness runs found. To compute the difficulty of classifying samples (`<pred_field>`) with respect to ground truth label `<gt_field>`, please run the following command:\n"
         command = """
@@ -265,7 +268,7 @@ class MistakennessRunSelector(RunSelector):
         ```
         """
         return message + command
-        
+
     def get_run_info(self, run):
         key = run.key
         prediction_field = run.config.pred_field
@@ -274,16 +277,17 @@ class MistakennessRunSelector(RunSelector):
         return {
             "key": key,
             "mistakenness_field": mistakenness_field,
-            "prediction_field": prediction_field, 
-            "label_field": label_field
-            }
-    
+            "prediction_field": prediction_field,
+            "label_field": label_field,
+        }
+
     def get_available_runs(self):
-        runs = self.dataset.list_brain_runs(method = "mistakenness")
+        runs = self.dataset.list_brain_runs(method="mistakenness")
         runs = [self.dataset.get_brain_info(r) for r in runs]
         runs = [self.get_run_info(r) for r in runs]
         return runs
-    
+
+
 class ImageSimilarityRunSelector(RunSelector):
     """Class to select the correct image_similarity run for a given query and dataset"""
 
@@ -306,7 +310,7 @@ class ImageSimilarityRunSelector(RunSelector):
         ```
         """
         return message + command
-        
+
     def get_run_info(self, run):
         key = run.key
         method = run.config.method
@@ -314,13 +318,13 @@ class ImageSimilarityRunSelector(RunSelector):
         model = run.config.model
         patches_field = run.config.patches_field
         return {
-            "key": key, 
-            "method": method, 
+            "key": key,
+            "method": method,
             "embeddings_field": embeddings_field,
             "model": model,
-            "patches_field": patches_field
-            }
-    
+            "patches_field": patches_field,
+        }
+
     def get_available_runs(self):
         runs = []
 
@@ -331,7 +335,8 @@ class ImageSimilarityRunSelector(RunSelector):
 
         runs = [self.get_run_info(r) for r in runs]
         return runs
-    
+
+
 class TextSimilarityRunSelector(RunSelector):
     """Class to select the correct text_similarity run for a given query and dataset"""
 
@@ -354,31 +359,34 @@ class TextSimilarityRunSelector(RunSelector):
         ```
         """
         return message + command
-        
+
     def get_run_info(self, run):
         key = run.key
         method = run.config.method
         model = run.config.model
         patches_field = run.config.patches_field
         return {
-            "key": key, 
-            "backend": method, 
+            "key": key,
+            "backend": method,
             "model": model,
-            "patches_field": patches_field
-            }
-    
+            "patches_field": patches_field,
+        }
+
     def get_available_runs(self):
         runs = []
 
         for run in self.dataset.list_brain_runs():
             info = self.dataset.get_brain_info(run)
-            if "Similarity" in info.config.cls and info.config.supports_prompts:
+            if (
+                "Similarity" in info.config.cls
+                and info.config.supports_prompts
+            ):
                 runs.append(info)
 
         runs = [self.get_run_info(r) for r in runs]
         return runs
-    
-    
+
+
 class HardnessRunSelector(RunSelector):
     """Class to select the correct hardness run for a given query and dataset"""
 
@@ -400,19 +408,24 @@ class HardnessRunSelector(RunSelector):
         ```
         """
         return message + command
-        
+
     def get_run_info(self, run):
         key = run.key
         label_field = run.config.label_field
         hardness_field = run.config.hardness_field
-        return {"key": key, "label_field": label_field, "hardness_field": hardness_field}
-    
+        return {
+            "key": key,
+            "label_field": label_field,
+            "hardness_field": hardness_field,
+        }
+
     def get_available_runs(self):
-        runs = self.dataset.list_brain_runs(method = "hardness")
+        runs = self.dataset.list_brain_runs(method="hardness")
         runs = [self.dataset.get_brain_info(r) for r in runs]
         runs = [self.get_run_info(r) for r in runs]
         return runs
-    
+
+
 class MetadataRunSelector(RunSelector):
     """Class for metadata computation validation"""
 
@@ -430,17 +443,17 @@ class MetadataRunSelector(RunSelector):
         ```
         """
         return message + command
-        
+
     def get_run_info(self, run):
-        return {"key": 'metadata'}
-    
+        return {"key": "metadata"}
+
     def get_available_runs(self):
         nsamples = self.dataset.count()
-        if self.dataset.exists('metadata').count() != nsamples:
+        if self.dataset.exists("metadata").count() != nsamples:
             return []
         else:
             return [self.get_run_info("metadata")]
-    
+
 
 run_selectors = {
     "uniqueness": UniquenessRunSelector,
@@ -450,8 +463,8 @@ run_selectors = {
     "hardness": HardnessRunSelector,
     "evaluation": EvaluationRunSelector,
     "metadata": MetadataRunSelector,
-    
 }
+
 
 class RunsSelector:
     """Class to select the correct runs for a given query and dataset"""
@@ -470,31 +483,7 @@ class RunsSelector:
 
         return selected_runs
 
+
 def select_runs(dataset, query, run_types):
     runs_selector = RunsSelector(dataset)
     return runs_selector.select_runs(query, run_types)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
