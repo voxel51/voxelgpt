@@ -1,0 +1,8 @@
+fiftyone:
+    version: '*'
+name: fiftyone-gpt
+description: FiftyOne ChatGPT Integration
+license: MIT
+version: 1.0.0
+operators:
+    - chatgpt_view_builder
