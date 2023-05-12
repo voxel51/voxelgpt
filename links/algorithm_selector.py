@@ -1,9 +1,27 @@
-import pandas as pd
+"""
+Algorithm selector.
+
+| Copyright 2017-2023, Voxel51, Inc.
+| `voxel51.com <https://voxel51.com/>`_
+|
+"""
+import os
 
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate, FewShotPromptTemplate
+import pandas as pd
 
-llm = ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo")
+
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+EXAMPLES_DIR = os.path.join(ROOT_DIR, "examples")
+PROMPTS_DIR = os.path.join(ROOT_DIR, "prompts")
+
+ALGORITHM_EXAMPLES_PATH = os.path.join(
+    EXAMPLES_DIR, "fiftyone_algorithm_examples.csv"
+)
+ALGORITHM_SELECTOR_PREFIX_PATH = os.path.join(
+    PROMPTS_DIR, "algorithm_selector_prefix.txt"
+)
 
 ALGORITHMS = (
     "uniqueness",
@@ -15,9 +33,11 @@ ALGORITHMS = (
     "metadata",
 )
 
+llm = ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo")
+
 
 def get_algorithm_examples():
-    df = pd.read_csv("examples/fiftyone_algorithm_examples.csv")
+    df = pd.read_csv(ALGORITHM_EXAMPLES_PATH)
     examples = []
 
     for _, row in df.iterrows():
@@ -28,9 +48,8 @@ def get_algorithm_examples():
 
 
 def load_algorithm_selector_prefix():
-    with open("prompts/algorithm_selector_prefix.txt", "r") as f:
-        prefix = f.read()
-    return prefix
+    with open(ALGORITHM_SELECTOR_PREFIX_PATH, "r") as f:
+        return f.read()
 
 
 def generate_algorithm_selector_prompt(query):

@@ -1,9 +1,25 @@
+"""
+Dataset view generator.
+
+| Copyright 2017-2023, Voxel51, Inc.
+| `voxel51.com <https://voxel51.com/>`_
+|
+"""
+import os
 import re
 
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
 
-llm = ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo")
+
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+LINKS_DIR = os.path.join(ROOT_DIR, "links")
+PROMPTS_DIR = os.path.join(ROOT_DIR, "prompts")
+
+VIEW_STAGES_LIST_PATH = os.path.join(ROOT_DIR, "view_stages_list.txt")
+VIEW_GENERATOR_PREFIX_PATH = os.path.join(
+    PROMPTS_DIR, "dataset_view_generator_prefix.txt"
+)
 
 UNIQUENESS_PROMPT_TEMPLATE = """
 A uniqueness run determines how unique each image is in the dataset. Its results are stored in the {uniqueness_field} field on the samples.
@@ -27,6 +43,8 @@ A mistakenness run determines how mistaken each image is in the dataset. Its res
 When converting a natural language query into a DatasetView, if you determine that the mistakenness of the images is important, the following fields store relevant information:
 - {mistakenness_field}: the mistakenness score for each image
 """
+
+llm = ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo")
 
 mistakenness_field_prompt = PromptTemplate(
     input_variables=["mistakenness_field"],
@@ -168,9 +186,8 @@ def generate_runs_prompt(dataset, runs):
 
 
 def load_dataset_view_prompt_prefix_template():
-    with open("prompts/dataset_view_generator_prefix.txt", "r") as f:
-        prefix = f.read()
-    return prefix
+    with open(VIEW_GENERATOR_PREFIX_PATH, "r") as f:
+        return f.read()
 
 
 def generate_dataset_view_prompt_prefix(available_fields, label_classes):
@@ -231,8 +248,9 @@ def remove_whitespace(stage_str):
 
 
 def split_into_stages(stages_text):
-    with open("view_stages_list.txt", "r") as f:
+    with open(VIEW_STAGES_LIST_PATH, "r") as f:
         view_stages = f.read().splitlines()
+
     pattern = "," + "|,".join(view_stages)[:-1]
 
     st = stages_text[1:-1].replace(", ", ",").replace("\n", "")

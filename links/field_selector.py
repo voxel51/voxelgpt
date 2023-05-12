@@ -1,13 +1,33 @@
-import pandas as pd
+"""
+Dataset view generator.
+
+| Copyright 2017-2023, Voxel51, Inc.
+| `voxel51.com <https://voxel51.com/>`_
+|
+"""
+import os
 
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate, FewShotPromptTemplate
+import pandas as pd
+
+
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+EXAMPLES_DIR = os.path.join(ROOT_DIR, "examples")
+PROMPTS_DIR = os.path.join(ROOT_DIR, "prompts")
+
+FIELD_SELECTION_EXAMPLES_PATH = os.path.join(
+    EXAMPLES_DIR, "fiftyone_field_selection_examples.csv"
+)
+FIELD_SELECTOR_PREFIX_PATH = os.path.join(
+    PROMPTS_DIR, "field_selector_prefix.txt"
+)
 
 llm = ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo")
 
 
 def get_field_selection_examples():
-    df = pd.read_csv("examples/fiftyone_field_selection_examples.csv")
+    df = pd.read_csv(FIELD_SELECTION_EXAMPLES_PATH)
     examples = []
 
     for _, row in df.iterrows():
@@ -21,9 +41,8 @@ def get_field_selection_examples():
 
 
 def load_field_selector_prefix():
-    with open("prompts/field_selector_prefix.txt", "r") as f:
-        prefix = f.read()
-    return prefix
+    with open(FIELD_SELECTOR_PREFIX_PATH, "r") as f:
+        return f.read()
 
 
 def get_field_type(sample, field_name):

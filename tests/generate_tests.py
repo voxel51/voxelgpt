@@ -5,11 +5,18 @@ Generate tests.
 | `voxel51.com <https://voxel51.com/>`_
 |
 """
-import numpy as np
+import os
+
 import pandas as pd
 
 
-with open("test_examples.csv", "r") as f:
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+TESTS_DIR = os.path.join(ROOT_DIR, "tests")
+
+TEST_EXAMPLES_PATH = os.path.join(TESTS_DIR, "test_examples.csv")
+
+
+with open(TEST_EXAMPLES_PATH, "r") as f:
     df = pd.read_csv(f)
     print(df)
 

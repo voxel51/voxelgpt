@@ -1,17 +1,24 @@
-import chromadb
-from chromadb.utils import embedding_functions
+"""
+View stage example selector.
+
+| Copyright 2017-2023, Voxel51, Inc.
+| `voxel51.com <https://voxel51.com/>`_
+|
+"""
 import hashlib
-from langchain.prompts import FewShotPromptTemplate, PromptTemplate
 import json
 import os
+
+import chromadb
+from chromadb.utils import embedding_functions
+from langchain.prompts import FewShotPromptTemplate, PromptTemplate
 import pandas as pd
 
 
-client = chromadb.Client()
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+EXAMPLES_DIR = os.path.join(ROOT_DIR, "examples")
 
-ada_002 = embedding_functions.OpenAIEmbeddingFunction(
-    api_key=os.getenv("OPENAI_API_KEY"), model_name="text-embedding-ada-002"
-)
+EXAMPLE_EMBEDDINGS_PATH = os.path.join(EXAMPLES_DIR, "embeddings.json")
 
 COLLECTION_NAME = "fiftyone_view_stage_examples"
 
@@ -20,29 +27,33 @@ VIEW_STAGE_EXAMPLE_PROMPT = PromptTemplate(
     template="Input: {input}\nOutput: {output}",
 )
 
+client = chromadb.Client()
 
-def hash_query(query):
-    hash_object = hashlib.md5(query.encode())
-    return hash_object.hexdigest()
+ada_002 = embedding_functions.OpenAIEmbeddingFunction(
+    api_key=os.getenv("OPENAI_API_KEY"), model_name="text-embedding-ada-002"
+)
 
 
-def load_chroma_db():
+def load_chromadb():
     try:
         _ = client.get_collection(COLLECTION_NAME, embedding_function=ada_002)
     except:
         create_chroma_collection()
 
 
+def hash_query(query):
+    hash_object = hashlib.md5(query.encode())
+    return hash_object.hexdigest()
+
+
 def get_or_create_embeddings(queries):
     print("Getting or creating embeddings for queries...")
 
-    example_embeddings_file = "examples/embeddings.json"
-    if os.path.exists(example_embeddings_file):
-        print("Loading embeddings from file...")
-        with open(example_embeddings_file, "r") as f:
+    if os.path.isfile(EXAMPLE_EMBEDDINGS_PATH):
+        print("Loading embeddings from disk...")
+        with open(EXAMPLE_EMBEDDINGS_PATH, "r") as f:
             example_embeddings = json.load(f)
     else:
-        print("No embeddings file found. Creating new embeddings...")
         example_embeddings = {}
 
     query_embeddings = []
@@ -58,8 +69,8 @@ def get_or_create_embeddings(queries):
             new_hashes.append(key)
             new_queries.append(query)
 
-    if len(new_hashes) > 0:
-        print("Creating new embeddings...")
+    if new_queries:
+        print("Generating %d new embeddings..." % len(new_queries))
         new_embeddings = ada_002(new_queries)
         for key, embedding in zip(new_hashes, new_embeddings):
             example_embeddings[key] = embedding
@@ -67,9 +78,10 @@ def get_or_create_embeddings(queries):
     for key in query_hashes:
         query_embeddings.append(example_embeddings[key])
 
-    print("Saving embeddings to file...")
-    with open(example_embeddings_file, "w") as f:
-        json.dump(example_embeddings, f)
+    if new_queries:
+        print("Saving embeddings to disk...")
+        with open(EXAMPLE_EMBEDDINGS_PATH, "w") as f:
+            json.dump(example_embeddings, f)
 
     return query_embeddings
 
@@ -104,7 +116,7 @@ def has_geo_field(dataset):
 
 
 def get_similar_examples(dataset, query):
-    load_chroma_db()
+    load_chromadb()
     collection = client.get_collection(
         COLLECTION_NAME, embedding_function=ada_002
     )

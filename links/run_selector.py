@@ -1,11 +1,20 @@
-import pandas as pd
+"""
+Run selector.
+
+| Copyright 2017-2023, Voxel51, Inc.
+| `voxel51.com <https://voxel51.com/>`_
+|
+"""
+import os
 
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate, FewShotPromptTemplate
+import pandas as pd
 
-llm = ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo")
 
-#####################################################################
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+EXAMPLES_DIR = os.path.join(ROOT_DIR, "examples")
+PROMPTS_DIR = os.path.join(ROOT_DIR, "prompts")
 
 RUN_EXAMPLE_TEMPLATE = """
 Query: {query}
@@ -25,24 +34,42 @@ RUN_PROMPT_SUFFIX = (
 RUN_PROMPT_INPUTS = ["run_type", "query", "available_runs"]
 
 TASK_RULES_FILE = {
-    "uniqueness": "prompts/uniqueness_task_rules.txt",
-    "hardness": "prompts/hardness_task_rules.txt",
-    "mistakenness": "prompts/mistakenness_task_rules.txt",
-    "image_similarity": "prompts/image_similarity_task_rules.txt",
-    "text_similarity": "prompts/text_similarity_task_rules.txt",
-    "evaluation": "prompts/evaluation_task_rules.txt",
+    "uniqueness": os.path.join(PROMPTS_DIR, "uniqueness_task_rules.txt"),
+    "hardness": os.path.join(PROMPTS_DIR, "hardness_task_rules.txt"),
+    "mistakenness": os.path.join(PROMPTS_DIR, "mistakenness_task_rules.txt"),
+    "image_similarity": os.path.join(
+        PROMPTS_DIR, "image_similarity_task_rules.txt"
+    ),
+    "text_similarity": os.path.join(
+        PROMPTS_DIR, "text_similarity_task_rules.txt"
+    ),
+    "evaluation": os.path.join(PROMPTS_DIR, "evaluation_task_rules.txt"),
     "metadata": None,
 }
 
 EXAMPLES_FILE = {
-    "uniqueness": "examples/fiftyone_uniqueness_run_examples.csv",
-    "hardness": "examples/fiftyone_hardness_run_examples.csv",
-    "mistakenness": "examples/fiftyone_mistakenness_run_examples.csv",
-    "image_similarity": "examples/fiftyone_image_similarity_run_examples.csv",
-    "text_similarity": "examples/fiftyone_text_similarity_run_examples.csv",
-    "evaluation": "examples/fiftyone_evaluation_run_examples.csv",
+    "uniqueness": os.path.join(
+        EXAMPLES_DIR, "fiftyone_uniqueness_run_examples.csv"
+    ),
+    "hardness": os.path.join(
+        EXAMPLES_DIR, "fiftyone_hardness_run_examples.csv"
+    ),
+    "mistakenness": os.path.join(
+        EXAMPLES_DIR, "fiftyone_mistakenness_run_examples.csv"
+    ),
+    "image_similarity": os.path.join(
+        EXAMPLES_DIR, "fiftyone_image_similarity_run_examples.csv"
+    ),
+    "text_similarity": os.path.join(
+        EXAMPLES_DIR, "fiftyone_text_similarity_run_examples.csv"
+    ),
+    "evaluation": os.path.join(
+        EXAMPLES_DIR, "fiftyone_evaluation_run_examples.csv"
+    ),
     "metadata": None,
 }
+
+llm = ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo")
 
 
 class RunSelector:
@@ -87,8 +114,7 @@ class RunSelector:
 
     def load_prompt_prefix(self):
         with open(self.task_rules_file, "r") as f:
-            prompt_prefix = f.read() + "\n"
-        return prompt_prefix
+            return f.read() + "\n"
 
     def load_prompt_suffix(self, query, runs):
         return self.prompt_suffix.format(query=query, runs=runs)
@@ -115,6 +141,7 @@ class RunSelector:
     def get_examples(self):
         with open(self.examples_file, "r") as f:
             df = pd.read_csv(f)
+
         examples = []
 
         for _, row in df.iterrows():
@@ -124,6 +151,7 @@ class RunSelector:
                 "selected_run": row.selected_run,
             }
             examples.append(example)
+
         return examples
 
     def select_run(self, query):

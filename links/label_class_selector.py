@@ -1,10 +1,39 @@
-import pandas as pd
+"""
+Label class selector.
+
+| Copyright 2017-2023, Voxel51, Inc.
+| `voxel51.com <https://voxel51.com/>`_
+|
+"""
+import os
+
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate, FewShotPromptTemplate
+import pandas as pd
 
-llm = ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo")
+
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+EXAMPLES_DIR = os.path.join(ROOT_DIR, "examples")
+PROMPTS_DIR = os.path.join(ROOT_DIR, "prompts")
+
+LABEL_CLASS_SELECTOR_PREFIX_PATH = os.path.join(
+    PROMPTS_DIR, "label_class_selector_prefix.txt"
+)
+SEMANTIC_CLASS_SELECTOR_PREFIX_PATH = os.path.join(
+    PROMPTS_DIR, "semantic_class_selector_prefix.txt"
+)
 
 SEMANTIC_MATCH_THRESHOLD = 1000
+LABELS_WITH_CLASSES = (
+    "Classification",
+    "Detection",
+    "Polyline",
+    "Classifications",
+    "Detections",
+    "Polylines",
+)
+
+llm = ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo")
 
 
 def get_label_class_selection_examples():
@@ -35,26 +64,14 @@ def get_semantic_class_selection_examples():
     return examples
 
 
-LABELS_WITH_CLASSES = (
-    "Classification",
-    "Detection",
-    "Polyline",
-    "Classifications",
-    "Detections",
-    "Polylines",
-)
-
-
 def load_class_selector_prefix():
-    with open("prompts/label_class_selector_prefix.txt", "r") as f:
-        prefix = f.read()
-    return prefix
+    with open(LABEL_CLASS_SELECTOR_PREFIX_PATH, "r") as f:
+        return f.read()
 
 
 def load_semantic_class_selector_prefix():
-    with open("prompts/semantic_class_selector_prefix.txt", "r") as f:
-        prefix = f.read()
-    return prefix
+    with open(SEMANTIC_CLASS_SELECTOR_PREFIX_PATH, "r") as f:
+        return f.read()
 
 
 def generate_class_selector_prompt(query, label_field):
