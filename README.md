@@ -9,7 +9,7 @@ This integration combines the power of
 language, enabling you to filter, sort, and semantically slice your data with
 natural language.
 
-## Try it out
+## Try it live
 
 You can test drive this integration live at
 [gpt.fiftyone.ai](https://gpt.fiftyone.ai).
@@ -25,14 +25,14 @@ Here's some examples of things you can ask ChatGPT to do:
 
 If you want to run this locally, you'll need to:
 
-1. Clone the `fiftyone-gpt` repo:
+1. Clone the repository:
 
 ```shell
 git clone https://github.com/voxel51/fiftyone-gpt
 cd fiftyone-gpt
 ```
 
-2. Install the following packages:
+2. Install some packages:
 
 ```shell
 pip install openai langchain chromadb
@@ -42,10 +42,10 @@ pip install openai langchain chromadb
    ([create one](https://platform.openai.com/account/api-keys)):
 
 ```shell
-export OPENAI_API_KEY=...
+export OPENAI_API_KEY=XXXXXXXX
 ```
 
-## Try it out!
+## Try it locally
 
 ```py
 import fiftyone as fo
@@ -86,22 +86,22 @@ You can manually lint a file if necessary like so:
 ```shell
 # Manually run linting configured in the pre-commit hook
 pre-commit run --files <file>
-````
+```
 
 ## How does it work?
 
--   OpenAI's
-    [text-embedding-ada-002 model](https://platform.openai.com/docs/guides/embeddings/embedding-models)
-    is used to embed the input text prompts
--   [Chroma](https://www.trychroma.com) is used to perform in-memory vector
-    searches for the most similar examples to input text prompts
--   LangChain](https://github.com/hwchase17/langchain) provides the connective
-    tissue for the application
--   OpenAI's [GPT-3.5 model](https://platform.openai.com/docs/models/gpt-3-5)
-    (the model underpinning ChatGPT) is used to generate the Python code that
-    is executed by [FiftyOne](https://github.com/voxel51/fiftyone)
--   The [FiftyOne App](https://docs.voxel51.com/user_guide/app.html) is used to
-    display the results of the generated Python code
+- OpenAI's
+  [text-embedding-ada-002 model](https://platform.openai.com/docs/guides/embeddings/embedding-models)
+  is used to embed the input text prompts
+- [Chroma](https://www.trychroma.com) is used to perform in-memory vector
+  searches for the most similar examples to input text prompts
+- LangChain](https://github.com/hwchase17/langchain) provides the connective
+  tissue for the application
+- OpenAI's [GPT-3.5 model](https://platform.openai.com/docs/models/gpt-3-5)
+  (the model underpinning ChatGPT) is used to generate the Python code that
+  is executed by [FiftyOne](https://github.com/voxel51/fiftyone)
+- The [FiftyOne App](https://docs.voxel51.com/user_guide/app.html) is used to
+  display the results of the generated Python code
 
 ## Limitations
 
