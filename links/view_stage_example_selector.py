@@ -47,8 +47,6 @@ def hash_query(query):
 
 
 def get_or_create_embeddings(queries):
-    print("Getting or creating embeddings for queries...")
-
     if os.path.isfile(EXAMPLE_EMBEDDINGS_PATH):
         print("Loading embeddings from disk...")
         with open(EXAMPLE_EMBEDDINGS_PATH, "r") as f:
@@ -70,7 +68,7 @@ def get_or_create_embeddings(queries):
             new_queries.append(query)
 
     if new_queries:
-        print("Generating %d new embeddings..." % len(new_queries))
+        print("Generating %d embeddings..." % len(new_queries))
         new_embeddings = ada_002(new_queries)
         for key, embedding in zip(new_hashes, new_embeddings):
             example_embeddings[key] = embedding

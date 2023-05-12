@@ -187,8 +187,8 @@ def validate_class_name(class_name, label_classes):
         ## try matching with prefix
         for c in label_classes:
             if c.lower().startswith(class_name.lower()):
-                print(f"Matching {class_name} with {c}")
                 return c
+
         return None
 
 
