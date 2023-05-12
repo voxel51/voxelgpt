@@ -15,7 +15,6 @@ class ChatGPTViewBuilder(foo.Operator):
             name="chatgpt_view_builder",
             label="ChatGPT view builder",
             execute_as_generator=True,
-            # dynamic=True,
             # unlisted=True,
         )
 
@@ -26,14 +25,14 @@ class ChatGPTViewBuilder(foo.Operator):
         inputs.str(
             "query",
             label="query",
-            required=True,
+            # required=True,
             description="Tell ChatGPT what you'd like to do",
         )
         inputs.str(
             "chat_history",
             label="chat_history",
             description="Chat history for this conversation",
-            required=False,
+            # required=False,
         )
 
         return types.Property(inputs)
@@ -47,7 +46,12 @@ class ChatGPTViewBuilder(foo.Operator):
             sample_collection = ctx.dataset
 
         query = ctx.params["query"]
+
         chat_history = ctx.params.get("chat_history", None)
+        if chat_history:
+            chat_history = chat_history.split("\n")
+        else:
+            chat_history = None
 
         for response in ask_gpt_generator(
             sample_collection, query, chat_history=chat_history
