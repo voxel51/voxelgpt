@@ -1,8 +1,11 @@
 import React, { useEffect, useRef } from 'react';
+import { useRecoilValue } from 'recoil';
 import Message from './Message';
+import * as state from './state';
 
-const Chat = ({ messages, incomingAvatar, outgoingAvatar }) => {
+const Chat = ({ incomingAvatar, outgoingAvatar }) => {
   const bottomRef = useRef(null);
+  const messages = useRecoilValue(state.atoms.messages);
 
   useEffect(() => {
     if (bottomRef.current && messages.length > 0) {

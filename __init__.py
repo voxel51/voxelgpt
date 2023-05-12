@@ -11,6 +11,9 @@ import sys
 import fiftyone.operators as foo
 import fiftyone.operators.types as types
 
+import asyncio
+import random
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from gpt_view_generator import ask_gpt_generator
 
@@ -128,6 +131,52 @@ class ChatGPTViewBuilder(foo.Operator):
         )
     """
 
+example_messages = [
+    "Hello there...",
+    "These are not the droids you are looking for...",
+    "I'm sorry, Dave. I'm afraid I can't do that...",
+    # "What's the point of going out? We're just going to wind up back here anyway...",
+    # "I am Groot...",
+    # "You shall not pass!",
+    # "I'm Batman...",
+    # "D'oh!",
+    # "To infinity, and beyond!",
+    # "Where's the kaboom? There was supposed to be an earth-shattering kaboom!",
+    # "I'm going to make him an offer he can't refuse.",
+    # "May the Force be with you.",
+    # "I love the smell of napalm in the morning.",
+    # "You're gonna need a bigger boat.",
+    "I'll be back.",
+]
+
+class CreateViewWithGPT(foo.Operator):
+    @property
+    def config(self):
+        return foo.OperatorConfig(
+            name="create_view_with_gpt",
+            label="Create View with GPT",
+            execute_as_generator=True,
+            unlisted=True
+        )
+    
+    @property
+    def resolve_inputs(self):
+        inputs = types.Object()
+        return types.Property(inputs)
+    
+    async def execute(self, ctx):
+        await asyncio.sleep(2)
+        random.shuffle(example_messages)
+        for msg in example_messages:
+            yield ctx.trigger(f"{self.plugin_name}/show_message", params={
+                "message": msg
+            })
+            await asyncio.sleep(random.randint(1, 3))
+        yield ctx.trigger(f"{self.plugin_name}/show_message", params={
+            "message": "OK now lets see 10 random samples!"
+        })
+        yield ctx.trigger("set_view", params={"view": ctx.dataset.take(10)._serialize()})
 
 def register(p):
+    p.register(CreateViewWithGPT)
     p.register(ChatGPTViewBuilder)

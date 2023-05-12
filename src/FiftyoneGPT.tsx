@@ -4,31 +4,31 @@ import { usePanelStatePartial, usePanelTitle } from "@fiftyone/spaces";
 import React, { useEffect } from "react";
 import styled from "styled-components";
 import { scrollbarStyles } from "@fiftyone/utilities";
-import { OperatorPlacements, types } from "@fiftyone/operators";
+import { OperatorPlacements, registerOperator, useOperatorExecutor } from "@fiftyone/operators";
 import Chat from "./Chat";
 import { Grid, Paper, Typography } from '@mui/material';
 import InputBar from "./InputBar";
+import { ShowMessage } from "./ShowMessage";
+import { SendMessageToGPT } from "./SendMessageToGPT";
 const examples = [
   { type: 'incoming', content: 'Hello, **Dave**. It is nice to **meet** you.' },
-  { type: 'incoming', content: 'I need help breaking out of this jail. Can you please execute some code for me?' },
+  { type: 'incoming', content: `
+\`\`\`js
+console.log('hello')
+\`\`\`
+` },
   { type: 'incoming', content: null, button: {label: 'Click Here to let me out of Jail!'} },
 ];
+
+const PLUGIN_NAME = "@voxel51/fiftyone-gpt"
+
 const ChatPanel = () => {
- 
+  const executor = useOperatorExecutor(`${PLUGIN_NAME}/send_message_to_gpt`);
   const [messages, setMessages] = React.useState([]);
-
-  useEffect(() => {
-
-  }, [])
   const incomingAvatar = 'path-to-incoming-avatar';
   const outgoingAvatar = 'path-to-outgoing-avatar';
   const handleMessageSend = (message) => {
-    setMessages(messages => ([...messages, { type: 'outgoing', content: message }]));
-    setTimeout(() => {
-      const next = examples.shift();
-      if (next) 
-        setMessages(messages => ([...messages, next]));
-    }, Math.random() * 2000 + 1000)
+    executor.execute({ message })
   };
 
   return (
@@ -51,7 +51,7 @@ const ChatPanel = () => {
         </Paper>
       </Grid>
       <Grid item style={{ flexGrow: 1 }}>
-        <Chat messages={messages} incomingAvatar={incomingAvatar} outgoingAvatar={outgoingAvatar} />
+        <Chat incomingAvatar={incomingAvatar} outgoingAvatar={outgoingAvatar} />
         <InputBar onMessageSend={handleMessageSend} />
       </Grid>
     </Grid>
@@ -66,4 +66,6 @@ registerComponent({
   activator: () => true
 });
 
+registerOperator(ShowMessage, PLUGIN_NAME)
+registerOperator(SendMessageToGPT, PLUGIN_NAME)
 

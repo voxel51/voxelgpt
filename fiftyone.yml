@@ -7,3 +7,4 @@ version: 1.0.0
 js_bundle: dist/index.umd.js
 operators:
     - chatgpt_view_builder
+    - create_view_with_gpt

@@ -9,7 +9,7 @@ import useTypewriterEffect from './useTypewriterEffect';
 
 const Message = ({ type, avatar, content = '', button }) => {
   const theme = useTheme();
-  const animatedContent = useTypewriterEffect(type === 'incoming' ? content : '', 50);
+  const animatedContent = useTypewriterEffect(type === 'incoming' ? content : '', 5);
 
 
   if (button) {
