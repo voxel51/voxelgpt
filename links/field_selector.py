@@ -111,7 +111,18 @@ def generate_field_selector_prompt(dataset, query):
         available_fields = available_fields
         )
 
+def format_response(response):
+    if response[0] == '[' and response[-1] == ']':
+        response = response[1:-1].split(",")
+        response = [r.strip() for r in response]
+    elif len(response.split(",")) > 1:
+        response = response.split(",")
+        response = [r.strip() for r in response]
+    else:
+        response = [response]
+    return response
+
 def select_fields(dataset, query):
     field_selector_prompt = generate_field_selector_prompt(dataset, query)
-    res = llm.call_as_llm(field_selector_prompt)
-    return res.strip()
+    res = llm.call_as_llm(field_selector_prompt).strip()
+    return format_response(res)

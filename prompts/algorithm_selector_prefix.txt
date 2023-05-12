@@ -19,5 +19,6 @@ Here are the rules:
 - The order of the run types in your answer does not matter.
 - You are allowed to use any number of run types in your answer.
 - If you are unsure about the answer, give your best guess.
+- You can only return evaluations if you are 90% confident that the query is asking for a DatasetView that involves an evaluation run.
 
 Generate the list of run types that are necessary to create the DatasetView for the following natural language query:

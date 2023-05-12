@@ -143,7 +143,7 @@ def get_dataset_label_classes(dataset, label_field):
     field = get_label_field_label_string(label_field, field_type)
     return dataset.distinct(field)
 
-def validate_class_name(class_name, label_classes, label_field):
+def validate_class_name(class_name, label_classes):
     if class_name in label_classes:
         return class_name
     else:
@@ -161,8 +161,7 @@ def validate_class_name(class_name, label_classes, label_field):
 
 def select_label_field_classes(dataset, query, label_field):
     class_names = identify_named_classes(query, label_field)
-    if len(' '.join(class_names)) > len(query):
-        return '_CONFUSED_'
+
     if len(class_names) == 0:
         return []
     _classes = get_dataset_label_classes(dataset, label_field)
@@ -171,7 +170,7 @@ def select_label_field_classes(dataset, query, label_field):
 
     label_classes = []
     for cn in class_names:
-        cn_validated = validate_class_name(cn, _classes, label_field)
+        cn_validated = validate_class_name(cn, _classes)
         if cn_validated is not None:
             label_classes.append({cn:cn_validated})
         elif sm_flag:
@@ -180,12 +179,11 @@ def select_label_field_classes(dataset, query, label_field):
     
     return label_classes
 
-def select_label_classes(dataset, query, required_fields):
-    field_names = dataset.first().field_names
-    fields = [f.strip() for f in required_fields[1:-1].split(",")]
-    fields = [f for f in fields if f != "" and f in field_names]
+def select_label_classes(dataset, query, fields):
+    dataset_field_names = dataset.first().field_names
+    present_fields = [f for f in fields if f != "" and f in dataset_field_names]
     label_classes = {}
-    for field in fields:
+    for field in present_fields:
         field_type = get_field_type(dataset, field)
         if field_type in LABELS_WITH_CLASSES:
             field_label_classes = select_label_field_classes(

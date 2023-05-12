@@ -4,6 +4,8 @@
 
 __pycache__
 
+links/__pycache__
+
 *.egg-info
 
 **/*.DS_store
