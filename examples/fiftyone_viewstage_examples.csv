@@ -304,3 +304,6 @@ Retrieve the detection predictions with IoU > 80%,"[to_evaluation_patches(""det_
 Show me the evaluation patches sorted by IoU,"[to_evaluation_patches(""det_eval""), sort_by(""iou"")]",Jacob,image,FALSE
 Just show me false positive predictions,"[filter_labels(""predictions"", F(""eval_det"") == ""fp"")]",Jacob,image,FALSE
 Give me 10 random images with a false positive prediction,"[match(F(""eval_det_fp"")>0), take(10)]",Jacob,image,FALSE
+"Find all samples where the filepath contains ""08"" or ""09""","[match(F(""filepath"").contains_str([""08"", ""09""])]",Jacob,all,FALSE
+"Retrieve any images whose filepath has ""ab"" and ""xy""","[match(F(""filepath"").contains_str([""ab""]) & F(""filepath"").contains_str([""xy""]))]",Jacob,all,FALSE
+"Show me just the labels that have the tag ""tagA"" but don't have tag ""tagB""","[filter_labels(""predictions"", F(""tags"").contains(""tagA"") & ~F(""tags"").contains(""tagB""))]",Jacob,all,FALSE
