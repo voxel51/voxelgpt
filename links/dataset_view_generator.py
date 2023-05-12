@@ -62,7 +62,7 @@ def generate_evaluation_prompt(dataset, eval_key):
 
     if f"{eval_key}_tp" in field_names:
         prompt += EVAL_FIELDS_PROMPT_TEMPLATE.format(eval_tp_field=f"{eval_key}_tp", eval_fp_field=f"{eval_key}_fp", eval_fn_field=f"{eval_key}_fn")
-    
+
     return prompt
 
 
@@ -76,7 +76,7 @@ def generate_mistakenness_prompt(dataset, brain_key):
     missing_field = brc.missing_field
     if missing_field in field_names:
         prompt += missing_field_prompt.format(missing_field=missing_field)
-    
+
     spurious_field = brc.spurious_field
     if spurious_field in field_names:
         prompt += spurious_field_prompt.format(spurious_field=spurious_field)
@@ -107,7 +107,7 @@ def generate_runs_prompt(dataset, runs):
     ## If there are no runs, return an empty string
     if len(runs) == 0:
         return ""
-    
+
     header = "Here is the relevant information about the runs that were run on this dataset:\n"
     prompt = header
 
@@ -208,7 +208,7 @@ def split_into_stages(stages_text):
     st = stages_text[1:-1].replace(', ', ',').replace('\n', '')
     st = st.replace('\r', '').replace('\'', "\"")
     x = re.finditer(pattern, st)
-    
+
     stages = []
     spans = []
     for match in x:
@@ -252,6 +252,6 @@ def get_gpt_view_stage_strings(
     if '_MORE_' in response:
         return '_MORE_'
     elif "_CONFUSED_" in response:
-        return "_CONFUSED_" 
+        return "_CONFUSED_"
     else:
         return split_into_stages(response)

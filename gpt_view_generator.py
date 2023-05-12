@@ -104,7 +104,7 @@ def get_gpt_view_text(dataset, query, chat_history):
         dataset,
         runs,
         fields,
-        label_classes,
+        format_label_classes(label_classes),
         view_stage_descriptions,
         examples
     )
@@ -131,9 +131,10 @@ from IPython.display import clear_output
 def gpt(dataset):
     chat_history = []
     session = fo.launch_app(dataset, auto = False)
+    print("Hello! I'm here to help you explore your datasets.\nMy reponses are based off of our chat history. To clear my history and restart, enter 'reset'.\n")
     while True:
         clear_output(True)
-        input_text = "Hello! I'm here to help you explore your datasets.\nMy reponses are based off of our chat history. To clear my history and restart, enter 'reset'.\nHow can I help you? "
+        input_text = "How can I help you? "
         if len(chat_history) == 0:
             log_chat_history(input_text, "GPT", chat_history)
         query = input(input_text)
