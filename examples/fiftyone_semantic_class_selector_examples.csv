@@ -1,0 +1,6 @@
+class_name,available_label_classes,semantic_matches,added_by
+animal,"['chair', 'zebra', 'bulldog', 'arm', 'plant', television', 'pig']","['zebra', 'bulldog', 'pig']",Jacob
+table,"['Dining Table', 'House', 'Door Mat', 'Window Pane']",['Dining Table'],Jacob
+Location,"['daytime', 'night time', 'loc'] ",['loc'],Jacob
+ingredients,"['butter', 'sugar', 'panko bread crumbs', 'mixing bowl', 'fridge', 'soda']","['butter', 'sugar', 'panko bread crumbs']",Jacob
+US presidents,"['Hilary Clinton', 'Jack Dorsey', 'Alexander Hamilton']",[],Jacob

@@ -12,3 +12,5 @@ Here are the rules:
 - Just return the final list of strings, no intermediate code snippets or explanation, or newlines.
 - If no class names are required, return an empty list.
 - If you are unsure of the answer, just give me your best guess. You must respond with a list of strings.
+- Do not just give examples of subclasses of the class in question. Do NOT make up your own answers. 
+- The number of strings you return can be at MOST as long as the number of entities/classes referenced in the query. If you return more strings than the number of entities/classes referenced in the query, you will be penalized.
