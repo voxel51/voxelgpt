@@ -1,3 +1,10 @@
+"""
+GPT view builder plugin.
+
+| Copyright 2017-2023, Voxel51, Inc.
+| `voxel51.com <https://voxel51.com/>`_
+|
+"""
 import os
 import sys
 
@@ -25,14 +32,14 @@ class ChatGPTViewBuilder(foo.Operator):
         inputs.str(
             "query",
             label="query",
-            # required=True,
+            required=True,
             description="Tell ChatGPT what you'd like to do",
         )
         inputs.str(
             "chat_history",
             label="chat_history",
             description="Chat history for this conversation",
-            # required=False,
+            required=False,
         )
 
         return types.Property(inputs)

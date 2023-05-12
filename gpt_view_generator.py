@@ -1,5 +1,13 @@
-from IPython.display import clear_output
+"""
+GPT view generator.
+
+| Copyright 2017-2023, Voxel51, Inc.
+| `voxel51.com <https://voxel51.com/>`_
+|
+"""
 import traceback
+
+import fiftyone as fo
 
 from links.query_validator import validate_query
 from links.view_stage_example_selector import (
@@ -15,9 +23,6 @@ from links.field_selector import select_fields
 from links.label_class_selector import select_label_classes
 from links.dataset_view_generator import get_gpt_view_stage_strings
 from links.effective_query_generator import generate_effective_query
-
-import fiftyone as fo
-from fiftyone import ViewField as F
 
 
 def log_chat_history(text, speaker, history):
@@ -122,7 +127,7 @@ def ask_gpt_generator(dataset, query, chat_history=None):
         _label_classes = format_label_classes(label_classes)
         yield _logh(f"Identified label classes: {_label_classes}")
     else:
-        yield _logh(f"Did not identify any relevant label classes")
+        yield _logh("Did not identify any relevant label classes")
 
     examples = reformat_query(examples, label_classes)
 
