@@ -64,11 +64,11 @@ def get_gpt_view_text(dataset, query, chat_history):
     if dataset.media_type not in ["image", "video"]:
         print(f"At present, the FiftyOne GPT integration only supports image and video datasets. The dataset {dataset.name} has media type {dataset.media_type}. If you would like to use this feature, please try a different dataset.")
         return
-    
+
     valid = validate_query(query)
     if not valid:
         return '_CONFUSED_'
-    
+
     examples = generate_view_stage_examples_prompt(
         dataset, query
         )
@@ -93,14 +93,11 @@ def get_gpt_view_text(dataset, query, chat_history):
     if any([l > 0 for l in lens]):
         label_classes_text = f"Identified label classes: {format_label_classes(label_classes)}"
         log_and_print_chat_history(label_classes_text, "GPT", chat_history)
-        
-        print(
-            f"Identified label classes: {format_label_classes(label_classes)}"
-            )
+
     else:
         label_classes_text = f"Did not identify any relevant label classes"
         log_and_print_chat_history(label_classes_text, "GPT", chat_history)
-    
+
     examples = reformat_query(examples, label_classes)
 
     response = get_gpt_view_stage_strings(
@@ -114,7 +111,7 @@ def get_gpt_view_text(dataset, query, chat_history):
 
     if "metadata" in ''.join(response) and "metadata" not in list(run_keys.keys()):
         return "_NEED_METADATA_"
-    
+
     return response
 
 def create_view_from_stages(stages, dataset, session, chat_history):
@@ -146,13 +143,13 @@ def gpt(dataset):
         if query == "reset":
             chat_history = []
             continue
-        
+
         if len(chat_history) != 2:
             new_query = generate_effective_query(chat_history)
             if validate_query(new_query):
                 query = new_query
                 print(f"Effective query: {query}")
-        
+
         stages = get_gpt_view_text(dataset, query, chat_history)
 
         if stages == "_MORE_":
@@ -166,5 +163,5 @@ def gpt(dataset):
             continue
 
         create_view_from_stages(stages, dataset, session, chat_history)
-        
+
     return
