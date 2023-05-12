@@ -25,26 +25,24 @@ Here's some examples of things you can ask ChatGPT to do:
 
 If you want to run this locally, you'll need to:
 
-1. Clone the `fiftyone-gpt` repo
+1. Clone the repository:
 
 ```shell
 git clone https://github.com/voxel51/fiftyone-gpt
 ```
 
-2. Install the `fiftyone-gpt` package by `cd`ing into the repo and running:
+2. Install some packages:
 
 ```shell
-pip install -e .
+pip install openai langchain chromadb
 ```
 
 3. Provide your OpenAI API key
    ([create one](https://platform.openai.com/account/api-keys)):
 
 ```shell
-export OPENAI_API_KEY=<your key>
+export OPENAI_API_KEY=XXXXXXXX
 ```
-
-4. Something about plugin?
 
 ## Contributing
 
