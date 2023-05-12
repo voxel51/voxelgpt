@@ -162,6 +162,7 @@ class CreateViewWithGPT(foo.Operator):
     @property
     def resolve_inputs(self):
         inputs = types.Object()
+        inputs.str("message", label="Message", required=True)
         return types.Property(inputs)
     
     async def execute(self, ctx):
