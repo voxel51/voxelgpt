@@ -47,7 +47,7 @@ class ChatGPTViewBuilder(foo.Operator):
 
         return types.Property(inputs)
 
-    def execute(self, ctx):
+    async def execute(self, ctx):
         self._logs = []
 
         if ctx.view is not None:
