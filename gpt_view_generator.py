@@ -74,23 +74,23 @@ def ask_gpt_generator(dataset, query, chat_history=None, raw=False):
     if chat_history is None:
         chat_history = []
 
+    if dataset.media_type not in ("image", "video"):
+        raise Exception("Only image and video datasets are supported")
+
     def _log(message):
         _log_chat_history(message, "GPT", chat_history)
         return message if raw else _emit_log(message)
 
     def _error(message, code=None):
-        if raw:
-            raise Exception(message)
-
-        return _emit_error(
-            message,
-            trace=traceback.format_exc(),
-            code=code,
+        return (
+            message
+            if raw
+            else _emit_error(
+                message,
+                trace=traceback.format_exc(),
+                code=code,
+            )
         )
-
-    if dataset.media_type not in ("image", "video"):
-        yield _error("Only image and video datasets are supported", code=400)
-        return
 
     # Continuing an existing conversation
     if len(chat_history) > 2:
@@ -145,12 +145,12 @@ def ask_gpt_generator(dataset, query, chat_history=None, raw=False):
         examples,
     )
 
+    if "metadata" in ".".join(stages) and "metadata" not in runs:
+        stages = "_NEED_METADATA_"
+
     if raw:
         yield _log(stages)
         return
-
-    if "metadata" in ".".join(stages) and "metadata" not in runs:
-        stages = "_NEED_METADATA_"
 
     if stages == "_NEED_METADATA_":
         yield _log("Please compute metadata first")
@@ -172,8 +172,9 @@ def ask_gpt_generator(dataset, query, chat_history=None, raw=False):
         view = eval(code)
         yield _emit_view(view)
     except Exception as e:
-        yield _error(
-            "Failed to create view from stages: %s" % str(e), code=500
+        yield _log(
+            "Attempted to create view from stages, but resulted in invalid "
+            "view. Please try again"
         )
 
 
