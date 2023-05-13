@@ -22,6 +22,12 @@ LABEL_CLASS_SELECTOR_PREFIX_PATH = os.path.join(
 SEMANTIC_CLASS_SELECTOR_PREFIX_PATH = os.path.join(
     PROMPTS_DIR, "semantic_class_selector_prefix.txt"
 )
+LABEL_CLASS_EXAMPLES_PATH = os.path.join(
+    EXAMPLES_DIR, "fiftyone_label_class_examples.csv"
+)
+SEMANTIC_CLASS_SELECTOR_EXAMPLES_PATH = os.path.join(
+    EXAMPLES_DIR, "fiftyone_semantic_class_selector_examples.csv"
+)
 
 SEMANTIC_MATCH_THRESHOLD = 1000
 LABELS_WITH_CLASSES = (
@@ -37,7 +43,7 @@ llm = ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo")
 
 
 def get_label_class_selection_examples():
-    df = pd.read_csv("examples/fiftyone_label_class_examples.csv")
+    df = pd.read_csv(LABEL_CLASS_EXAMPLES_PATH)
     examples = []
 
     for _, row in df.iterrows():
@@ -51,7 +57,7 @@ def get_label_class_selection_examples():
 
 
 def get_semantic_class_selection_examples():
-    df = pd.read_csv("examples/fiftyone_semantic_class_selector_examples.csv")
+    df = pd.read_csv(SEMANTIC_CLASS_SELECTOR_EXAMPLES_PATH)
     examples = []
 
     for _, row in df.iterrows():

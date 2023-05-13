@@ -19,6 +19,9 @@ ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EXAMPLES_DIR = os.path.join(ROOT_DIR, "examples")
 
 EXAMPLE_EMBEDDINGS_PATH = os.path.join(EXAMPLES_DIR, "embeddings.json")
+VIEW_STAGE_EXAMPLES_PATH = os.path.join(
+    EXAMPLES_DIR, "fiftyone_viewstage_examples.csv"
+)
 
 COLLECTION_NAME = "fiftyone_view_stage_examples"
 
@@ -89,9 +92,7 @@ def create_chroma_collection():
         COLLECTION_NAME, embedding_function=ada_002
     )
 
-    examples = pd.read_csv(
-        "examples/fiftyone_viewstage_examples.csv", on_bad_lines="skip"
-    )
+    examples = pd.read_csv(VIEW_STAGE_EXAMPLES_PATH, on_bad_lines="skip")
     queries = examples["query"].tolist()
     media_types = examples["media_type"].tolist()
     geos = examples["geo"].tolist()
