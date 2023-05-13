@@ -105,22 +105,24 @@ def ask_gpt_generator(dataset, query, chat_history=None, raw=False):
 
     # View stages
     view_stages = get_most_relevant_view_stages(examples)
-    yield _log(f"Identified likely view stages: {view_stages}")
+    if view_stages:
+        yield _log(f"Identified potential view stages: {view_stages}")
 
     # Algorithms
     algorithms = select_algorithms(query)
-    if len(algorithms) > 0:
-        yield _log(f"Identified algorithms: {algorithms}")
+    if algorithms:
+        yield _log(f"Identified potential algorithms: {algorithms}")
 
     # Runs
     runs = select_runs(dataset, query, algorithms)
-    run_keys = {k: v["key"] for k, v in runs.items()}
-    if len(runs) > 0:
-        yield _log(f"Identified runs: {run_keys}")
+    if runs:
+        run_keys = {k: v["key"] for k, v in runs.items()}
+        yield _log(f"Identified potential runs: {run_keys}")
 
     # Fields
     fields = select_fields(dataset, query)
-    yield _log(f"Identified potentially relevant fields: {fields}")
+    if fields:
+        yield _log(f"Identified potential fields: {fields}")
 
     # Label classes
     label_classes = select_label_classes(dataset, query, fields)
@@ -130,9 +132,7 @@ def ask_gpt_generator(dataset, query, chat_history=None, raw=False):
 
     if any(len(v) > 0 for v in label_classes.values()):
         _label_classes = _format_label_classes(label_classes)
-        yield _log(f"Identified label classes: {_label_classes}")
-    else:
-        yield _log("Did not identify any relevant label classes")
+        yield _log(f"Identified potential label classes: {_label_classes}")
 
     examples = _reformat_query(examples, label_classes)
 
@@ -164,25 +164,26 @@ def ask_gpt_generator(dataset, query, chat_history=None, raw=False):
         yield _log("I'm sorry, I don't understand")
         return
 
-    yield _log(_format_stages(stages))
+    view_str = "view." + ".".join(stages)
+
+    yield _log("Okay, here's the view I'm going to load")
+    yield _log(view_str)
 
     try:
         view = _build_view(dataset, stages)
         yield _emit_view(view)
     except Exception as e:
-        yield _log(
-            "Attempted to create view from stages, but resulted in invalid "
-            "view. Please try again"
-        )
+        yield _log("Looks like the view was invalid. Please try again")
 
 
-def _build_view(dataset, stages):
+def _build_view(dataset, view_str):
     # These may be used by the `eval()`
     import fiftyone as fo
     from fiftyone import ViewField as F
 
     view = dataset.view()
-    return eval("view." + ".".join(stages))
+
+    return eval(view_str)
 
 
 def _log_chat_history(text, speaker, history):

@@ -40,15 +40,18 @@ class ChatGPTViewBuilder(foo.Operator):
         inputs.str(
             "query",
             label="query",
-            required=True,
+            # required=True,
             description="Tell ChatGPT what you'd like to do",
         )
+
+        """
         inputs.str(
             "chat_history",
             label="chat_history",
             description="Chat history for this conversation",
             required=False,
         )
+        """
 
         return types.Property(inputs)
 
@@ -90,14 +93,20 @@ class ChatGPTViewBuilder(foo.Operator):
         message = data["message"]
 
         self._logs.append(message)
-        msg = "\n".join(self._logs)
 
         outputs = types.Object()
+        outputs.str("query", label="You")
+        results = dict(query=ctx.params["query"])
+        for i, msg in enumerate(self._logs, 1):
+            field = "message" + str(i)
+            outputs.str(field, label="ChatGPT")
+            results[field] = msg
+
         return ctx.trigger(
             "show_output",
             params=dict(
                 outputs=types.Property(outputs).to_json(),
-                results={"message": msg},
+                results=results,
             ),
         )
 
@@ -110,6 +119,7 @@ class ChatGPTViewBuilder(foo.Operator):
 
         outputs = types.Object()
         outputs.str("msg", view=types.Error(label=msg))
+
         return ctx.trigger(
             "show_output",
             params=dict(outputs=types.Property(outputs).to_json()),
