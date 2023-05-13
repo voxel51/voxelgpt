@@ -149,7 +149,7 @@ def ask_gpt_generator(dataset, query, chat_history=None, raw=False):
         stages = "_NEED_METADATA_"
 
     if raw:
-        yield _log(stages)
+        yield stages
         return
 
     if stages == "_NEED_METADATA_":
@@ -167,15 +167,22 @@ def ask_gpt_generator(dataset, query, chat_history=None, raw=False):
     yield _log(_format_stages(stages))
 
     try:
-        view = dataset.view()
-        code = "view." + ".".join(stages)
-        view = eval(code)
+        view = _build_view(dataset, stages)
         yield _emit_view(view)
     except Exception as e:
         yield _log(
             "Attempted to create view from stages, but resulted in invalid "
             "view. Please try again"
         )
+
+
+def _build_view(dataset, stages):
+    # These may be used by the `eval()`
+    import fiftyone as fo
+    from fiftyone import ViewField as F
+
+    view = dataset.view()
+    return eval("view." + ".".join(stages))
 
 
 def _log_chat_history(text, speaker, history):
