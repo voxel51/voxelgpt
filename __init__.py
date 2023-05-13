@@ -1,5 +1,5 @@
 """
-GPT view builder plugin.
+GPT plugin.
 
 | Copyright 2017-2023, Voxel51, Inc.
 | `voxel51.com <https://voxel51.com/>`_
@@ -8,32 +8,37 @@ GPT view builder plugin.
 import os
 import random
 import sys
-
-import asyncio
+import traceback
 
 import fiftyone.operators as foo
 import fiftyone.operators.types as types
-import fiftyone.core.utils as fou
 
 
-def set_path():
-    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+class add_sys_path(object):
+    """Context manager that temporarily inserts a path to ``sys.path``."""
+
+    def __init__(self, path):
+        self.path = path
+
+    def __enter__(self):
+        sys.path.insert(0, self.path)
+
+    def __exit__(self, *args):
+        try:
+            sys.path.remove(self.path)
+        except:
+            pass
 
 
-gvg = fou.lazy_import("gpt_view_generator", callback=set_path)
-
-
-class ChatGPTViewBuilder(foo.Operator):
+class AskGPT(foo.Operator):
     @property
     def config(self):
         return foo.OperatorConfig(
-            name="chatgpt_view_builder",
-            label="ChatGPT view builder",
+            name="ask_gpt",
+            label="Ask GPT",
             execute_as_generator=True,
-            # unlisted=True,
         )
 
-    ## testing only
     def resolve_input(self, ctx):
         inputs = types.Object()
 
@@ -54,48 +59,49 @@ class ChatGPTViewBuilder(foo.Operator):
         return types.Property(inputs)
 
     async def execute(self, ctx):
-        self._logs = []
-
         if ctx.view is not None:
             sample_collection = ctx.view
         else:
             sample_collection = ctx.dataset
 
         query = ctx.params["query"]
-
-        chat_history = ctx.params.get("context", None)
-        if chat_history:
+        context = ctx.params.get("context", None)
+        if context:
             chat_history = chat_history.split("\n")
         else:
             chat_history = None
 
-        for response in gvg.ask_gpt_generator(
-            sample_collection, query, chat_history=chat_history
-        ):
-            type = response["type"]
-            data = response["data"]
+        logs = []
 
-            if type == "view":
-                yield self.view(ctx, data)
-            elif type == "log":
-                yield self.log(ctx, data)
-            elif type == "error":
-                yield self.error(ctx, data)
+        with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
+            from gpt_view_generator import ask_gpt_generator
+
+            try:
+                for response in ask_gpt_generator(
+                    sample_collection, query, chat_history=chat_history
+                ):
+                    type = response["type"]
+                    data = response["data"]
+
+                    if type == "view":
+                        yield self.view(ctx, data)
+                    elif type == "log":
+                        yield self.log(ctx, data, logs)
+            except Exception as e:
+                yield self.error(ctx, dict(exception=e))
 
     def view(self, ctx, data):
         view = data["view"]
         return ctx.trigger("set_view", params=dict(view=view._serialize()))
 
-    ## testing only
-    def log(self, ctx, data):
+    def log(self, ctx, data, logs):
         message = data["message"]
-
-        self._logs.append(message)
+        logs.append(message)
 
         outputs = types.Object()
         outputs.str("query", label="You")
         results = dict(query=ctx.params["query"])
-        for i, msg in enumerate(self._logs, 1):
+        for i, msg in enumerate(logs, 1):
             field = "message" + str(i)
             outputs.str(field, label="ChatGPT")
             results[field] = msg
@@ -108,11 +114,11 @@ class ChatGPTViewBuilder(foo.Operator):
             ),
         )
 
-    ## testing only
     def error(self, ctx, data):
-        message = data["message"]
-        trace = data["trace"]
+        exception = data["exception"]
 
+        message = str(exception)
+        trace = traceback.format_exc()
         msg = "%s\n\nTraceback\n%s" % (message, trace)
 
         outputs = types.Object()
@@ -122,27 +128,6 @@ class ChatGPTViewBuilder(foo.Operator):
             "show_output",
             params=dict(outputs=types.Property(outputs).to_json()),
         )
-
-    """
-    ## production
-    def log(self, ctx, data):
-        message = data["message"]
-        return ctx.trigger(
-            f"{self.plugin_name}/show_message",
-            params={"message": message},
-        )
-
-    ## production
-    def error(self, ctx, data):
-        message = data["message"]
-        trace = data["trace"]  # @todo use
-
-        # @todo format as error?
-        return ctx.trigger(
-            f"{self.plugin_name}/show_message",
-            params={"message": message},
-        )
-    """
 
 
 class CreateViewWithGPT(foo.Operator):
@@ -161,48 +146,65 @@ class CreateViewWithGPT(foo.Operator):
         return types.Property(inputs)
 
     async def execute(self, ctx):
-        example_messages = [
-            "Hello there...",
-            "These are not the droids you are looking for...",
-            "I'm sorry, Dave. I'm afraid I can't do that...",
-            # "What's the point of going out? We're just going to wind up back here anyway...",
-            # "I am Groot...",
-            # "You shall not pass!",
-            # "I'm Batman...",
-            # "D'oh!",
-            # "To infinity, and beyond!",
-            # "Where's the kaboom? There was supposed to be an earth-shattering kaboom!",
-            # "I'm going to make him an offer he can't refuse.",
-            # "May the Force be with you.",
-            # "I love the smell of napalm in the morning.",
-            # "You're gonna need a bigger boat.",
-            "I'll be back.",
-        ]
+        if ctx.view is not None:
+            sample_collection = ctx.view
+        else:
+            sample_collection = ctx.dataset
 
-        await asyncio.sleep(2)
-        random.shuffle(example_messages)
+        # @todo feed these as input
+        query = "show me 10 random samples"
+        chat_history = None
 
-        for msg in example_messages:
-            yield ctx.trigger(
-                f"{self.plugin_name}/show_message", params={"message": msg}
-            )
-            await asyncio.sleep(random.randint(1, 3))
+        with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
+            from gpt_view_generator import ask_gpt_generator
 
-        yield ctx.trigger(
+            try:
+                for response in ask_gpt_generator(
+                    sample_collection, query, chat_history=chat_history
+                ):
+                    type = response["type"]
+                    data = response["data"]
+
+                    if type == "view":
+                        yield self.view(ctx, data)
+                    elif type == "log":
+                        yield self.log(ctx, data)
+            except Exception as e:
+                yield self.error(ctx, dict(exception=e))
+
+        yield self.done(ctx)
+
+    def view(self, ctx, data):
+        view = data["view"]
+        return ctx.trigger("set_view", params=dict(view=view._serialize()))
+
+    def log(self, ctx, data):
+        message = data["message"]
+
+        return ctx.trigger(
             f"{self.plugin_name}/show_message",
-            params={"message": "OK now lets see 10 random samples!"},
+            params=dict(message=message),
         )
 
-        yield ctx.trigger(
-            "set_view", params={"view": ctx.dataset.take(10)._serialize()}
-        )
-
+    def done(self, ctx):
         yield ctx.trigger(
             f"{self.plugin_name}/show_message",
-            params={"done": True},
+            params=dict(done=True),
+        )
+
+    def error(self, ctx, data):
+        exception = data["exception"]
+
+        message = str(exception)
+        trace = traceback.format_exc()
+        msg = "%s\n\nTraceback\n%s" % (message, trace)
+
+        return ctx.trigger(
+            f"{self.plugin_name}/show_message",
+            params=dict(message=msg),
         )
 
 
 def register(p):
+    p.register(AskGPT)
     p.register(CreateViewWithGPT)
-    p.register(ChatGPTViewBuilder)

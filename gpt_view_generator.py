@@ -5,8 +5,6 @@ GPT view generator.
 | `voxel51.com <https://voxel51.com/>`_
 |
 """
-import traceback
-
 import fiftyone as fo
 
 from links.query_validator import validate_query
@@ -80,17 +78,6 @@ def ask_gpt_generator(dataset, query, chat_history=None, raw=False):
     def _log(message):
         _log_chat_history(message, "GPT", chat_history)
         return message if raw else _emit_log(message)
-
-    def _error(message, code=None):
-        return (
-            message
-            if raw
-            else _emit_error(
-                message,
-                trace=traceback.format_exc(),
-                code=code,
-            )
-        )
 
     # Continuing an existing conversation
     if len(chat_history) > 2:
@@ -237,17 +224,6 @@ def _format_label_classes(label_classes):
         label_class_dict[field] = field_list
 
     return label_class_dict
-
-
-def _emit_error(message, code=None, trace=None):
-    return {
-        "type": "error",
-        "data": {
-            "code": code,
-            "message": message,
-            "trace": trace,
-        },
-    }
 
 
 def _emit_log(message):
