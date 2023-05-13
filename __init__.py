@@ -13,9 +13,14 @@ import asyncio
 
 import fiftyone.operators as foo
 import fiftyone.operators.types as types
+import fiftyone.core.utils as fou
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from gpt_view_generator import ask_gpt_generator
+
+def set_path():
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+
+gvg = fou.lazy_import("gpt_view_generator", callback=set_path)
 
 
 class ChatGPTViewBuilder(foo.Operator):
@@ -63,7 +68,7 @@ class ChatGPTViewBuilder(foo.Operator):
         else:
             chat_history = None
 
-        for response in ask_gpt_generator(
+        for response in gvg.ask_gpt_generator(
             sample_collection, query, chat_history=chat_history
         ):
             type = response["type"]
@@ -139,14 +144,14 @@ class CreateViewWithGPT(foo.Operator):
             name="create_view_with_gpt",
             label="Create View with GPT",
             execute_as_generator=True,
-            unlisted=True
+            unlisted=True,
         )
-    
+
     @property
     def resolve_inputs(self):
         inputs = types.Object()
         return types.Property(inputs)
-    
+
     async def execute(self, ctx):
         example_messages = [
             "Hello there...",
@@ -185,7 +190,8 @@ class CreateViewWithGPT(foo.Operator):
         )
 
         yield ctx.trigger(
-            f"{self.plugin_name}/show_message", params={"done": True},
+            f"{self.plugin_name}/show_message",
+            params={"done": True},
         )
 
 
