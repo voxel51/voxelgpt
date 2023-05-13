@@ -40,18 +40,16 @@ class ChatGPTViewBuilder(foo.Operator):
         inputs.str(
             "query",
             label="query",
-            # required=True,
+            required=True,
             description="Tell ChatGPT what you'd like to do",
         )
 
-        """
         inputs.str(
-            "chat_history",
-            label="chat_history",
-            description="Chat history for this conversation",
+            "context",
+            label="context",
+            description="Context for this conversation",
             required=False,
         )
-        """
 
         return types.Property(inputs)
 
@@ -65,7 +63,7 @@ class ChatGPTViewBuilder(foo.Operator):
 
         query = ctx.params["query"]
 
-        chat_history = ctx.params.get("chat_history", None)
+        chat_history = ctx.params.get("context", None)
         if chat_history:
             chat_history = chat_history.split("\n")
         else:
