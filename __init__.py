@@ -118,12 +118,9 @@ class AskGPT(foo.Operator):
     def error(self, ctx, data):
         exception = data["exception"]
 
-        message = str(exception)
-        trace = traceback.format_exc()
-        msg = "%s\n\nTraceback\n%s" % (message, trace)
-
         outputs = types.Object()
-        outputs.str("msg", view=types.Error(label=msg))
+        outputs.str("message", view=types.Error(label=str(exception)))
+        outputs.str("trace", view=types.Error(label=traceback.format_exc()))
 
         return ctx.trigger(
             "show_output",
