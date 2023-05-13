@@ -137,7 +137,12 @@ def ask_gpt_generator(dataset, query, chat_history=None, raw=False):
     examples = _reformat_query(examples, label_classes)
 
     stages = get_gpt_view_stage_strings(
-        dataset, runs, fields, label_classes, view_stage_descriptions, examples
+        dataset,
+        runs,
+        fields,
+        _format_label_classes(label_classes),
+        view_stage_descriptions,
+        examples,
     )
 
     if raw:
