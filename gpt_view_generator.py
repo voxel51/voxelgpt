@@ -164,10 +164,12 @@ def ask_gpt_generator(dataset, query, chat_history=None, raw=False):
         yield _log("I'm sorry, I don't understand")
         return
 
-    view_str = "view." + ".".join(stages)
+    if isinstance(dataset, fo.Dataset):
+        view_str = "dataset." + ".".join(stages)
+    else:
+        view_str = "view." + ".".join(stages)
 
-    yield _log("Okay, here's the view I'm going to load")
-    yield _log(view_str)
+    yield _log("Okay, I'm going to load %s" % view_str)
 
     try:
         view = _build_view(dataset, view_str)
@@ -177,11 +179,12 @@ def ask_gpt_generator(dataset, query, chat_history=None, raw=False):
 
 
 def _build_view(dataset, view_str):
-    # These may be used by the `eval()`
+    # These symbols may be used by `eval()`
     import fiftyone as fo
     from fiftyone import ViewField as F
 
-    view = dataset.view()
+    if isinstance(dataset, fo.DatasetView):
+        view = dataset
 
     return eval(view_str)
 

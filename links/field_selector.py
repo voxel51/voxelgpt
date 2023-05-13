@@ -149,13 +149,13 @@ def generate_field_selector_prompt(dataset, query):
 def format_response(response):
     if response[0] == "[" and response[-1] == "]":
         response = response[1:-1].split(",")
-        response = [r.strip() for r in response]
     elif len(response.split(",")) > 1:
         response = response.split(",")
-        response = [r.strip() for r in response]
     else:
         response = [response]
-    return response
+
+    response = [r.strip() for r in response]
+    return [r for r in response if r]
 
 
 def select_fields(dataset, query):
