@@ -73,10 +73,10 @@ class AskGPT(foo.Operator):
 
         logs = []
 
-        with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
-            from gpt_view_generator import ask_gpt_generator
+        try:
+            with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
+                from gpt_view_generator import ask_gpt_generator
 
-            try:
                 for response in ask_gpt_generator(
                     sample_collection, query, chat_history=chat_history
                 ):
@@ -87,8 +87,8 @@ class AskGPT(foo.Operator):
                         yield self.view(ctx, data)
                     elif type == "log":
                         yield self.log(ctx, data, logs)
-            except Exception as e:
-                yield self.error(ctx, dict(exception=e))
+        except Exception as e:
+            yield self.error(ctx, dict(exception=e))
 
     def view(self, ctx, data):
         view = data["view"]
@@ -155,10 +155,10 @@ class CreateViewWithGPT(foo.Operator):
         query = "show me 10 random samples"
         chat_history = None
 
-        with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
-            from gpt_view_generator import ask_gpt_generator
+        try:
+            with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
+                from gpt_view_generator import ask_gpt_generator
 
-            try:
                 for response in ask_gpt_generator(
                     sample_collection, query, chat_history=chat_history
                 ):
@@ -169,10 +169,10 @@ class CreateViewWithGPT(foo.Operator):
                         yield self.view(ctx, data)
                     elif type == "log":
                         yield self.log(ctx, data)
-            except Exception as e:
-                yield self.error(ctx, dict(exception=e))
-
-        yield self.done(ctx)
+        except Exception as e:
+            yield self.error(ctx, dict(exception=e))
+        finally:
+            yield self.done(ctx)
 
     def view(self, ctx, data):
         view = data["view"]
@@ -186,12 +186,6 @@ class CreateViewWithGPT(foo.Operator):
             params=dict(message=message),
         )
 
-    def done(self, ctx):
-        yield ctx.trigger(
-            f"{self.plugin_name}/show_message",
-            params=dict(done=True),
-        )
-
     def error(self, ctx, data):
         exception = data["exception"]
 
@@ -202,6 +196,12 @@ class CreateViewWithGPT(foo.Operator):
         return ctx.trigger(
             f"{self.plugin_name}/show_message",
             params=dict(message=msg),
+        )
+
+    def done(self, ctx):
+        return ctx.trigger(
+            f"{self.plugin_name}/show_message",
+            params=dict(done=True),
         )
 
 
