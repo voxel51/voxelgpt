@@ -17,11 +17,12 @@ import fiftyone.operators.types as types
 class add_sys_path(object):
     """Context manager that temporarily inserts a path to ``sys.path``."""
 
-    def __init__(self, path):
+    def __init__(self, path, index=0):
         self.path = path
+        self.index = index
 
     def __enter__(self):
-        sys.path.insert(0, self.path)
+        sys.path.insert(self.index, self.path)
 
     def __exit__(self, *args):
         try:
