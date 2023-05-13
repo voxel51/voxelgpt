@@ -17,7 +17,15 @@ import fiftyone.brain as fob  # pylint: disable=import-error,no-name-in-module
 from fiftyone import ViewField as F
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from gpt_view_generator import get_gpt_view_text
+from gpt_view_generator import ask_gpt_generator
+
+
+def get_gpt_view_text(dataset, query):
+    response = None
+    for response in ask_gpt_generator(dataset, query, raw=True):
+        pass
+
+    return response
 
 
 def create_view_from_stages(text, dataset):
