@@ -118,6 +118,7 @@ class AskGPT(foo.Operator):
     def error(self, ctx, data):
         exception = data["exception"]
 
+        # @todo what's the right pattern to display this?
         outputs = types.Object()
         outputs.str("message", view=types.Error(label=str(exception)))
         outputs.str("trace", view=types.Error(label=traceback.format_exc()))

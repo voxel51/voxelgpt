@@ -7,9 +7,11 @@ Dataset view generator.
 """
 import os
 
-from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate, FewShotPromptTemplate
 import pandas as pd
+
+# pylint: disable=relative-beyond-top-level
+from .utils import get_llm
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -22,8 +24,6 @@ FIELD_SELECTION_EXAMPLES_PATH = os.path.join(
 FIELD_SELECTOR_PREFIX_PATH = os.path.join(
     PROMPTS_DIR, "field_selector_prefix.txt"
 )
-
-llm = ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo")
 
 
 def get_field_selection_examples():
@@ -160,5 +160,5 @@ def format_response(response):
 
 def select_fields(dataset, query):
     field_selector_prompt = generate_field_selector_prompt(dataset, query)
-    res = llm.call_as_llm(field_selector_prompt).strip()
+    res = get_llm().call_as_llm(field_selector_prompt).strip()
     return format_response(res)

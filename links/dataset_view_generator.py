@@ -8,8 +8,10 @@ Dataset view generator.
 import os
 import re
 
-from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
+
+# pylint: disable=relative-beyond-top-level
+from .utils import get_llm
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -43,8 +45,6 @@ A mistakenness run determines how mistaken each image is in the dataset. Its res
 When converting a natural language query into a DatasetView, if you determine that the mistakenness of the images is important, the following fields store relevant information:
 - {mistakenness_field}: the mistakenness score for each image
 """
-
-llm = ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo")
 
 mistakenness_field_prompt = PromptTemplate(
     input_variables=["mistakenness_field"],
@@ -237,7 +237,7 @@ def generate_dataset_view_text(
         examples_prompt,
     )
 
-    response = llm.call_as_llm(prompt)
+    response = get_llm().call_as_llm(prompt)
     return response.strip()
 
 

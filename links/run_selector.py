@@ -7,9 +7,11 @@ Run selector.
 """
 import os
 
-from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate, FewShotPromptTemplate
 import pandas as pd
+
+# pylint: disable=relative-beyond-top-level
+from .utils import get_llm
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -68,8 +70,6 @@ EXAMPLES_FILE = {
     ),
     "metadata": None,
 }
-
-llm = ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo")
 
 
 class RunSelector:
@@ -159,14 +159,16 @@ class RunSelector:
         if len(available_runs) == 0:
             self.print_compute_run_message()
             return None
-        elif len(available_runs) == 1:
+
+        if len(available_runs) == 1:
             return available_runs[0]
-        else:
-            prompt = self.generate_prompt(query, available_runs)
-            response = llm.call_as_llm(prompt).strip()
-            if response not in available_runs:
-                response = available_runs[0]
-            return response
+
+        prompt = self.generate_prompt(query, available_runs)
+        response = get_llm().call_as_llm(prompt).strip()
+        if response not in available_runs:
+            response = available_runs[0]
+
+        return response
 
 
 class EvaluationRunSelector(RunSelector):

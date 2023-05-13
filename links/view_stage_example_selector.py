@@ -9,10 +9,11 @@ import hashlib
 import json
 import os
 
-import chromadb
-from chromadb.utils import embedding_functions
 from langchain.prompts import FewShotPromptTemplate, PromptTemplate
 import pandas as pd
+
+# pylint: disable=relative-beyond-top-level
+from .utils import get_chromadb_client, get_embedding_function
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -23,32 +24,12 @@ VIEW_STAGE_EXAMPLES_PATH = os.path.join(
     EXAMPLES_DIR, "fiftyone_viewstage_examples.csv"
 )
 
-COLLECTION_NAME = "fiftyone_view_stage_examples"
+CHROMADB_COLLECTION_NAME = "fiftyone_view_stage_examples"
 
 VIEW_STAGE_EXAMPLE_PROMPT = PromptTemplate(
     input_variables=["input", "output"],
     template="Input: {input}\nOutput: {output}",
 )
-
-api_key = os.environ.get("OPENAI_API_KEY", None)
-if api_key is None:
-    raise ValueError(
-        "You must provide an OpenAI key by setting the OPENAI_API_KEY "
-        "environment variable"
-    )
-
-ada_002 = embedding_functions.OpenAIEmbeddingFunction(
-    api_key=api_key, model_name="text-embedding-ada-002"
-)
-
-client = chromadb.Client()
-
-
-def load_chromadb():
-    try:
-        client.get_collection(COLLECTION_NAME, embedding_function=ada_002)
-    except:
-        create_chroma_collection()
 
 
 def hash_query(query):
@@ -79,7 +60,7 @@ def get_or_create_embeddings(queries):
 
     if new_queries:
         print("Generating %d embeddings..." % len(new_queries))
-        new_embeddings = ada_002(new_queries)
+        new_embeddings = get_embedding_function()(new_queries)
         for key, embedding in zip(new_hashes, new_embeddings):
             example_embeddings[key] = embedding
 
@@ -94,9 +75,10 @@ def get_or_create_embeddings(queries):
     return query_embeddings
 
 
-def create_chroma_collection():
+def create_chroma_collection(client):
     collection = client.create_collection(
-        COLLECTION_NAME, embedding_function=ada_002
+        CHROMADB_COLLECTION_NAME,
+        embedding_function=get_embedding_function(),
     )
 
     examples = pd.read_csv(VIEW_STAGE_EXAMPLES_PATH, on_bad_lines="skip")
@@ -114,6 +96,8 @@ def create_chroma_collection():
     embeddings = get_or_create_embeddings(queries)
     collection.add(embeddings=embeddings, metadatas=metadatas, ids=ids)
 
+    return collection
+
 
 def has_geo_field(dataset):
     types = list(dataset.get_field_schema(flat=True).values())
@@ -122,10 +106,15 @@ def has_geo_field(dataset):
 
 
 def get_similar_examples(dataset, query):
-    load_chromadb()
-    collection = client.get_collection(
-        COLLECTION_NAME, embedding_function=ada_002
-    )
+    client = get_chromadb_client()
+
+    try:
+        collection = client.get_collection(
+            CHROMADB_COLLECTION_NAME,
+            embedding_function=get_embedding_function(),
+        )
+    except:
+        collection = create_chroma_collection(client)
 
     media_type = dataset.media_type
     geo = has_geo_field(dataset)

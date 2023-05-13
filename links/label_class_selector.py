@@ -7,9 +7,11 @@ Label class selector.
 """
 import os
 
-from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate, FewShotPromptTemplate
 import pandas as pd
+
+# pylint: disable=relative-beyond-top-level
+from .utils import get_llm
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -38,8 +40,6 @@ LABELS_WITH_CLASSES = (
     "Detections",
     "Polylines",
 )
-
-llm = ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo")
 
 
 def get_label_class_selection_examples():
@@ -142,7 +142,7 @@ def generate_semantic_class_selector_prompt(class_name, label_classes):
 
 def identify_named_classes(query, label_field):
     class_selector_prompt = generate_class_selector_prompt(query, label_field)
-    res = llm.call_as_llm(class_selector_prompt).strip()
+    res = get_llm().call_as_llm(class_selector_prompt).strip()
     ncs = [c.strip().replace("'", "") for c in res[1:-1].split(",")]
     ncs = [c for c in ncs if c != ""]
     return ncs
@@ -152,7 +152,7 @@ def identify_semantic_matches(class_name, label_classes):
     semantic_class_selector_prompt = generate_semantic_class_selector_prompt(
         class_name, label_classes
     )
-    res = llm.call_as_llm(semantic_class_selector_prompt).strip()
+    res = get_llm().call_as_llm(semantic_class_selector_prompt).strip()
     ncs = [c.strip().replace("'", "") for c in res[1:-1].split(",")]
     ncs = [c for c in ncs if c != ""]
     ncs = [c for c in ncs if c in label_classes and c != class_name]

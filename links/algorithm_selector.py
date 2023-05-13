@@ -7,9 +7,11 @@ Algorithm selector.
 """
 import os
 
-from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate, FewShotPromptTemplate
 import pandas as pd
+
+# pylint: disable=relative-beyond-top-level
+from .utils import get_llm
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -32,8 +34,6 @@ ALGORITHMS = (
     "evaluation",
     "metadata",
 )
-
-llm = ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo")
 
 
 def get_algorithm_examples():
@@ -80,5 +80,5 @@ def generate_algorithm_selector_prompt(query):
 
 def select_algorithms(query):
     algorithm_selector_prompt = generate_algorithm_selector_prompt(query)
-    res = llm.call_as_llm(algorithm_selector_prompt)
+    res = get_llm().call_as_llm(algorithm_selector_prompt)
     return [alg for alg in ALGORITHMS if alg in res]
