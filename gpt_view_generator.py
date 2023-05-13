@@ -170,7 +170,7 @@ def ask_gpt_generator(dataset, query, chat_history=None, raw=False):
     yield _log(view_str)
 
     try:
-        view = _build_view(dataset, stages)
+        view = _build_view(dataset, view_str)
         yield _emit_view(view)
     except Exception as e:
         yield _log("Looks like the view was invalid. Please try again")
