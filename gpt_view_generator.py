@@ -23,11 +23,11 @@ from links.dataset_view_generator import get_gpt_view_stage_strings
 from links.effective_query_generator import generate_effective_query
 
 
-def ask_gpt_interactive(dataset, session=None):
+def ask_gpt_interactive(sample_collection, session=None):
     chat_history = []
 
     if session is None:
-        session = fo.launch_app(dataset, auto=False)
+        session = fo.launch_app(sample_collection, auto=False)
 
     while True:
         prompt = "How can I help you?"
@@ -45,15 +45,17 @@ def ask_gpt_interactive(dataset, session=None):
 
         _log_chat_history(query, "User", chat_history)
 
-        view = ask_gpt(dataset, query, chat_history=chat_history)
+        response = ask_gpt(sample_collection, query, chat_history=chat_history)
 
-        if view is not None:
-            session.view = view
+        if isinstance(response, fo.DatasetView):
+            session.view = response
+        elif isinstance(response, fo.Dataset):
+            session.dataset = response
 
 
-def ask_gpt(dataset, query, chat_history=None):
+def ask_gpt(sample_collection, query, chat_history=None):
     for response in ask_gpt_generator(
-        dataset, query, chat_history=chat_history
+        sample_collection, query, chat_history=chat_history
     ):
         type = response["type"]
         data = response["data"]
@@ -61,19 +63,15 @@ def ask_gpt(dataset, query, chat_history=None):
         if type == "view":
             return data["view"]
         elif type == "log":
-            msg = data["message"]
-            print(msg)
-        elif type == "error":
-            msg = data["message"]
-            print("ERROR: %s" % msg)
+            print(data["message"])
 
 
-def ask_gpt_generator(dataset, query, chat_history=None, raw=False):
+def ask_gpt_generator(sample_collection, query, chat_history=None, raw=False):
     if chat_history is None:
         chat_history = []
 
-    if dataset.media_type not in ("image", "video"):
-        raise Exception("Only image and video datasets are supported")
+    if sample_collection.media_type not in ("image", "video"):
+        raise Exception("Only image or video collections are supported")
 
     def _log(message):
         _log_chat_history(message, "GPT", chat_history)
@@ -87,7 +85,7 @@ def ask_gpt_generator(dataset, query, chat_history=None, raw=False):
         yield _log("I'm sorry, I don't understand")
         return
 
-    examples = generate_view_stage_examples_prompt(dataset, query)
+    examples = generate_view_stage_examples_prompt(sample_collection, query)
     view_stage_descriptions = generate_view_stage_descriptions_prompt(examples)
 
     # View stages
@@ -101,18 +99,18 @@ def ask_gpt_generator(dataset, query, chat_history=None, raw=False):
         yield _log(f"Identified potential algorithms: {algorithms}")
 
     # Runs
-    runs = select_runs(dataset, query, algorithms)
+    runs = select_runs(sample_collection, query, algorithms)
     if runs:
         run_keys = {k: v["key"] for k, v in runs.items()}
         yield _log(f"Identified potential runs: {run_keys}")
 
     # Fields
-    fields = select_fields(dataset, query)
+    fields = select_fields(sample_collection, query)
     if fields:
         yield _log(f"Identified potential fields: {fields}")
 
     # Label classes
-    label_classes = select_label_classes(dataset, query, fields)
+    label_classes = select_label_classes(sample_collection, query, fields)
     if label_classes == "_CONFUSED_":
         yield _log("I'm sorry, I don't understand")
         return
@@ -124,7 +122,7 @@ def ask_gpt_generator(dataset, query, chat_history=None, raw=False):
     examples = _reformat_query(examples, label_classes)
 
     stages = get_gpt_view_stage_strings(
-        dataset,
+        sample_collection,
         runs,
         fields,
         _format_label_classes(label_classes),
@@ -151,27 +149,46 @@ def ask_gpt_generator(dataset, query, chat_history=None, raw=False):
         yield _log("I'm sorry, I don't understand")
         return
 
-    if isinstance(dataset, fo.Dataset):
-        view_str = "dataset." + ".".join(stages)
+    view_str = _build_view_str(sample_collection, stages)
+
+    if view_str:
+        yield _log("Okay, I'm going to load %s" % view_str)
+
+        try:
+            view = _build_view(sample_collection, view_str)
+            yield _emit_view(view)
+        except Exception as e:
+            yield _log("Looks like the view was invalid. Please try again")
     else:
-        view_str = "view." + ".".join(stages)
+        if isinstance(sample_collection, fo.DatasetView):
+            yield _log("I'm returning your entire view")
+        else:
+            yield _log("I'm returning your entire dataset")
 
-    yield _log("Okay, I'm going to load %s" % view_str)
-
-    try:
-        view = _build_view(dataset, view_str)
-        yield _emit_view(view)
-    except Exception as e:
-        yield _log("Looks like the view was invalid. Please try again")
+        yield _emit_view(sample_collection)
 
 
-def _build_view(dataset, view_str):
-    # These symbols may be used by `eval()`
+def _build_view_str(sample_collection, stages):
+    stages_str = ".".join(stages)
+    if not stages_str:
+        return None
+
+    if isinstance(sample_collection, fo.DatasetView):
+        return "view." + stages_str
+
+    return "dataset." + stages_str
+
+
+def _build_view(sample_collection, view_str):
     import fiftyone as fo
     from fiftyone import ViewField as F
 
-    if isinstance(dataset, fo.DatasetView):
-        view = dataset
+    if isinstance(sample_collection, fo.DatasetView):
+        view = sample_collection
+        dataset = view._root_dataset
+    else:
+        dataset = sample_collection
+        view = dataset.view()
 
     return eval(view_str)
 
