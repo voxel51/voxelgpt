@@ -30,16 +30,23 @@ VIEW_STAGE_EXAMPLE_PROMPT = PromptTemplate(
     template="Input: {input}\nOutput: {output}",
 )
 
-client = chromadb.Client()
+api_key = os.environ.get("OPENAI_API_KEY", None)
+if api_key is None:
+    raise ValueError(
+        "You must provide an OpenAI key by setting the OPENAI_API_KEY "
+        "environment variable"
+    )
 
 ada_002 = embedding_functions.OpenAIEmbeddingFunction(
-    api_key=os.getenv("OPENAI_API_KEY"), model_name="text-embedding-ada-002"
+    api_key=api_key, model_name="text-embedding-ada-002"
 )
+
+client = chromadb.Client()
 
 
 def load_chromadb():
     try:
-        _ = client.get_collection(COLLECTION_NAME, embedding_function=ada_002)
+        client.get_collection(COLLECTION_NAME, embedding_function=ada_002)
     except:
         create_chroma_collection()
 
