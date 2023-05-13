@@ -52,7 +52,7 @@ class ChatGPTViewBuilder(foo.Operator):
 
         return types.Property(inputs)
 
-    def execute(self, ctx):
+    async def execute(self, ctx):
         self._logs = []
 
         if ctx.view is not None:
@@ -83,7 +83,7 @@ class ChatGPTViewBuilder(foo.Operator):
 
     def view(self, ctx, data):
         view = data["view"]
-        return ctx.trigger("set_view", {"view": view._serialize()})
+        return ctx.trigger("set_view", params=dict(view=view._serialize()))
 
     ## testing only
     def log(self, ctx, data):
@@ -95,7 +95,7 @@ class ChatGPTViewBuilder(foo.Operator):
         outputs = types.Object()
         return ctx.trigger(
             "show_output",
-            dict(
+            params=dict(
                 outputs=types.Property(outputs).to_json(),
                 results={"message": msg},
             ),
@@ -112,7 +112,7 @@ class ChatGPTViewBuilder(foo.Operator):
         outputs.str("msg", view=types.Error(label=msg))
         return ctx.trigger(
             "show_output",
-            dict(outputs=types.Property(outputs).to_json()),
+            params=dict(outputs=types.Property(outputs).to_json()),
         )
 
     """
