@@ -1,30 +1,31 @@
-import React, { useState } from 'react';
-import { TextField } from '@mui/material';
+import React, { useState } from 'react'
+import { TextField } from '@mui/material'
 
 const InputBar = ({ disabled, onMessageSend }) => {
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState('')
 
   const handleKeyPress = (event) => {
     if (event.key === 'Enter' && message.trim()) {
-      onMessageSend(message);
-      setMessage('');
+      onMessageSend(message)
+      setMessage('')
     }
-  };
+  }
 
   return (
-    <div style={{background: '#fff', padding: '3px'}}>
+    <div style={{ padding: '0.5rem' }}>
       <TextField
         fullWidth
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         onKeyPress={handleKeyPress}
-        label="Type your message"
         variant="outlined"
         autofocus
         disabled={disabled}
+        size="small"
+        placeholder="Type your message"
       />
     </div>
-  );
-};
+  )
+}
 
-export default InputBar;
+export default InputBar
