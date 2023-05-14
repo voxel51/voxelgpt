@@ -1,13 +1,20 @@
-# Running Unit Tests
-To Run Single Test: pytest -q tests/<filename.py> -k <test_name>
+# Unit tests
 
-To Run All Tests From Single Test File: pytest -q tests/<filename>.py
+## Running tests
 
-To Run All Unit Tests: pytest -q tests/
+```py
+# All tests
+pytest -q tests/
 
-# Rules
-To add a new test, the name must start with test_
+# All tests in a module
+pytest -q tests/<filename>.py
 
-To add a new test class, the name must start with Test
+# Single test
+pytest -q tests/<filename.py> -k <test_name>
+```
 
-To add a new test file, the name must start with test_ or end with _test
+## Writing tests
+
+- New test modules must start with `test_` or end with `_test.py`
+- New test classes must start with `Test`
+- New test functions must start with `test_`

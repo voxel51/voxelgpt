@@ -1,11 +1,22 @@
+"""
+Run selector.
+
+| Copyright 2017-2023, Voxel51, Inc.
+| `voxel51.com <https://voxel51.com/>`_
+|
+"""
+import os
+
+from langchain.prompts import PromptTemplate, FewShotPromptTemplate
 import pandas as pd
 
-from langchain.chat_models import ChatOpenAI
-from langchain.prompts import PromptTemplate, FewShotPromptTemplate
+# pylint: disable=relative-beyond-top-level
+from .utils import get_llm
 
-llm = ChatOpenAI(temperature=0, model_name='gpt-3.5-turbo')
 
-#####################################################################
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+EXAMPLES_DIR = os.path.join(ROOT_DIR, "examples")
+PROMPTS_DIR = os.path.join(ROOT_DIR, "prompts")
 
 RUN_EXAMPLE_TEMPLATE = """
 Query: {query}
@@ -19,28 +30,47 @@ RUN_EXAMPLE_PROMPT = PromptTemplate(
 )
 
 RUN_PROMPT_PREFIX = "Return the name of the {run_type} run required to generate the DatasetView specified in the query, given available {run_type} runs:\n"
-RUN_PROMPT_SUFFIX = "Query: {query}\nAvailable runs: {available_runs}\nSelected run:"
+RUN_PROMPT_SUFFIX = (
+    "Query: {query}\nAvailable runs: {available_runs}\nSelected run:"
+)
 RUN_PROMPT_INPUTS = ["run_type", "query", "available_runs"]
 
 TASK_RULES_FILE = {
-    "uniqueness": "prompts/uniqueness_task_rules.txt",
-    "hardness": "prompts/hardness_task_rules.txt",
-    "mistakenness": "prompts/mistakenness_task_rules.txt",
-    "image_similarity": "prompts/image_similarity_task_rules.txt",
-    "text_similarity": "prompts/text_similarity_task_rules.txt",
-    "evaluation": "prompts/evaluation_task_rules.txt",
-    "metadata": None
+    "uniqueness": os.path.join(PROMPTS_DIR, "uniqueness_task_rules.txt"),
+    "hardness": os.path.join(PROMPTS_DIR, "hardness_task_rules.txt"),
+    "mistakenness": os.path.join(PROMPTS_DIR, "mistakenness_task_rules.txt"),
+    "image_similarity": os.path.join(
+        PROMPTS_DIR, "image_similarity_task_rules.txt"
+    ),
+    "text_similarity": os.path.join(
+        PROMPTS_DIR, "text_similarity_task_rules.txt"
+    ),
+    "evaluation": os.path.join(PROMPTS_DIR, "evaluation_task_rules.txt"),
+    "metadata": None,
 }
 
 EXAMPLES_FILE = {
-    "uniqueness": "examples/fiftyone_uniqueness_run_examples.csv",
-    "hardness": "examples/fiftyone_hardness_run_examples.csv",
-    "mistakenness": "examples/fiftyone_mistakenness_run_examples.csv",
-    "image_similarity": "examples/fiftyone_image_similarity_run_examples.csv",
-    "text_similarity": "examples/fiftyone_text_similarity_run_examples.csv",
-    "evaluation": "examples/fiftyone_evaluation_run_examples.csv",
-    "metadata": None
+    "uniqueness": os.path.join(
+        EXAMPLES_DIR, "fiftyone_uniqueness_run_examples.csv"
+    ),
+    "hardness": os.path.join(
+        EXAMPLES_DIR, "fiftyone_hardness_run_examples.csv"
+    ),
+    "mistakenness": os.path.join(
+        EXAMPLES_DIR, "fiftyone_mistakenness_run_examples.csv"
+    ),
+    "image_similarity": os.path.join(
+        EXAMPLES_DIR, "fiftyone_image_similarity_run_examples.csv"
+    ),
+    "text_similarity": os.path.join(
+        EXAMPLES_DIR, "fiftyone_text_similarity_run_examples.csv"
+    ),
+    "evaluation": os.path.join(
+        EXAMPLES_DIR, "fiftyone_evaluation_run_examples.csv"
+    ),
+    "metadata": None,
 }
+
 
 class RunSelector:
     """Class to select the correct run for a given query and dataset"""
@@ -84,19 +114,15 @@ class RunSelector:
 
     def load_prompt_prefix(self):
         with open(self.task_rules_file, "r") as f:
-            prompt_prefix = f.read() + '\n'
-        return prompt_prefix
+            return f.read() + "\n"
 
     def load_prompt_suffix(self, query, runs):
-        return self.prompt_suffix.format(
-            query=query,
-            runs=runs
-        )
+        return self.prompt_suffix.format(query=query, runs=runs)
 
     def generate_prompt(self, query, runs):
         prefix = self.load_prompt_prefix()
         body = self.generate_examples_prompt(query, runs)
-        return (prefix + body).replace('{', '(').replace('}', ')')
+        return (prefix + body).replace("{", "(").replace("}", ")")
 
     def generate_examples_prompt(self, query, available_runs):
         examples = self.get_examples()
@@ -109,23 +135,23 @@ class RunSelector:
             input_variables=RUN_PROMPT_INPUTS,
             example_separator="\n",
         ).format(
-            query=query,
-            available_runs=available_runs,
-            run_type=self.run_type
-            )
+            query=query, available_runs=available_runs, run_type=self.run_type
+        )
 
     def get_examples(self):
         with open(self.examples_file, "r") as f:
             df = pd.read_csv(f)
+
         examples = []
 
         for _, row in df.iterrows():
             example = {
                 "query": row.query,
                 "available_runs": row.available_runs,
-                "selected_run": row.selected_run
+                "selected_run": row.selected_run,
             }
             examples.append(example)
+
         return examples
 
     def select_run(self, query):
@@ -133,14 +159,16 @@ class RunSelector:
         if len(available_runs) == 0:
             self.print_compute_run_message()
             return None
-        elif len(available_runs) == 1:
+
+        if len(available_runs) == 1:
             return available_runs[0]
-        else:
-            prompt = self.generate_prompt(query, available_runs)
-            response = llm.call_as_llm(prompt).strip()
-            if response not in available_runs:
-                response = available_runs[0]
-            return response
+
+        prompt = self.generate_prompt(query, available_runs)
+        response = get_llm().call_as_llm(prompt).strip()
+        if response not in available_runs:
+            response = available_runs[0]
+
+        return response
 
 
 class EvaluationRunSelector(RunSelector):
@@ -203,7 +231,6 @@ class EvaluationRunSelector(RunSelector):
         except:
             pass
 
-
         return dict
 
     def get_available_runs(self):
@@ -211,6 +238,7 @@ class EvaluationRunSelector(RunSelector):
         runs = [self.dataset.get_evaluation_info(run) for run in runs]
         runs = [self.get_run_info(run) for run in runs]
         return runs
+
 
 class UniquenessRunSelector(RunSelector):
     """Class to select the correct uniqueness run for a given query and dataset"""
@@ -233,15 +261,20 @@ class UniquenessRunSelector(RunSelector):
 
     def get_run_info(self, run):
         key = run.key
-        model = run.config.model.split('.')[-1]
+        model = run.config.model.split(".")[-1]
         uniqueness_field = run.config.uniqueness_field
-        return {"key": key, "model": model, "uniqueness_field": uniqueness_field}
+        return {
+            "key": key,
+            "model": model,
+            "uniqueness_field": uniqueness_field,
+        }
 
     def get_available_runs(self):
-        runs = self.dataset.list_brain_runs(method = "uniqueness")
+        runs = self.dataset.list_brain_runs(method="uniqueness")
         runs = [self.dataset.get_brain_info(r) for r in runs]
         runs = [self.get_run_info(r) for r in runs]
         return runs
+
 
 class MistakennessRunSelector(RunSelector):
     """Class to select the correct mistakenness run for a given query and dataset"""
@@ -275,14 +308,15 @@ class MistakennessRunSelector(RunSelector):
             "key": key,
             "mistakenness_field": mistakenness_field,
             "prediction_field": prediction_field,
-            "label_field": label_field
-            }
+            "label_field": label_field,
+        }
 
     def get_available_runs(self):
-        runs = self.dataset.list_brain_runs(method = "mistakenness")
+        runs = self.dataset.list_brain_runs(method="mistakenness")
         runs = [self.dataset.get_brain_info(r) for r in runs]
         runs = [self.get_run_info(r) for r in runs]
         return runs
+
 
 class ImageSimilarityRunSelector(RunSelector):
     """Class to select the correct image_similarity run for a given query and dataset"""
@@ -318,8 +352,8 @@ class ImageSimilarityRunSelector(RunSelector):
             "method": method,
             "embeddings_field": embeddings_field,
             "model": model,
-            "patches_field": patches_field
-            }
+            "patches_field": patches_field,
+        }
 
     def get_available_runs(self):
         runs = []
@@ -331,6 +365,7 @@ class ImageSimilarityRunSelector(RunSelector):
 
         runs = [self.get_run_info(r) for r in runs]
         return runs
+
 
 class TextSimilarityRunSelector(RunSelector):
     """Class to select the correct text_similarity run for a given query and dataset"""
@@ -364,15 +399,18 @@ class TextSimilarityRunSelector(RunSelector):
             "key": key,
             "backend": method,
             "model": model,
-            "patches_field": patches_field
-            }
+            "patches_field": patches_field,
+        }
 
     def get_available_runs(self):
         runs = []
 
         for run in self.dataset.list_brain_runs():
             info = self.dataset.get_brain_info(run)
-            if "Similarity" in info.config.cls and info.config.supports_prompts:
+            if (
+                "Similarity" in info.config.cls
+                and info.config.supports_prompts
+            ):
                 runs.append(info)
 
         runs = [self.get_run_info(r) for r in runs]
@@ -405,13 +443,18 @@ class HardnessRunSelector(RunSelector):
         key = run.key
         label_field = run.config.label_field
         hardness_field = run.config.hardness_field
-        return {"key": key, "label_field": label_field, "hardness_field": hardness_field}
+        return {
+            "key": key,
+            "label_field": label_field,
+            "hardness_field": hardness_field,
+        }
 
     def get_available_runs(self):
-        runs = self.dataset.list_brain_runs(method = "hardness")
+        runs = self.dataset.list_brain_runs(method="hardness")
         runs = [self.dataset.get_brain_info(r) for r in runs]
         runs = [self.get_run_info(r) for r in runs]
         return runs
+
 
 class MetadataRunSelector(RunSelector):
     """Class for metadata computation validation"""
@@ -432,11 +475,11 @@ class MetadataRunSelector(RunSelector):
         return message + command
 
     def get_run_info(self, run):
-        return {"key": 'metadata'}
+        return {"key": "metadata"}
 
     def get_available_runs(self):
         nsamples = self.dataset.count()
-        if self.dataset.exists('metadata').count() != nsamples:
+        if self.dataset.exists("metadata").count() != nsamples:
             return []
         else:
             return [self.get_run_info("metadata")]
@@ -450,8 +493,8 @@ run_selectors = {
     "hardness": HardnessRunSelector,
     "evaluation": EvaluationRunSelector,
     "metadata": MetadataRunSelector,
-
 }
+
 
 class RunsSelector:
     """Class to select the correct runs for a given query and dataset"""
@@ -470,31 +513,7 @@ class RunsSelector:
 
         return selected_runs
 
+
 def select_runs(dataset, query, run_types):
     runs_selector = RunsSelector(dataset)
     return runs_selector.select_runs(query, run_types)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

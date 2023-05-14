@@ -1,27 +1,43 @@
+"""
+Query validator.
+
+| Copyright 2017-2023, Voxel51, Inc.
+| `voxel51.com <https://voxel51.com/>`_
+|
+"""
+import os
+
+from langchain.prompts import PromptTemplate, FewShotPromptTemplate
 import pandas as pd
 
-from langchain.chat_models import ChatOpenAI
-from langchain.prompts import PromptTemplate, FewShotPromptTemplate
+# pylint: disable=relative-beyond-top-level
+from .utils import get_llm
 
-llm = ChatOpenAI(temperature=0, model_name='gpt-3.5-turbo')
+
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+EXAMPLES_DIR = os.path.join(ROOT_DIR, "examples")
+PROMPTS_DIR = os.path.join(ROOT_DIR, "prompts")
+
+QUERY_VALIDATION_EXAMPLES_PATH = os.path.join(
+    EXAMPLES_DIR, "fiftyone_query_validation_examples.csv"
+)
+CONFUSED_TASK_RULES_PATH = os.path.join(PROMPTS_DIR, "confused_task_rules.txt")
 
 
 def load_query_validator_prefix():
-    with open('prompts/confused_task_rules.txt', 'r') as f:
-        prefix = f.read()
-    return prefix
+    with open(CONFUSED_TASK_RULES_PATH, "r") as f:
+        return f.read()
+
 
 def get_query_validation_examples():
-    df = pd.read_csv("examples/fiftyone_query_validation_examples.csv")
+    df = pd.read_csv(QUERY_VALIDATION_EXAMPLES_PATH)
     examples = []
 
     for _, row in df.iterrows():
-        example = {
-            "input": row.input,
-            "is_valid": row.is_valid
-        }
+        example = {"input": row.input, "is_valid": row.is_valid}
         examples.append(example)
     return examples
+
 
 def generate_query_validator_prompt(query):
     prefix = load_query_validator_prefix()
@@ -48,10 +64,11 @@ def generate_query_validator_prompt(query):
 
     return prefix + query_validator_prompt.format(input=query)
 
+
 def validate_query(query):
     prompt = generate_query_validator_prompt(query)
-    res = llm.call_as_llm(prompt).strip()
-    if res == 'N':
+    res = get_llm().call_as_llm(prompt).strip()
+    if res == "N":
         return False
     else:
         return True

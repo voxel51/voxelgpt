@@ -1,37 +1,56 @@
+"""
+Algorithm selector.
+
+| Copyright 2017-2023, Voxel51, Inc.
+| `voxel51.com <https://voxel51.com/>`_
+|
+"""
+import os
+
+from langchain.prompts import PromptTemplate, FewShotPromptTemplate
 import pandas as pd
 
-from langchain.chat_models import ChatOpenAI
-from langchain.prompts import PromptTemplate, FewShotPromptTemplate
+# pylint: disable=relative-beyond-top-level
+from .utils import get_llm
 
-llm = ChatOpenAI(temperature=0, model_name='gpt-3.5-turbo')
 
-ALGORITHMS = (
-        'uniqueness', 
-        'image_similarity', 
-        'text_similarity',
-        'mistakenness',
-        'hardness',
-        'evaluation',
-        'metadata'
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+EXAMPLES_DIR = os.path.join(ROOT_DIR, "examples")
+PROMPTS_DIR = os.path.join(ROOT_DIR, "prompts")
+
+ALGORITHM_EXAMPLES_PATH = os.path.join(
+    EXAMPLES_DIR, "fiftyone_algorithm_examples.csv"
+)
+ALGORITHM_SELECTOR_PREFIX_PATH = os.path.join(
+    PROMPTS_DIR, "algorithm_selector_prefix.txt"
 )
 
+ALGORITHMS = (
+    "uniqueness",
+    "image_similarity",
+    "text_similarity",
+    "mistakenness",
+    "hardness",
+    "evaluation",
+    "metadata",
+)
+
+
 def get_algorithm_examples():
-    df = pd.read_csv("examples/fiftyone_algorithm_examples.csv")
+    df = pd.read_csv(ALGORITHM_EXAMPLES_PATH)
     examples = []
 
     for _, row in df.iterrows():
         algorithms_used = [alg for alg in ALGORITHMS if row[alg] == "Y"]
-        example = {
-            "query": row.prompt,
-            "algorithms": algorithms_used
-        }
+        example = {"query": row.prompt, "algorithms": algorithms_used}
         examples.append(example)
     return examples
 
+
 def load_algorithm_selector_prefix():
-    with open("prompts/algorithm_selector_prefix.txt", "r") as f:
-        prefix = f.read()
-    return prefix
+    with open(ALGORITHM_SELECTOR_PREFIX_PATH, "r") as f:
+        return f.read()
+
 
 def generate_algorithm_selector_prompt(query):
     prefix = load_algorithm_selector_prefix()
@@ -56,9 +75,10 @@ def generate_algorithm_selector_prompt(query):
         example_separator="\n",
     )
 
-    return algorithm_selector_prompt.format(query = query)
+    return algorithm_selector_prompt.format(query=query)
+
 
 def select_algorithms(query):
     algorithm_selector_prompt = generate_algorithm_selector_prompt(query)
-    res = llm.call_as_llm(algorithm_selector_prompt)
+    res = get_llm().call_as_llm(algorithm_selector_prompt)
     return [alg for alg in ALGORITHMS if alg in res]
