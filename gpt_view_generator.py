@@ -36,7 +36,7 @@ def reformat_query(examples, label_classes):
     for k, v in class_name_map.items():
         if type(v) == str:
             query = query.replace(k, v)
-        else:
+        elif v:
             clarification = f" where by {k} I mean any of {v}"
             query += clarification
 
@@ -56,6 +56,7 @@ def format_label_classes(label_classes):
             else:
                 field_list += el_val
         label_class_dict[field] = field_list
+
     return label_class_dict
 
 
