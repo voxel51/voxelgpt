@@ -242,24 +242,17 @@ def get_similar_examples(sample_collection, query, runs, label_fields):
         
         _filter = {"$and": [_filter, _label_filter]}
 
+    def add_and_to_filter(_filter, new_str):
+        _filter = {"$and": [_filter, {new_str: {"$eq": "0"}}]}
+        return _filter
+    
+    match_filter = red_label_fields and not text_sim
 
-    if not geo:
-        _filter = {"$and": [_filter, {"geo": {"$eq": "0"}}]}
+    conds = [geo, text_sim, image_sim, meta, eval, match_filter]
+    strs = ["geo", "text_sim", "image_sim", "meta", "eval", "match_filter"]
 
-    if not text_sim:
-        _filter = {"$and": [_filter, {"text_sim": {"$eq": "0"}}]}
-        
-    if not image_sim:
-        _filter = {"$and": [_filter, {"image_sim": {"$eq": "0"}}]}
-
-    if not meta:
-        _filter = {"$and": [_filter, {"meta": {"$eq": "0"}}]}
-
-    if not eval:
-        _filter = {"$and": [_filter, {"eval": {"$eq": "0"}}]}
-
-    if text_sim and not red_label_fields:
-        _filter = {"$and": [_filter, {"match_filter": {"$eq": "0"}}]}
+    for cond, new_str in zip(conds, strs):
+        _filter = add_and_to_filter(_filter, new_str) if not cond else _filter
 
     res = collection.query(
         query_texts=[query], n_results=20, where=_filter, include=["metadatas"]
@@ -311,5 +304,4 @@ def generate_view_stage_examples_prompt(
     
     prompt = similar_examples_prompt_template.format(text=query)
     prompt = _replace_run_keys(prompt, runs)
-    print(prompt)
     return prompt
