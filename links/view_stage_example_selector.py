@@ -77,6 +77,10 @@ def get_or_create_embeddings(queries):
 def _format_bool_column(col):
     return [str(int(entry)) for entry in col.tolist()]
 
+def _contains_match_or_filter_labels(stages_list):
+    cond = ("match" in stages_list) or ("filter_labels" in stages_list)
+    return str(int(cond))
+
 def create_chroma_collection(client):
     collection = client.create_collection(
         CHROMADB_COLLECTION_NAME,
@@ -94,6 +98,8 @@ def create_chroma_collection(client):
     metas = _format_bool_column(examples["metadata"])
 
     stages_lists = examples["stages"].tolist()
+    match_filter = [_contains_match_or_filter_labels(sl) for sl in stages_lists]
+
     ids = [f"{i}" for i in range(len(queries))]
     metadatas = [
         {
@@ -106,8 +112,9 @@ def create_chroma_collection(client):
             "image_sim": ims,
             "eval": eval,
             "meta": meta,
+            "match_filter": mf,
             }
-        for query, sl, mt, geo, lt, ts, ims, eval, meta in zip(
+        for query, sl, mt, geo, lt, ts, ims, eval, meta, mf in zip(
             queries, 
             stages_lists, 
             media_types, 
@@ -117,6 +124,7 @@ def create_chroma_collection(client):
             image_sims,
             evals,
             metas,
+            match_filter,
             )
     ]
 
@@ -157,6 +165,36 @@ def _replace_run_keys(prompt, runs):
             )
     return prompt
 
+def _count_empty_class_names(label_field):
+    return [
+        list(class_name.values())[0] 
+        for class_name in label_field
+        ].count([])
+
+def _reduce_label_fields(label_fields):
+    label_field_keys = list(label_fields.keys())
+    if len(label_field_keys) == 0:
+        return None, None
+    elif len(label_field_keys) > 0:
+        empty_counts = [
+            _count_empty_class_names(label_fields[key])
+            for key in label_field_keys
+        ]
+        min_empty_count = min(empty_counts)
+        valid_keys = [
+            key for key, count in zip(label_field_keys, empty_counts)
+            if count == min_empty_count
+        ]
+        return {key: label_fields[key] for key in valid_keys}, min_empty_count
+
+def _parse_runs_and_labels(runs, label_fields):
+    reduced_label_fields, count = _reduce_label_fields(label_fields.copy())
+    reduced_runs = runs.copy()
+    if count is not None and count > 0 and "text_similarity" in reduced_runs:
+        reduced_label_fields = None
+
+    return reduced_runs, reduced_label_fields
+
 def get_similar_examples(sample_collection, query, runs, label_fields):
     client = get_chromadb_client()
 
@@ -168,12 +206,14 @@ def get_similar_examples(sample_collection, query, runs, label_fields):
     except:
         collection = create_chroma_collection(client)
 
+    red_runs, red_label_fields = _parse_runs_and_labels(runs, label_fields)
+
     media_type = sample_collection.media_type
     geo = has_geo_field(sample_collection)
-    text_sim = "text_similarity" in runs
-    image_sim = "image_similarity" in runs
-    meta = "metadata" in runs
-    eval = "eval" in runs
+    text_sim = "text_similarity" in red_runs
+    image_sim = "image_similarity" in red_runs
+    meta = "metadata" in red_runs
+    eval = "eval" in red_runs
 
     _filter = {
         "$or": [
@@ -182,11 +222,11 @@ def get_similar_examples(sample_collection, query, runs, label_fields):
         ]
     }
 
-    if label_fields:
+    if red_label_fields:
         label_types = list(set(
             [
                 get_label_type(sample_collection, field) 
-                for field in label_fields
+                for field in red_label_fields
                 ]
             ))
         label_types.append("all")
@@ -217,6 +257,9 @@ def get_similar_examples(sample_collection, query, runs, label_fields):
 
     if not eval:
         _filter = {"$and": [_filter, {"eval": {"$eq": "0"}}]}
+
+    if text_sim and not red_label_fields:
+        _filter = {"$and": [_filter, {"match_filter": {"$eq": "0"}}]}
 
     res = collection.query(
         query_texts=[query], n_results=20, where=_filter, include=["metadatas"]
@@ -268,4 +311,5 @@ def generate_view_stage_examples_prompt(
     
     prompt = similar_examples_prompt_template.format(text=query)
     prompt = _replace_run_keys(prompt, runs)
+    print(prompt)
     return prompt
