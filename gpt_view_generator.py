@@ -103,21 +103,23 @@ def ask_gpt_generator(sample_collection, query, chat_history=None, raw=False):
 
     # Label classes
     label_classes = select_label_classes(sample_collection, query, fields)
-    if label_classes == "_CONFUSED_":
+    if label_classes == "_CONFUSED_" and "text_similarity" not in runs:
         yield _log("I'm sorry, I don't understand")
         return
+    elif label_classes == "_CONFUSED_":
+        label_classes = {}
 
     if any(len(v) > 0 for v in label_classes.values()):
         _label_classes = _format_label_classes(label_classes)
         yield _log(f"Identified potential label classes: {_label_classes}")
     
-    _label_fields = list(label_classes.keys())
+    # _label_fields = list(label_classes.keys())
 
     examples = generate_view_stage_examples_prompt(
         sample_collection, 
         query,
         runs,
-        _label_fields
+        label_classes
         )
     view_stage_descriptions = generate_view_stage_descriptions_prompt(examples)
 
