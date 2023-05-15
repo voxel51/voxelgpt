@@ -74,41 +74,6 @@ EVAL_FIELDS_PROMPT_TEMPLATE = PromptTemplate(
 )
 
 
-def generate_evaluation_prompt(dataset, eval_key):
-    field_names = dataset.first().field_names
-
-    prompt = EVALUATION_PROMPT_TEMPLATE.format(eval_key=eval_key)
-
-    if f"{eval_key}_tp" in field_names:
-        prompt += EVAL_FIELDS_PROMPT_TEMPLATE.format(
-            eval_tp_field=f"{eval_key}_tp",
-            eval_fp_field=f"{eval_key}_fp",
-            eval_fn_field=f"{eval_key}_fn",
-        )
-
-    return prompt
-
-
-def generate_mistakenness_prompt(dataset, brain_key):
-    field_names = dataset.first().field_names
-
-    brc = dataset.get_brain_info(brain_key).config
-    mistakenness_field = brc.mistakenness_field
-    prompt = mistakenness_field_prompt.format(
-        mistakenness_field=mistakenness_field
-    )
-
-    missing_field = brc.missing_field
-    if missing_field in field_names:
-        prompt += missing_field_prompt.format(missing_field=missing_field)
-
-    spurious_field = brc.spurious_field
-    if spurious_field in field_names:
-        prompt += spurious_field_prompt.format(spurious_field=spurious_field)
-
-    return prompt
-
-
 UNIQUENESS_PROMPT = PromptTemplate(
     input_variables=["uniqueness_field"],
     template=UNIQUENESS_PROMPT_TEMPLATE,
@@ -130,7 +95,42 @@ TEXT_SIMILARITY_PROMPT = PromptTemplate(
 )
 
 
-def generate_runs_prompt(dataset, runs):
+def generate_evaluation_prompt(sample_collection, eval_key):
+    schema = sample_collection.get_field_schema()
+
+    prompt = EVALUATION_PROMPT_TEMPLATE.format(eval_key=eval_key)
+
+    if f"{eval_key}_tp" in schema:
+        prompt += EVAL_FIELDS_PROMPT_TEMPLATE.format(
+            eval_tp_field=f"{eval_key}_tp",
+            eval_fp_field=f"{eval_key}_fp",
+            eval_fn_field=f"{eval_key}_fn",
+        )
+
+    return prompt
+
+
+def generate_mistakenness_prompt(sample_collection, brain_key):
+    schema = sample_collection.get_field_schema()
+
+    brc = sample_collection.get_brain_info(brain_key).config
+    mistakenness_field = brc.mistakenness_field
+    prompt = mistakenness_field_prompt.format(
+        mistakenness_field=mistakenness_field
+    )
+
+    missing_field = brc.missing_field
+    if missing_field in schema:
+        prompt += missing_field_prompt.format(missing_field=missing_field)
+
+    spurious_field = brc.spurious_field
+    if spurious_field in schema:
+        prompt += spurious_field_prompt.format(spurious_field=spurious_field)
+
+    return prompt
+
+
+def generate_runs_prompt(sample_collection, runs):
     ## If there are no runs, return an empty string
     if len(runs) == 0:
         return ""
@@ -164,19 +164,19 @@ def generate_runs_prompt(dataset, runs):
         text_similarity_key = runs["text_similarity"]
         text_similarity_prompt = TEXT_SIMILARITY_PROMPT.format(
             text_similarity_key=text_similarity_key,
-            brain_key=text_similarity_key["key"]
+            brain_key=text_similarity_key["key"],
         )
         prompt += text_similarity_prompt
 
     if "mistakenness" in runs:
         mistakenness_prompt = generate_mistakenness_prompt(
-            dataset, runs["mistakenness"]["key"]
+            sample_collection, runs["mistakenness"]["key"]
         )
         prompt += mistakenness_prompt
 
     if "evaluation" in runs:
         evaluation_prompt = generate_evaluation_prompt(
-            dataset, runs["evaluation"]["key"]
+            sample_collection, runs["evaluation"]["key"]
         )
         prompt += evaluation_prompt
 
@@ -204,7 +204,7 @@ def generate_dataset_view_prompt_prefix(available_fields, label_classes):
 
 
 def generate_dataset_view_prompt(
-    dataset,
+    sample_collection,
     required_runs,
     available_fields,
     label_classes,
@@ -215,14 +215,14 @@ def generate_dataset_view_prompt(
     prompt = generate_dataset_view_prompt_prefix(
         available_fields, label_classes
     )
-    prompt += generate_runs_prompt(dataset, required_runs)
+    prompt += generate_runs_prompt(sample_collection, required_runs)
     prompt += view_stage_descriptions
     prompt += examples_prompt
     return prompt
 
 
 def generate_dataset_view_text(
-    dataset,
+    sample_collection,
     required_runs,
     available_fields,
     label_classes,
@@ -230,7 +230,7 @@ def generate_dataset_view_text(
     examples_prompt,
 ):
     prompt = generate_dataset_view_prompt(
-        dataset,
+        sample_collection,
         required_runs,
         available_fields,
         label_classes,
@@ -280,7 +280,7 @@ def split_into_stages(stages_text):
 
 
 def get_gpt_view_stage_strings(
-    dataset,
+    sample_collection,
     required_brain_runs,
     available_fields,
     label_classes,
@@ -288,7 +288,7 @@ def get_gpt_view_stage_strings(
     examples_prompt,
 ):
     response = generate_dataset_view_text(
-        dataset,
+        sample_collection,
         required_brain_runs,
         available_fields,
         label_classes,

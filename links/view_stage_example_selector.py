@@ -99,13 +99,13 @@ def create_chroma_collection(client):
     return collection
 
 
-def has_geo_field(dataset):
-    types = list(dataset.get_field_schema(flat=True).values())
+def has_geo_field(sample_collection):
+    types = list(sample_collection.get_field_schema(flat=True).values())
     types = [type(t) for t in types]
     return any(["Geo" in t.__name__ for t in types])
 
 
-def get_similar_examples(dataset, query):
+def get_similar_examples(sample_collection, query):
     client = get_chromadb_client()
 
     try:
@@ -116,8 +116,8 @@ def get_similar_examples(dataset, query):
     except:
         collection = create_chroma_collection(client)
 
-    media_type = dataset.media_type
-    geo = has_geo_field(dataset)
+    media_type = sample_collection.media_type
+    geo = has_geo_field(sample_collection)
 
     _media_filter = {
         "$or": [
@@ -142,8 +142,8 @@ def get_similar_examples(dataset, query):
     return similar_examples
 
 
-def generate_view_stage_examples_prompt_template(dataset, query):
-    examples = get_similar_examples(dataset, query)
+def generate_view_stage_examples_prompt_template(sample_collection, query):
+    examples = get_similar_examples(sample_collection, query)
     example_prompt = VIEW_STAGE_EXAMPLE_PROMPT
     return FewShotPromptTemplate(
         examples=examples,
@@ -154,8 +154,8 @@ def generate_view_stage_examples_prompt_template(dataset, query):
     )
 
 
-def generate_view_stage_examples_prompt(dataset, query):
+def generate_view_stage_examples_prompt(sample_collection, query):
     similar_examples_prompt_template = (
-        generate_view_stage_examples_prompt_template(dataset, query)
+        generate_view_stage_examples_prompt_template(sample_collection, query)
     )
     return similar_examples_prompt_template.format(text=query)

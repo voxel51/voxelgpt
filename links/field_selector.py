@@ -37,6 +37,7 @@ def get_field_selection_examples():
             "required_fields": row.required_fields,
         }
         examples.append(example)
+
     return examples
 
 
@@ -46,14 +47,12 @@ def load_field_selector_prefix():
 
 
 def get_field_type(sample, field_name):
-    """Assumes dataset has at least one sample"""
-    field_type = (
+    return (
         str(type(sample[field_name]))
         .split(".")[-1]
         .replace("'>", "")
         .replace("<class '", "")
     )
-    return field_type
 
 
 def initialize_available_fields_list():
@@ -66,13 +65,14 @@ def initialize_available_fields_list():
 def remove_field_from_list(field_names, field_name):
     if field_name in field_names:
         field_names.remove(field_name)
+
     return field_names
 
 
-def remove_brain_run_fields(dataset, field_names):
-    br_names = dataset.list_brain_runs()
+def remove_brain_run_fields(sample_collection, field_names):
+    br_names = sample_collection.list_brain_runs()
     for brn in br_names:
-        br = dataset.get_brain_info(brn)
+        br = sample_collection.get_brain_info(brn)
         if "Similarity" in br.config.cls:
             continue
         elif br.config.method == "hardness":
@@ -97,16 +97,17 @@ def remove_brain_run_fields(dataset, field_names):
             field_names = remove_field_from_list(
                 field_names, br.config.uniqueness_field
             )
+
     return field_names
 
 
-def get_available_fields(dataset):
-    sample = dataset.first()
+def get_available_fields(sample_collection):
+    sample = sample_collection.first()
     field_names = list(sample.field_names)
 
     available_fields = initialize_available_fields_list()
 
-    for fn in remove_brain_run_fields(dataset, field_names):
+    for fn in remove_brain_run_fields(sample_collection, field_names):
         if fn in ["id", "filepath", "tags", "metadata"]:
             continue
         field_type = get_field_type(sample, fn)
@@ -116,8 +117,8 @@ def get_available_fields(dataset):
     return available_fields
 
 
-def generate_field_selector_prompt(dataset, query):
-    available_fields = get_available_fields(dataset)
+def generate_field_selector_prompt(sample_collection, query):
+    available_fields = get_available_fields(sample_collection)
     prefix = load_field_selector_prefix()
     field_selection_examples = get_field_selection_examples()
 
@@ -158,7 +159,9 @@ def format_response(response):
     return [r for r in response if r]
 
 
-def select_fields(dataset, query):
-    field_selector_prompt = generate_field_selector_prompt(dataset, query)
+def select_fields(sample_collection, query):
+    field_selector_prompt = generate_field_selector_prompt(
+        sample_collection, query
+    )
     res = get_llm().call_as_llm(field_selector_prompt).strip()
     return format_response(res)

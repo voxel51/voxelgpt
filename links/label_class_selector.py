@@ -158,11 +158,12 @@ def identify_semantic_matches(class_name, label_classes):
     ncs = [c for c in ncs if c in label_classes and c != class_name]
     if len(ncs) == 1:
         return ncs[0]
+
     return ncs
 
 
-def get_field_type(dataset, field_name):
-    sample = dataset.first()
+def get_field_type(sample_collection, field_name):
+    sample = sample_collection.first()
     field = sample.get_field(field_name)
     field_type = type(field).__name__
     return field_type
@@ -175,10 +176,10 @@ def get_label_field_label_string(label_field, label_type):
         return f"{label_field}.{label_type.lower()}.label"
 
 
-def get_dataset_label_classes(dataset, label_field):
-    field_type = get_field_type(dataset, label_field)
+def get_label_classes(sample_collection, label_field):
+    field_type = get_field_type(sample_collection, label_field)
     field = get_label_field_label_string(label_field, field_type)
-    return dataset.distinct(field)
+    return sample_collection.distinct(field)
 
 
 def validate_class_name(class_name, label_classes):
@@ -198,12 +199,12 @@ def validate_class_name(class_name, label_classes):
         return None
 
 
-def select_label_field_classes(dataset, query, label_field):
+def select_label_field_classes(sample_collection, query, label_field):
     class_names = identify_named_classes(query, label_field)
-
-    if len(class_names) == 0:
+    if not class_names:
         return []
-    _classes = get_dataset_label_classes(dataset, label_field)
+
+    _classes = get_label_classes(sample_collection, label_field)
     num_classes = len(_classes)
     sm_flag = num_classes < SEMANTIC_MATCH_THRESHOLD
 
@@ -219,21 +220,21 @@ def select_label_field_classes(dataset, query, label_field):
     return label_classes
 
 
-def select_label_classes(dataset, query, fields):
-    dataset_field_names = dataset.first().field_names
-    present_fields = [
-        f for f in fields if f != "" and f in dataset_field_names
-    ]
+def select_label_classes(sample_collection, query, fields):
+    schema = sample_collection.get_field_schema()
+    present_fields = [f for f in fields if f != "" and f in schema]
+
     label_classes = {}
     for field in present_fields:
-        field_type = get_field_type(dataset, field)
+        field_type = get_field_type(sample_collection, field)
         if field_type in LABELS_WITH_CLASSES:
             field_label_classes = select_label_field_classes(
-                dataset, query, field
+                sample_collection, query, field
             )
 
             if field_label_classes == "_CONFUSED_":
                 return "_CONFUSED_"
             else:
                 label_classes[field] = field_label_classes
+
     return label_classes

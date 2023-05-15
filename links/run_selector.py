@@ -35,7 +35,7 @@ RUN_PROMPT_SUFFIX = (
 )
 RUN_PROMPT_INPUTS = ["run_type", "query", "available_runs"]
 
-TASK_RULES_FILE = {
+TASK_RULES_PATHS = {
     "uniqueness": os.path.join(PROMPTS_DIR, "uniqueness_task_rules.txt"),
     "hardness": os.path.join(PROMPTS_DIR, "hardness_task_rules.txt"),
     "mistakenness": os.path.join(PROMPTS_DIR, "mistakenness_task_rules.txt"),
@@ -49,7 +49,7 @@ TASK_RULES_FILE = {
     "metadata": None,
 }
 
-EXAMPLES_FILE = {
+EXAMPLES_PATHS = {
     "uniqueness": os.path.join(
         EXAMPLES_DIR, "fiftyone_uniqueness_run_examples.csv"
     ),
@@ -72,52 +72,37 @@ EXAMPLES_FILE = {
 }
 
 
-class RunSelector:
-    """Class to select the correct run for a given query and dataset"""
+class RunSelector(object):
+    """Interface for selecting the correct run for a given query and dataset."""
 
-    def __init__(self, dataset):
-        self.dataset = dataset
-        self.set_run_type()
-        self.task_rules_file = self.get_task_rules_file()
-        self.examples_file = self.get_examples_file()
+    def __init__(self, sample_collection):
+        self.sample_collection = sample_collection
+        self.task_rules_path = TASK_RULES_PATHS[self.run_type]
+        self.examples_path = EXAMPLES_PATHS[self.run_type]
 
-    def set_run_type(self):
-        raise NotImplementedError("set_run_type method not implemented")
+    @property
+    def dataset(self):
+        return self.sample_collection._root_dataset
 
-    def set_task_rules_file(self):
-        raise NotImplementedError("set_task_rules_file method not implemented")
-
-    def set_examples_file(self):
-        raise NotImplementedError("set_examples_file method not implemented")
-
-    def get_run_info(self, run):
-        raise NotImplementedError("get_run_info method not implemented")
+    @property
+    def run_type(self):
+        raise NotImplementedError("run_type not implemented")
 
     def get_available_runs(self):
-        raise NotImplementedError("get_available_runs method not implemented")
+        raise NotImplementedError("get_available_runs() not implemented")
 
-    def print_compute_run_message(self):
-        message = self.generate_compute_run_message()
-        print(message)
+    def get_run_info(self, run):
+        raise NotImplementedError("get_run_info() not implemented")
 
     def get_run(self):
-        raise NotImplementedError("get_run method not implemented")
+        raise NotImplementedError("get_run() not implemented")
 
-    def get_task_rules_file(self):
-        return TASK_RULES_FILE[self.run_type]
-
-    def get_examples_file(self):
-        return EXAMPLES_FILE[self.run_type]
-
-    def value_error(self):
-        raise ValueError(f"No {self.run_type} runs found")
+    def compute_run_message(self):
+        raise NotImplementedError("compute_run_message() not implemented")
 
     def load_prompt_prefix(self):
-        with open(self.task_rules_file, "r") as f:
+        with open(self.task_rules_path, "r") as f:
             return f.read() + "\n"
-
-    def load_prompt_suffix(self, query, runs):
-        return self.prompt_suffix.format(query=query, runs=runs)
 
     def generate_prompt(self, query, runs):
         prefix = self.load_prompt_prefix()
@@ -139,7 +124,7 @@ class RunSelector:
         )
 
     def get_examples(self):
-        with open(self.examples_file, "r") as f:
+        with open(self.examples_path, "r") as f:
             df = pd.read_csv(f)
 
         examples = []
@@ -156,8 +141,8 @@ class RunSelector:
 
     def select_run(self, query):
         available_runs = self.get_available_runs()
-        if len(available_runs) == 0:
-            self.print_compute_run_message()
+        if available_runs:
+            print(self.compute_run_message())
             return None
 
         if len(available_runs) == 1:
@@ -172,15 +157,13 @@ class RunSelector:
 
 
 class EvaluationRunSelector(RunSelector):
-    """Class to select the correct evaluation run for a given query and dataset"""
+    """Selects the correct evaluation run for a given query and dataset."""
 
-    def __init__(self, dataset):
-        super().__init__(dataset)
+    @property
+    def run_type(self):
+        return "evaluation"
 
-    def set_run_type(self):
-        self.run_type = "evaluation"
-
-    def generate_compute_run_message(self):
+    def compute_run_message(self):
         return "No evaluation runs found."
         # base_message =  "No evaluation runs found.\n\n"
         # detection_message = "If you want to compute detection evaluation, please run the following command:\n"
@@ -241,15 +224,13 @@ class EvaluationRunSelector(RunSelector):
 
 
 class UniquenessRunSelector(RunSelector):
-    """Class to select the correct uniqueness run for a given query and dataset"""
+    """Selects the correct uniqueness run for a given query and dataset."""
 
-    def __init__(self, dataset):
-        super().__init__(dataset)
+    @property
+    def run_type(self):
+        return "uniqueness"
 
-    def set_run_type(self):
-        self.run_type = "uniqueness"
-
-    def generate_compute_run_message(self):
+    def compute_run_message(self):
         message = "No uniqueness runs found. If you want to compute uniqueness, please run the following command:\n"
         command = """
         ```
@@ -277,15 +258,13 @@ class UniquenessRunSelector(RunSelector):
 
 
 class MistakennessRunSelector(RunSelector):
-    """Class to select the correct mistakenness run for a given query and dataset"""
+    """Selects the correct mistakenness run for a given query and dataset."""
 
-    def __init__(self, dataset):
-        super().__init__(dataset)
+    @property
+    def run_type(self):
+        return "mistakenness"
 
-    def set_run_type(self):
-        self.run_type = "mistakenness"
-
-    def generate_compute_run_message(self):
+    def compute_run_message(self):
         message = "No mistakenness runs found. To compute the difficulty of classifying samples (`<pred_field>`) with respect to ground truth label `<gt_field>`, please run the following command:\n"
         command = """
         ```
@@ -319,24 +298,18 @@ class MistakennessRunSelector(RunSelector):
 
 
 class ImageSimilarityRunSelector(RunSelector):
-    """Class to select the correct image_similarity run for a given query and dataset"""
+    """Selects the correct image similarity run for a given query and dataset."""
 
-    def __init__(self, dataset):
-        super().__init__(dataset)
+    @property
+    def run_type(self):
+        return "image_similarity"
 
-    def set_run_type(self):
-        self.run_type = "image_similarity"
-
-    def generate_compute_run_message(self):
+    def compute_run_message(self):
         message = "No similarity index found. To generate a similarity index for your samples, please run the following command:\n"
         command = """
         ```
         import fiftyone.brain as fob
-        fob.compute_similarity(
-            dataset,
-            model='mobilenet-v2-imagenet-torch',
-            brain_key='img_sim',
-            )
+        fob.compute_similarity(dataset, brain_key="img_sim")
         ```
         """
         return message + command
@@ -368,24 +341,18 @@ class ImageSimilarityRunSelector(RunSelector):
 
 
 class TextSimilarityRunSelector(RunSelector):
-    """Class to select the correct text_similarity run for a given query and dataset"""
+    """Selects the correct text similarity run for a given query and dataset."""
 
-    def __init__(self, dataset):
-        super().__init__(dataset)
+    @property
+    def run_type(self):
+        return "text_similarity"
 
-    def set_run_type(self):
-        self.run_type = "text_similarity"
-
-    def generate_compute_run_message(self):
+    def compute_run_message(self):
         message = "No similarity index found that supports text prompts. To generate a similarity index for your samples, please run the following command:\n"
         command = """
         ```
         import fiftyone.brain as fob
-        fob.compute_similarity(
-            dataset,
-            model='clip-vit-base32-torch',
-            brain_key='text_sim',
-            )
+        fob.compute_similarity(dataset, model="clip-vit-base32-torch", brain_key="text_sim")
         ```
         """
         return message + command
@@ -418,23 +385,18 @@ class TextSimilarityRunSelector(RunSelector):
 
 
 class HardnessRunSelector(RunSelector):
-    """Class to select the correct hardness run for a given query and dataset"""
+    """Selects the correct hardness run for a given query and dataset."""
 
-    def __init__(self, dataset):
-        super().__init__(dataset)
+    @property
+    def run_type(self):
+        return "hardness"
 
-    def set_run_type(self):
-        self.run_type = "hardness"
-
-    def generate_compute_run_message(self):
-        message = "No hardness run found. To measure of the uncertainty of your model's predictions (in `<label_field>`) on the samples in your dataset, please run the following command:\n"
+    def compute_run_message(self):
+        message = "No hardness run found. To measure of the uncertainty of your model's predictions (in `label_field`) on the samples in your dataset, please run the following command:\n"
         command = """
         ```
         import fiftyone.brain as fob
-        fob.compute_hardness(
-            dataset,
-            <label_field>,
-            )
+        fob.compute_hardness(dataset, label_field)
         ```
         """
         return message + command
@@ -457,15 +419,13 @@ class HardnessRunSelector(RunSelector):
 
 
 class MetadataRunSelector(RunSelector):
-    """Class for metadata computation validation"""
+    """Class for metadata computation validation."""
 
-    def __init__(self, dataset):
-        super().__init__(dataset)
+    @property
+    def run_type(self):
+        return "metadata"
 
-    def set_run_type(self):
-        self.run_type = "metadata"
-
-    def generate_compute_run_message(self):
+    def compute_run_message(self):
         message = "No metadata found. To compute metadata for your samples, please run the following command:\n"
         command = """
         ```
@@ -478,8 +438,8 @@ class MetadataRunSelector(RunSelector):
         return {"key": "metadata"}
 
     def get_available_runs(self):
-        nsamples = self.dataset.count()
-        if self.dataset.exists("metadata").count() != nsamples:
+        nsamples = self.sample_collection.count()
+        if self.sample_collection.exists("metadata").count() != nsamples:
             return []
         else:
             return [self.get_run_info("metadata")]
@@ -496,17 +456,16 @@ run_selectors = {
 }
 
 
-class RunsSelector:
-    """Class to select the correct runs for a given query and dataset"""
+class RunsSelector(object):
+    """Selects the correct runs for a given query and dataset."""
 
-    def __init__(self, dataset):
-        self.dataset = dataset
+    def __init__(self, sample_collection):
+        self.sample_collection = sample_collection
 
     def select_runs(self, query, run_types):
         selected_runs = {}
-
         for rt in run_types:
-            run_selector = run_selectors[rt](self.dataset)
+            run_selector = run_selectors[rt](self.sample_collection)
             run = run_selector.select_run(query)
             if run:
                 selected_runs[rt] = run
@@ -514,6 +473,6 @@ class RunsSelector:
         return selected_runs
 
 
-def select_runs(dataset, query, run_types):
-    runs_selector = RunsSelector(dataset)
+def select_runs(sample_collection, query, run_types):
+    runs_selector = RunsSelector(sample_collection)
     return runs_selector.select_runs(query, run_types)
