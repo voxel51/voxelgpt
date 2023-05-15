@@ -37,7 +37,7 @@ An image_similarity run determines determines how similar each image is to anoth
 """
 
 TEXT_SIMILARITY_PROMPT_TEMPLATE = """
-A text_similarity run determines determines how similar each image is to a user-specified input text prompt. You can use the {text_similarity_key} key to access the results of this run and find images that most resemble the description in the user-input text prompt.
+A text_similarity run determines determines how similar each image is to a user-specified input text prompt. You can use the {text_similarity_key} key to access the results of this run and find images that most resemble the description in the user-input text prompt. You can use these and only these brian_key values brain_key="{brain_key}" for an output using sort_by_similarity.
 """
 
 MISTAKENNESS_FIELD_PROMPT_TEMPLATE = """
@@ -125,7 +125,7 @@ IMAGE_SIMILARITY_PROMPT = PromptTemplate(
 )
 
 TEXT_SIMILARITY_PROMPT = PromptTemplate(
-    input_variables=["text_similarity_key"],
+    input_variables=["text_similarity_key", "brain_key"],
     template=TEXT_SIMILARITY_PROMPT_TEMPLATE,
 )
 
@@ -163,19 +163,20 @@ def generate_runs_prompt(dataset, runs):
     if "text_similarity" in runs:
         text_similarity_key = runs["text_similarity"]
         text_similarity_prompt = TEXT_SIMILARITY_PROMPT.format(
-            text_similarity_key=text_similarity_key
+            text_similarity_key=text_similarity_key,
+            brain_key=text_similarity_key["key"]
         )
         prompt += text_similarity_prompt
 
     if "mistakenness" in runs:
         mistakenness_prompt = generate_mistakenness_prompt(
-            dataset, runs["mistakenness"]
+            dataset, runs["mistakenness"]["key"]
         )
         prompt += mistakenness_prompt
 
     if "evaluation" in runs:
         evaluation_prompt = generate_evaluation_prompt(
-            dataset, runs["evaluation"]
+            dataset, runs["evaluation"]["key"]
         )
         prompt += evaluation_prompt
 

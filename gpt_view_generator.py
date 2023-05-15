@@ -217,7 +217,7 @@ def _reformat_query(examples, label_classes):
     for k, v in class_name_map.items():
         if type(v) == str:
             query = query.replace(k, v)
-        else:
+        elif v:
             clarification = f" where by {k} I mean any of {v}"
             query += clarification
 

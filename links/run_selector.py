@@ -291,7 +291,7 @@ class MistakennessRunSelector(RunSelector):
         ```
         import fiftyone.brain as fob
         fob.compute_mistakenness(
-            dataset, 
+            dataset,
             <pred_field>,
             label_field=<gt_field>
             )
@@ -333,9 +333,9 @@ class ImageSimilarityRunSelector(RunSelector):
         ```
         import fiftyone.brain as fob
         fob.compute_similarity(
-            dataset, 
+            dataset,
             model='mobilenet-v2-imagenet-torch',
-            brain_run_key='img_sim',
+            brain_key='img_sim',
             )
         ```
         """
@@ -382,9 +382,9 @@ class TextSimilarityRunSelector(RunSelector):
         ```
         import fiftyone.brain as fob
         fob.compute_similarity(
-            dataset, 
+            dataset,
             model='clip-vit-base32-torch',
-            brain_run_key='text_sim',
+            brain_key='text_sim',
             )
         ```
         """
@@ -432,7 +432,7 @@ class HardnessRunSelector(RunSelector):
         ```
         import fiftyone.brain as fob
         fob.compute_hardness(
-            dataset, 
+            dataset,
             <label_field>,
             )
         ```
