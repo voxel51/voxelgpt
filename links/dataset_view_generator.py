@@ -247,10 +247,13 @@ def remove_whitespace(stage_str):
         r"\s+", lambda m: " " if len(m.group(0)) == 1 else "", stage_str
     )
 
-
 def split_into_stages(stages_text):
     with open(VIEW_STAGES_LIST_PATH, "r") as f:
         view_stages = f.read().splitlines()
+    
+    upper_to_lower = {
+        stage.upper().replace("_", ""): stage for stage in view_stages
+    }
 
     pattern = "," + "|,".join(view_stages)[:-1]
 
@@ -276,6 +279,13 @@ def split_into_stages(stages_text):
 
     stages = stages[::-1]
     stages = [remove_whitespace(stage) for stage in stages]
+
+    for i, stage in enumerate(stages):
+        stage_name = stage.split("(")[0]
+        if stage_name not in view_stages and stage_name in upper_to_lower:
+            num_chars = len(stage_name)
+            stages[i]= upper_to_lower[stage_name] + stage[num_chars:]
+
     return stages
 
 
