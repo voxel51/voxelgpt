@@ -85,14 +85,6 @@ def ask_gpt_generator(sample_collection, query, chat_history=None, raw=False):
         yield _log("I'm sorry, I don't understand")
         return
 
-    examples = generate_view_stage_examples_prompt(sample_collection, query)
-    view_stage_descriptions = generate_view_stage_descriptions_prompt(examples)
-
-    # View stages
-    view_stages = get_most_relevant_view_stages(examples)
-    if view_stages:
-        yield _log(f"Identified potential view stages: {view_stages}")
-
     # Algorithms
     algorithms = select_algorithms(query)
     if algorithms:
@@ -118,6 +110,16 @@ def ask_gpt_generator(sample_collection, query, chat_history=None, raw=False):
     if any(len(v) > 0 for v in label_classes.values()):
         _label_classes = _format_label_classes(label_classes)
         yield _log(f"Identified potential label classes: {_label_classes}")
+
+    print(runs)
+    
+    examples = generate_view_stage_examples_prompt(sample_collection, query)
+    view_stage_descriptions = generate_view_stage_descriptions_prompt(examples)
+
+    # View stages
+    view_stages = get_most_relevant_view_stages(examples)
+    if view_stages:
+        yield _log(f"Identified potential view stages: {view_stages}")
 
     examples = _reformat_query(examples, label_classes)
 
