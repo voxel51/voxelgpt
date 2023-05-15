@@ -87,6 +87,7 @@ def create_chroma_collection(client):
     queries = examples["query"].tolist()
     media_types = examples["media_type"].tolist()
     geos = _format_bool_column(examples["geo"])
+    label_types = examples["label_type"].tolist()
     text_sims = _format_bool_column(examples["text_sim"])
     image_sims = _format_bool_column(examples["image_sim"])
     evals = _format_bool_column(examples["eval"])
@@ -100,16 +101,18 @@ def create_chroma_collection(client):
             "output": sl, 
             "media_type": mt, 
             "geo": geo,
+            "label_type": lt,
             "text_sim": ts,
             "image_sim": ims,
             "eval": eval,
             "meta": meta,
             }
-        for query, sl, mt, geo, ts, ims, eval, meta in zip(
+        for query, sl, mt, geo, lt, ts, ims, eval, meta in zip(
             queries, 
             stages_lists, 
             media_types, 
             geos,
+            label_types,
             text_sims,
             image_sims,
             evals,
@@ -127,6 +130,14 @@ def has_geo_field(sample_collection):
     types = list(sample_collection.get_field_schema(flat=True).values())
     types = [type(t) for t in types]
     return any(["Geo" in t.__name__ for t in types])
+
+def get_label_type(sample_collection, field_name):
+    sample = sample_collection.first()
+    field = sample.get_field(field_name)
+    field_type = str(type(field).__name__).lower()
+    field_type = field_type[:-1] if field_type.endswith("s") else field_type
+    return field_type
+
 
 def _replace_run_keys(prompt, runs):
     if "text_similarity" in runs:
@@ -146,7 +157,7 @@ def _replace_run_keys(prompt, runs):
             )
     return prompt
 
-def get_similar_examples(sample_collection, query, runs):
+def get_similar_examples(sample_collection, query, runs, label_fields):
     client = get_chromadb_client()
 
     try:
@@ -170,6 +181,27 @@ def get_similar_examples(sample_collection, query, runs):
             {"media_type": {"$eq": media_type}},
         ]
     }
+
+    if label_fields:
+        label_types = list(set(
+            [
+                get_label_type(sample_collection, field) 
+                for field in label_fields
+                ]
+            ))
+        label_types.append("all")
+
+        _label_filter_or = [
+            {"label_type": {"$eq": lt}}
+            for lt in label_types
+        ]
+
+        _label_filter = {
+            "$or": _label_filter_or
+        }
+        
+        _filter = {"$and": [_filter, _label_filter]}
+
 
     if not geo:
         _filter = {"$and": [_filter, {"geo": {"$eq": "0"}}]}
@@ -200,9 +232,15 @@ def get_similar_examples(sample_collection, query, runs):
 def generate_view_stage_examples_prompt_template(
         sample_collection, 
         query, 
-        runs
+        runs,
+        label_fields
         ):
-    examples = get_similar_examples(sample_collection, query, runs)
+    examples = get_similar_examples(
+        sample_collection, 
+        query, 
+        runs, 
+        label_fields
+        )
     example_prompt = VIEW_STAGE_EXAMPLE_PROMPT
     return FewShotPromptTemplate(
         examples=examples,
@@ -213,12 +251,18 @@ def generate_view_stage_examples_prompt_template(
     )
 
 
-def generate_view_stage_examples_prompt(sample_collection, query, runs):
+def generate_view_stage_examples_prompt(
+        sample_collection, 
+        query,
+        runs,
+        label_fields
+        ):
     similar_examples_prompt_template = (
         generate_view_stage_examples_prompt_template(
         sample_collection, 
         query,
-        runs
+        runs,
+        label_fields
         )
     )
     
