@@ -110,10 +110,12 @@ def ask_gpt_generator(sample_collection, query, chat_history=None, raw=False):
     if any(len(v) > 0 for v in label_classes.values()):
         _label_classes = _format_label_classes(label_classes)
         yield _log(f"Identified potential label classes: {_label_classes}")
-
-    print(runs)
     
-    examples = generate_view_stage_examples_prompt(sample_collection, query)
+    examples = generate_view_stage_examples_prompt(
+        sample_collection, 
+        query,
+        runs
+        )
     view_stage_descriptions = generate_view_stage_descriptions_prompt(examples)
 
     # View stages

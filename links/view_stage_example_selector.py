@@ -74,6 +74,8 @@ def get_or_create_embeddings(queries):
 
     return query_embeddings
 
+def _format_bool_column(col):
+    return [str(int(entry)) for entry in col.tolist()]
 
 def create_chroma_collection(client):
     collection = client.create_collection(
@@ -84,13 +86,35 @@ def create_chroma_collection(client):
     examples = pd.read_csv(VIEW_STAGE_EXAMPLES_PATH, on_bad_lines="skip")
     queries = examples["query"].tolist()
     media_types = examples["media_type"].tolist()
-    geos = examples["geo"].tolist()
-    geos = [str(int(g)) for g in geos]
+    geos = _format_bool_column(examples["geo"])
+    text_sims = _format_bool_column(examples["text_sim"])
+    image_sims = _format_bool_column(examples["image_sim"])
+    evals = _format_bool_column(examples["eval"])
+    metas = _format_bool_column(examples["metadata"])
+
     stages_lists = examples["stages"].tolist()
     ids = [f"{i}" for i in range(len(queries))]
     metadatas = [
-        {"input": query, "output": sl, "media_type": mt, "geo": geo}
-        for query, sl, mt, geo in zip(queries, stages_lists, media_types, geos)
+        {
+            "input": query, 
+            "output": sl, 
+            "media_type": mt, 
+            "geo": geo,
+            "text_sim": ts,
+            "image_sim": ims,
+            "eval": eval,
+            "meta": meta,
+            }
+        for query, sl, mt, geo, ts, ims, eval, meta in zip(
+            queries, 
+            stages_lists, 
+            media_types, 
+            geos,
+            text_sims,
+            image_sims,
+            evals,
+            metas,
+            )
     ]
 
     embeddings = get_or_create_embeddings(queries)
@@ -104,8 +128,25 @@ def has_geo_field(sample_collection):
     types = [type(t) for t in types]
     return any(["Geo" in t.__name__ for t in types])
 
+def _replace_run_keys(prompt, runs):
+    if "text_similarity" in runs:
+        prompt = prompt.replace(
+            "TEXT_SIM_KEY", 
+            runs["text_similarity"]['key']
+            )
+    if "image_similarity" in runs:
+        prompt = prompt.replace(
+            "IMAGE_SIM_KEY", 
+            runs["image_similarity"]['key']
+            )
+    if "evaluation" in runs:
+        prompt = prompt.replace(
+            "EVAL_KEY", 
+            runs["evaluation"]['key']
+            )
+    return prompt
 
-def get_similar_examples(sample_collection, query):
+def get_similar_examples(sample_collection, query, runs):
     client = get_chromadb_client()
 
     try:
@@ -118,18 +159,32 @@ def get_similar_examples(sample_collection, query):
 
     media_type = sample_collection.media_type
     geo = has_geo_field(sample_collection)
+    text_sim = "text_similarity" in runs
+    image_sim = "image_similarity" in runs
+    meta = "metadata" in runs
+    eval = "eval" in runs
 
-    _media_filter = {
+    _filter = {
         "$or": [
             {"media_type": {"$eq": "all"}},
             {"media_type": {"$eq": media_type}},
         ]
     }
 
-    if geo:
-        _filter = _media_filter
-    else:
-        _filter = {"$and": [_media_filter, {"geo": {"$eq": "0"}}]}
+    if not geo:
+        _filter = {"$and": [_filter, {"geo": {"$eq": "0"}}]}
+
+    if not text_sim:
+        _filter = {"$and": [_filter, {"text_sim": {"$eq": "0"}}]}
+        
+    if not image_sim:
+        _filter = {"$and": [_filter, {"image_sim": {"$eq": "0"}}]}
+
+    if not meta:
+        _filter = {"$and": [_filter, {"meta": {"$eq": "0"}}]}
+
+    if not eval:
+        _filter = {"$and": [_filter, {"eval": {"$eq": "0"}}]}
 
     res = collection.query(
         query_texts=[query], n_results=20, where=_filter, include=["metadatas"]
@@ -142,8 +197,12 @@ def get_similar_examples(sample_collection, query):
     return similar_examples
 
 
-def generate_view_stage_examples_prompt_template(sample_collection, query):
-    examples = get_similar_examples(sample_collection, query)
+def generate_view_stage_examples_prompt_template(
+        sample_collection, 
+        query, 
+        runs
+        ):
+    examples = get_similar_examples(sample_collection, query, runs)
     example_prompt = VIEW_STAGE_EXAMPLE_PROMPT
     return FewShotPromptTemplate(
         examples=examples,
@@ -154,8 +213,15 @@ def generate_view_stage_examples_prompt_template(sample_collection, query):
     )
 
 
-def generate_view_stage_examples_prompt(sample_collection, query):
+def generate_view_stage_examples_prompt(sample_collection, query, runs):
     similar_examples_prompt_template = (
-        generate_view_stage_examples_prompt_template(sample_collection, query)
+        generate_view_stage_examples_prompt_template(
+        sample_collection, 
+        query,
+        runs
+        )
     )
-    return similar_examples_prompt_template.format(text=query)
+    
+    prompt = similar_examples_prompt_template.format(text=query)
+    prompt = _replace_run_keys(prompt, runs)
+    return prompt
