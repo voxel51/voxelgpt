@@ -1,20 +1,19 @@
-# ChatGPT <> FiftyOne Integration
+# VoxelGPT
 
 Wish you could search your images or videos without writing a line of code? Now
 you can!
 
-This integration combines the power of
+VoxelGPT combines the power of
 [GPT-3.5](https://platform.openai.com/docs/models/gpt-3-5) with
 [FiftyOne](https://github.com/voxel51/fiftyone)'s computer vision query
 language, enabling you to filter, sort, and semantically slice your data with
 natural language.
 
-## Try it live
+## Live demo
 
-You can test drive this integration live at
-[gpt.fiftyone.ai](https://gpt.fiftyone.ai).
+You can try VoxelGPT out live at [try.fiftyone.ai](https://try.fiftyone.ai).
 
-Here's some examples of things you can ask ChatGPT to do:
+Here's some examples of things you can ask VoxelGPT to do:
 
 - Show me the most unique images with a false positive prediction
 - Retrieve the first 10 images with 3 dogs and 1 cat
@@ -32,7 +31,7 @@ git clone https://github.com/voxel51/fiftyone-gpt
 cd fiftyone-gpt
 ```
 
-2. Install some packages:
+2. Install these packages:
 
 ```shell
 pip install openai langchain chromadb pandas
@@ -112,21 +111,17 @@ for videos and other media types.
 
 ### Examples
 
-This MVP implementation is based on a limited set of examples, so it may not
-generalize well to your data. The more specific your query, the better the
+This implementation is based on a limited set of examples, so it may not
+generalize well to all datasets. The more specific your query, the better the
 results will be. If you find that the results are not what you expect, please
 let us know!
 
-### Interactivity
-
-The current implementation is not interactive. You can't ask follow-up
-questions or refine your query. We're working on it!
-
 ### View stages
 
-While the current implementation supports most of FiftyOne's `ViewStage`
-methods, it does not support all of them. In particular, it does not support
-`concat()`, `mongo()`, or `geo_within()`. Again, we're working on it!
+The current implementation supports most FiftyOne
+[view stages](https://docs.voxel51.com/user_guide/using_views.html), but
+certain stages like `concat()`, `mongo()`, and `geo_within()` are not yet
+supported. We're working on it!
 
 ## About FiftyOne
 
@@ -136,4 +131,4 @@ check out [FiftyOne](https://github.com/voxel51/fiftyone) and give us a star!
 FiftyOne is an open source library for building high-quality datasets and
 computer vision models. It's the engine that powers this project.
 
-Thanks for using :)
+Thanks for visiting! 😊
