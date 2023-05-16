@@ -12,20 +12,6 @@ export const Message = ({ type, avatar, content = '', button }) => {
   const animatedContent = useTypewriterEffect(type === 'incoming' ? content : '', 5);
 
 
-  if (button) {
-    return (
-      <div
-        style={{
-          display: 'flex',
-          marginBottom: theme.spacing(2),
-          justifyContent: 'center',
-        }}
-      >
-        <Button>{button.label}</Button>
-      </div>
-    );
-  }
-
   return (
     <Typography component='div' style={{ marginLeft: theme.spacing(2) }}>
       <ReactMarkdown>
@@ -41,22 +27,20 @@ export function MessageWrapper({index,
   avatar,
   messages}) {
   const theme = useTheme();
+  const background = type === 'incoming' ? "rgba(255, 255, 255, 0.04)" : "rgba(255, 255, 255, 0.08)";
+
   return (
-    <div
-      style={{
-        display: 'flex',
-        marginBottom: theme.spacing(2),
-        justifyContent: 'center',
-      }}
-    >
-      <Paper elevation={4} variant="outlined" style={{padding: '1rem', width: 500, display: 'flex', flexDirection: 'row',}}>
-        <Avatar alt={type} src={avatar} />
-        <div>
-          {messages.map((message, index) => (
-            <Message key={index} type={message.type} avatar={message.avatar} content={message.content} button={message.button} />
-          ))}
-        </div>
-      </Paper>
-    </div>
+    <Grid container sx={{background, padding: "1rem"}} justifyContent="center">
+        <Grid container item lg={8} spacing={2}>
+          <Grid item>
+            {avatar || <Avatar alt={type} />}
+          </Grid>
+          <Grid item>
+            {messages.map((message, index) => (
+              <Message key={index} type={message.type} content={message.content} button={message.button} />
+            ))}
+          </Grid>
+        </Grid>
+    </Grid>
   )
 }

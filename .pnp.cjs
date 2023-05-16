@@ -30,6 +30,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageDependencies": [\
             ["@emotion/react", "virtual:4896dff2adcc28c6a9f7a259787bb4359898db80eca5fd0cb6d9012fba582e250412773637e9744fca8eef17da2931b9bcf37f8f59556d0de543de291b70ae21#npm:11.11.0"],\
             ["@emotion/styled", "virtual:4896dff2adcc28c6a9f7a259787bb4359898db80eca5fd0cb6d9012fba582e250412773637e9744fca8eef17da2931b9bcf37f8f59556d0de543de291b70ae21#npm:11.11.0"],\
+            ["@mui/icons-material", "virtual:4896dff2adcc28c6a9f7a259787bb4359898db80eca5fd0cb6d9012fba582e250412773637e9744fca8eef17da2931b9bcf37f8f59556d0de543de291b70ae21#npm:5.11.16"],\
             ["@mui/material", "virtual:4896dff2adcc28c6a9f7a259787bb4359898db80eca5fd0cb6d9012fba582e250412773637e9744fca8eef17da2931b9bcf37f8f59556d0de543de291b70ae21#npm:5.13.0"],\
             ["@mui/styled-engine", [\
               "@mui/styled-engine-sc",\
@@ -752,6 +753,33 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "linkType": "HARD"\
         }]\
       ]],\
+      ["@mui/icons-material", [\
+        ["npm:5.11.16", {\
+          "packageLocation": "./.yarn/cache/@mui-icons-material-npm-5.11.16-d962649d08-db70426b6e.zip/node_modules/@mui/icons-material/",\
+          "packageDependencies": [\
+            ["@mui/icons-material", "npm:5.11.16"]\
+          ],\
+          "linkType": "SOFT"\
+        }],\
+        ["virtual:4896dff2adcc28c6a9f7a259787bb4359898db80eca5fd0cb6d9012fba582e250412773637e9744fca8eef17da2931b9bcf37f8f59556d0de543de291b70ae21#npm:5.11.16", {\
+          "packageLocation": "./.yarn/__virtual__/@mui-icons-material-virtual-fcc0456354/0/cache/@mui-icons-material-npm-5.11.16-d962649d08-db70426b6e.zip/node_modules/@mui/icons-material/",\
+          "packageDependencies": [\
+            ["@mui/icons-material", "virtual:4896dff2adcc28c6a9f7a259787bb4359898db80eca5fd0cb6d9012fba582e250412773637e9744fca8eef17da2931b9bcf37f8f59556d0de543de291b70ae21#npm:5.11.16"],\
+            ["@babel/runtime", "npm:7.21.5"],\
+            ["@mui/material", "virtual:4896dff2adcc28c6a9f7a259787bb4359898db80eca5fd0cb6d9012fba582e250412773637e9744fca8eef17da2931b9bcf37f8f59556d0de543de291b70ae21#npm:5.13.0"],\
+            ["@types/mui__material", null],\
+            ["@types/react", null],\
+            ["react", "npm:18.2.0"]\
+          ],\
+          "packagePeers": [\
+            "@mui/material",\
+            "@types/mui__material",\
+            "@types/react",\
+            "react"\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
       ["@mui/material", [\
         ["npm:5.13.0", {\
           "packageLocation": "./.yarn/cache/@mui-material-npm-5.13.0-36f6bb79c1-3601eae0a5.zip/node_modules/@mui/material/",\
@@ -1211,6 +1239,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@voxel51/fiftyone-gpt", "workspace:."],\
             ["@emotion/react", "virtual:4896dff2adcc28c6a9f7a259787bb4359898db80eca5fd0cb6d9012fba582e250412773637e9744fca8eef17da2931b9bcf37f8f59556d0de543de291b70ae21#npm:11.11.0"],\
             ["@emotion/styled", "virtual:4896dff2adcc28c6a9f7a259787bb4359898db80eca5fd0cb6d9012fba582e250412773637e9744fca8eef17da2931b9bcf37f8f59556d0de543de291b70ae21#npm:11.11.0"],\
+            ["@mui/icons-material", "virtual:4896dff2adcc28c6a9f7a259787bb4359898db80eca5fd0cb6d9012fba582e250412773637e9744fca8eef17da2931b9bcf37f8f59556d0de543de291b70ae21#npm:5.11.16"],\
             ["@mui/material", "virtual:4896dff2adcc28c6a9f7a259787bb4359898db80eca5fd0cb6d9012fba582e250412773637e9744fca8eef17da2931b9bcf37f8f59556d0de543de291b70ae21#npm:5.13.0"],\
             ["@mui/styled-engine", [\
               "@mui/styled-engine-sc",\

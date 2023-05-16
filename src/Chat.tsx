@@ -2,8 +2,10 @@ import React, { useEffect, useRef } from 'react';
 import { useRecoilValue } from 'recoil';
 import Message, { MessageWrapper } from './Message';
 import * as state from './state';
+import { ChatGPTAvatar } from './avatars';
+import {Grid} from "@mui/material";
 
-const Chat = ({ incomingAvatar, outgoingAvatar }) => {
+const Chat = () => {
   const bottomRef = useRef(null);
   const messages = useRecoilValue(state.atoms.messages);
 
@@ -13,15 +15,21 @@ const Chat = ({ incomingAvatar, outgoingAvatar }) => {
     }
   }, [messages]);
 
+  const avatars = {
+    incoming: <ChatGPTAvatar />
+  }
+
   return (
-    <div style={{ overflow: 'auto' }}>
-      {groupMessages(messages)}
+    <div style={{ overflow: 'auto', marginTop: '2rem' }}>
+      <Grid container direction="row">
+        {groupMessages(messages, avatars)}
+      </Grid>
       <div ref={bottomRef} />
     </div>
   );
 };
 
-function groupMessages(messages) {
+function groupMessages(messages, avatars) {
   const els = [];
   let currentGroup = [];
   let idx = 0;
@@ -29,9 +37,10 @@ function groupMessages(messages) {
     idx += 1;
     // group messages by type
     if (currentGroup.length > 0 && currentGroup[0].type !== message.type) {
+      console.log(message)
       const groupMessage = currentGroup[0]
       els.push(
-        <MessageWrapper avatar={groupMessage.avatar} type={groupMessage.type} index={idx} messages={currentGroup} />
+        <MessageWrapper avatar={groupMessage.type === 'incoming' ? avatars.incoming : avatars.outgoing} type={groupMessage.type} index={idx} messages={currentGroup} />
       );
       currentGroup = [message];
     } else {
@@ -41,7 +50,7 @@ function groupMessages(messages) {
   if (currentGroup.length > 0) {
     const groupMessage = currentGroup[0]
     els.push(
-      <MessageWrapper avatar={groupMessage.avatar} type={groupMessage.type} index={idx} messages={currentGroup} />
+      <MessageWrapper avatar={groupMessage.type === 'incoming' ? avatars.incoming : avatars.outgoing} type={groupMessage.type} index={idx} messages={currentGroup} />
     );
   }
   return els
