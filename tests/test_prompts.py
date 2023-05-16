@@ -1,6 +1,8 @@
 # To Run: pytest -q tests/test_prompts.py
 # See README for full details
 
+import re
+
 import fiftyone as fo
 from fiftyone import ViewField as F
 import fiftyone.zoo as foz
@@ -8,11 +10,61 @@ import sys
 sys.path.append("/Users/jacobmarks/Desktop/blog_playground/misc/gpt/gpt-view-stages") #Replace with the path to your folder
 from gpt_view_generator import get_gpt_view_text
 
+
+def remove_whitespace(stage_str):
+    return re.sub(
+        r'\s+', lambda m: ' ' if len(m.group(0)) == 1 else '',
+        stage_str
+        )
+
+
+def split_into_stages(stages_text):
+    with open("view_stages_list.txt", "r") as f:
+        view_stages = f.read().splitlines()
+    pattern = ','+'|,'.join(view_stages)[:-1]
+
+    st = stages_text[1:-1].replace(', ', ',').replace('\n', '')
+    st = st.replace('\r', '').replace('\'', "\"")
+    x = re.finditer(pattern, st)
+
+    stages = []
+    spans = []
+    for match in x:
+        spans.append(match.span())
+
+    spans = spans[::-1]
+    for i, span in enumerate(spans):
+        if i == 0:
+            stages.append(st[span[0]+1:])
+        else:
+            stages.append(st[span[0]+1:spans[i-1][0]])
+    if len(stages) != 0:
+        stages.append(st[:spans[-1][0]])
+    else:
+        stages.append(st)
+
+    stages = stages[::-1]
+    stages = [remove_whitespace(stage) for stage in stages]
+    return stages
+
+
 def create_view_from_stages(text, dataset):
     view = dataset.view()
-    code = 'dataset.' + text.strip()[1:-1]
-    view = eval(code)
+    all_text = ""
+    for element in text[:-1]:
+        all_text += element + "."
+    all_text += text[-1]
+    code = 'dataset.' + all_text
+    print(code)
+    try:
+        view = eval(code)
+    except:
+        print("Bad View.")
+        view = dataset.view()
     return view
+
+def get_gpt_view_text_no_history(dataset, prompt):
+    return get_gpt_view_text(dataset, prompt, [])
 
 class TestClassViewStages:
     # def MockDataset(self, test_name):
@@ -20,24 +72,17 @@ class TestClassViewStages:
     #     return dataset
         
     def EvaluateResults(self, ground_truth, gpt_response):
-        if gpt_response.stats()['samples_count'] != ground_truth.stats()['samples_count']:
-            return False
-        elif sorted(gpt_response.values("id")) != sorted(ground_truth.values("id")):
-            return False
-        elif sorted(gpt_response.values("filepath")) != sorted(ground_truth.values("filepath")):
-            return False
-        elif gpt_response.values("ground_truth.detections.label") != ground_truth.values("ground_truth.detections.label"):
-            return False
-        elif gpt_response.get_field_schema() != ground_truth.get_field_schema():
-            return False
-        else:
-            return True
-
+        assert gpt_response.stats()['samples_count'] == ground_truth.stats()['samples_count']
+        assert sorted(gpt_response.values("id")) == sorted(ground_truth.values("id"))
+        assert sorted(gpt_response.values("filepath")) == sorted(ground_truth.values("filepath"))
+        assert gpt_response.values("ground_truth.detections.label") == ground_truth.values("ground_truth.detections.label")
+        assert gpt_response.get_field_schema() == ground_truth.get_field_schema()
+        
     def test_query1(self):
         prompt = "Create a view excluding samples whose `my_field` field have values in ['a', 'b', 'e', '1']"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[exclude_by('my_field', ['a', 'b', 'e', '1'])]", dataset)
-        gpt_response = get_gpt_view_text(dataset, prompt)
+        gpt_response = get_gpt_view_text_no_history(dataset, prompt)
         print(gpt_response)
         view = create_view_from_stages(gpt_response, dataset)
         assert self.EvaluateResults(expected_view, view)
@@ -45,33 +90,39 @@ class TestClassViewStages:
     def test_query2(self):
         prompt = "remove samples with 1, 3, 5, 7, or 9 in 'num_predictions' field"
         dataset = foz.load_zoo_dataset("quickstart")
-        expected_view = create_view_from_stages("[exclude_by('num_predictions', [1, 3, 5, 7, 9])]", dataset)
-        gpt_response = get_gpt_view_text(dataset, prompt)
+        stages = "[exclude_by('num_predictions', [1, 3, 5, 7, 9])]"
+        stages = split_into_stages(stages)
+        expected_view = create_view_from_stages(stages, dataset)
+        gpt_response = get_gpt_view_text_no_history(dataset, prompt)
         print(gpt_response)
         view = create_view_from_stages(gpt_response, dataset)
-        assert self.EvaluateResults(view, expected_view)
+        self.EvaluateResults(expected_view,view)
 
     def test_100_random_samples_of_dogs_with_people(self):
         prompt = "100 random samples of dogs with people"
         dataset = foz.load_zoo_dataset("quickstart")
-        expected_view = create_view_from_stages("[match(F('ground_truth.detections.label').contains(['dog', 'person'], all=True)), take(100)]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        stages = "[match(F('ground_truth.detections.label').contains(['dog', 'person'], all=True)), take(100)]"
+        stages = split_into_stages(stages)
+        expected_view = create_view_from_stages(stages, dataset)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
-        assert self.EvaluateResults(expected_view, gpt_view)
+        self.EvaluateResults(expected_view, gpt_view)
 
     def test_hardest_sample_of_a_random_sampling_of_69_samples(self):
         prompt = "Hardest sample of a random sampling of 69 samples"
         dataset = foz.load_zoo_dataset("quickstart")
-        expected_view = create_view_from_stages("[take(69), sort_by('hardness', reverse=True), limit(1)]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        stages = "[take(69), sort_by('hardness', reverse=True), limit(1)]"
+        stages = split_into_stages(stages)
+        expected_view = create_view_from_stages(stages, dataset)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
-        assert self.EvaluateResults(expected_view, gpt_view)
+        self.EvaluateResults(expected_view, gpt_view)
 
     def test_show_me_the_clip_trajectories_of_my_detections_wit(self):
         prompt = "Show me the clip trajectories of my detections with no people or road signs"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[exclude_by('detections.label',['person', 'road sign']), to_trajectories('frames.detections')]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -79,7 +130,7 @@ class TestClassViewStages:
         prompt = "Show me crowded videos in the daytime"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[match_frames(F('detections.detections').length() > 100), match(F('detections.detections.label.timeofday').is_subset(['daytime']))]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -87,7 +138,7 @@ class TestClassViewStages:
         prompt = "show me 11 random samples of people playing sports"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[sort_by_similarity('people playing sports', k = 15, brain_key = 'qdrant'), take(11)]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -95,7 +146,7 @@ class TestClassViewStages:
         prompt = "Show me the hardest samples in Mumbai"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[sort_by('hardness', reverse=True), geo_near([72.8777, 19.0760])]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -103,7 +154,7 @@ class TestClassViewStages:
         prompt = "Show me all confirmed blocked exit violations within Amazon Headquarters in Seattle, WA"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[match(F('eval')==True).filter_labels('blocked_exit'), geo_within([-122.340524,47.617944], [-122.336709,47.61571], [-122.338324,47.614524], [-122.342042,47.616716])]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -111,7 +162,7 @@ class TestClassViewStages:
         prompt = "Find me images nearby and east from Ann Arbor"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[match(((F('geolocation_field.point.coordinates')[0] + 83.732124 - 1).abs() < 1) & ((F('geolocation_field.point.coordinates')[1] - 42.279594).abs() < 1))]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -119,7 +170,7 @@ class TestClassViewStages:
         prompt = "Show me houses in Ann Arbor, MI"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[match(F('ground_truth.detections.label').is_subset(['house'])), geo_near([83.7430, 42.2808], max_distance=80467.2)]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -127,7 +178,7 @@ class TestClassViewStages:
         prompt = "Find all samples within 100km of Paris (either pt named paris, or latlong)"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[geo_near([2.3522, 48.8566], max_distance=100000)]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -135,7 +186,7 @@ class TestClassViewStages:
         prompt = "29 sunny in philadelphia samples"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[match(F('weather').label == 'sunny'), geo_near([75.1652, 39.9526]), take(29)]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -143,7 +194,7 @@ class TestClassViewStages:
         prompt = "Give me all videos that are longer than 10 minutes"
         dataset = foz.load_zoo_dataset("quickstart-video")
         expected_view = create_view_from_stages("[match(F('metadata.duration') > 10*60)]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -151,7 +202,7 @@ class TestClassViewStages:
         prompt = "Show me 80 hardest samples with incorrect predictions having confidence above 0.82"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[match(F('eval')==False).filter_labels('prediction',F('confidence')>0.82), sort_by('hardness', reverse=True), limit(80)]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -159,7 +210,7 @@ class TestClassViewStages:
         prompt = "Show me images with no detections"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[match(F('detections.detections').length() == 0)]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         print(gpt_view_stages)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
@@ -168,7 +219,7 @@ class TestClassViewStages:
         prompt = "Missed predictions with no annotation mistakes"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[match(F('eval')==False), exclude_labels(tags='annotation_mistake')]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -176,7 +227,7 @@ class TestClassViewStages:
         prompt = "Missed predictions from torch model with no annotation mistakes"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[match(F('eval')==False).filter_labels('torch'), exclude_labels(tags='annotation_mistake')]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -184,7 +235,7 @@ class TestClassViewStages:
         prompt = "3 least unique black and white images"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[match(F('metadata.num_channels') = 1), sort_by('uniqueness', reverse=False), limit(3)]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -192,7 +243,7 @@ class TestClassViewStages:
         prompt = "Samples containing eyes without glasses"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[match(F('positive_labels.detections.label').contains('human eye') & F('negative_label.detections.label').contains(['glasses', 'sunglasses', 'monacle'])]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -200,7 +251,7 @@ class TestClassViewStages:
         prompt = "45 nighttime samples with most mistakes this year"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[match(F('detections.detections.label.timeofday').is_subset(['nighttime'])), match(F('timetaken').year() == 2023), sort_by('mistakenness', reverse=True), limit(45)]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -208,7 +259,7 @@ class TestClassViewStages:
         prompt = "Most unique images from 2020 similar to image 101."
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[match(F('date').year() == 2020), sort_by_similarity(dataset.limit[101:].first().id), sort_by('uniqueness', reverse=True)]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -216,7 +267,7 @@ class TestClassViewStages:
         prompt = "Video clips with drones flying during the golden hour"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[match(F('detections.detections.label.timeofday').is_subset(['dawn/dusk'])), filter_labels('events', F('label') == 'drone'), to_clips('events')]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -224,7 +275,7 @@ class TestClassViewStages:
         prompt = "Trajectories containing swimming fish"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[filter_labels('frames.detections', F('label') == 'fish'), to_trajectories('frames.detections')]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -232,7 +283,7 @@ class TestClassViewStages:
         prompt = "Top 10 mistakes from CVAT annotation and LabelStudio annotation respectively"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[select_labels(tags=['cvat', 'annotation_mistake']), limit(10), concat(select_labels(tags=['label_studio', 'annotation_mistake']), limit(10))]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -240,7 +291,7 @@ class TestClassViewStages:
         prompt = "Show me lots of small objects from my model predictions"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[filter_labels('rcs_5_20230417', (F('bounding_box')[2] * F('bounding_box')[3]) < 0.1), match(F('rcs_5_20230417.detections').length() > 10)]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -248,7 +299,7 @@ class TestClassViewStages:
         prompt = "What are the 5 most likley object detection mistakes in my dataset?"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[filter_labels('final_yolov8', (F('march_1_eval') == 'fp') & (F('confidence') > 0.8)), sort_by(F('final_yolov8.detections').reduce(VALUE.append(F('confidence')), init_val=[]).max()), limit(5)]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -256,7 +307,7 @@ class TestClassViewStages:
         prompt = "Remove all non-person or car objects from my model predictions but keep all samples"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[filter_labels('instances', F('label').is_in(['person', 'Car'], only_matches=False)]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -264,7 +315,7 @@ class TestClassViewStages:
         prompt = "Which airplanes are occluded for longer than 20 frames?"
         dataset = foz.load_zoo_dataset("quickstart-video")
         expected_view = create_view_from_stages("[filter_labels('frames.close_poly_segs', (F('label') == 'airplane') & (F('occluded') == True), trajectories=True), to_trajectories('frames.close_poly_segs'), match(F('frames.close_poly_segs').filter(F('occluded') == True)).length() > 20)]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -272,7 +323,7 @@ class TestClassViewStages:
         prompt = "Give me the 100 most unique images with a keypoint that has an FTON score of at least 51"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[filter_keypoints('driver_pose', F('FTON') >= 51), sort_by('uniqueness', reverse=True), limit(100)]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -280,7 +331,7 @@ class TestClassViewStages:
         prompt = "Round the CHS score of my scenes to one decimal place"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[set_field('scene', F('scene.classifications').map(F('chs_score').round(place=1)))]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -288,7 +339,7 @@ class TestClassViewStages:
         prompt = "Filter for all tags that include 'annotation_mistake', 'june_task_5', 'roi_issue'. Case independent"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[set_field('tags', F('tags').map(F().lower())), match_tags(['annotation_mistake', 'june_task_5', 'roi_issue'])]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -296,7 +347,7 @@ class TestClassViewStages:
         prompt = "Which patches from my frames show potholes in a crowded scene of more than 20 objects?"
         dataset = foz.load_zoo_dataset("quickstart-video")
         expected_view = create_view_from_stages("[to_frames(), match(F('test_detections.detections').length() > 20), filter_labels('test_detections', F('label') == 'Pot hole'),  to_patches('test_detections')]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -304,7 +355,7 @@ class TestClassViewStages:
         prompt = "Update my crowding field based on the number of people in the image given the following: {0 people: empty, 1 person: solo, 2 people: group, 10 people: gathering, 15+ people: crowd}"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[set_field('crowding', F('person_detector.detections').length().switch({(F()==0): 'empty', (F() == 1)): 'solo', ((F() > 2) & (F() <= 10)): 'group', ((F() > 10) & (F() <= 15)): 'gathering', (F() > 15): 'crowd' }))]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -312,7 +363,7 @@ class TestClassViewStages:
         prompt = "Show all of my model predictions from models 1-3 in one field"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[set_field('model_1', F('detections').extend(F('$model_2.detections')).extend(F('$model_3.detections')))]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -320,7 +371,7 @@ class TestClassViewStages:
         prompt = "Show me samples with lots of small objects from my model predictions"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[match(F('rcs_5_20230417.detections').filter(F('bounding_box')[2] * F('bounding_box')[3]) < 0.1).length() > 10)]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -328,7 +379,7 @@ class TestClassViewStages:
         prompt = "When did I detect objects best at night or dusk?"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[match(F('timeofday').is_in(['night', 'dusk'])), to_evaluation_patches('eval', other_fields=['timeofday'])]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -336,7 +387,7 @@ class TestClassViewStages:
         prompt = "Which segmentations did Eric annotate in January?"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[filter_labels('segmentations', (F('annotator') == 'Eric') & F('annotation_date').month() == 1))]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -344,7 +395,7 @@ class TestClassViewStages:
         prompt = "Show me all patches with issues"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[to_patches('gold_standard'), match_labels(tags=['box_issue', 'class_issue'])]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -352,7 +403,7 @@ class TestClassViewStages:
         prompt = "Show me the 10 samples with classifications most similar to the most incorrect prediction"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[sort_by_similarity(dataset.match(F('eval') == False).sort_by('predictions.confidence').first().id), limit(10)]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -360,7 +411,7 @@ class TestClassViewStages:
         prompt = "Show me all samples that are visually at night, but not annotated as night"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[match(F('timeofday') != 'night'), sort_by_similarity('image taken at night')]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -368,7 +419,7 @@ class TestClassViewStages:
         prompt = "What are the 100 most unique samples that I haven't trained on"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[match_tags('train', bool=False), sort('uniqueness'), limit(100)]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -376,7 +427,7 @@ class TestClassViewStages:
         prompt = "Select all video frames that do not contain precisely two objects"
         dataset = foz.load_zoo_dataset("quickstart-video")
         expected_view = create_view_from_stages("[match_frames(F('detections.detections').length() !=2)]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -384,7 +435,7 @@ class TestClassViewStages:
         prompt = "Find all video frames that contain an object with aspect ratio greater than 2 or less than 0.5"
         dataset = foz.load_zoo_dataset("quickstart-video")
         expected_view = create_view_from_stages("[filter_labels('frames.detections', (F('bounding_box')[2]/F('bounding_box')[3] > 2) |  (F('bounding_box')[2]/F('bounding_box')[3] <0.5) )]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -392,7 +443,7 @@ class TestClassViewStages:
         prompt = "Find all samples where the filepath contains ‘montreal’ and ‘trial2’"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[match(F('filepath').contains_str(['montreal','trial2']))]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         print(gpt_view_stages)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
@@ -401,7 +452,7 @@ class TestClassViewStages:
         prompt = "Which samples are in the 'task_16' directory?"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[match(F('filepath').contains_str('task_16'))]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         print(gpt_view_stages)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
@@ -410,7 +461,7 @@ class TestClassViewStages:
         prompt = "Create a clips view for all bouts of ‘attack’ or ‘chase’"
         dataset = foz.load_zoo_dataset("quickstart-video")
         expected_view = create_view_from_stages("[filter_labels('bouts', F('label').is_in(['attack','label]')), to_clips('bouts')]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -418,7 +469,7 @@ class TestClassViewStages:
         prompt = "Find all images from zip codes 07920, 07924, and 07059 that were sunny"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[F('zip_code').is_in(['07920','07924','07059']), F('weather')=='sunny')]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -426,7 +477,7 @@ class TestClassViewStages:
         prompt = "Find all (video) samples tagged as ‘Intruder’ that do not contain a vehicle"
         dataset = foz.load_zoo_dataset("quickstart-video")
         expected_view = create_view_from_stages("[match_tags('intruder'), match(~F('frames').filter(F('obj_dets.detections').filter(F('label') == 'vehicle').length() > 1)).length() > 1))]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -434,7 +485,7 @@ class TestClassViewStages:
         prompt = "Find all samples that are not in a group of at least 5 when grouped by 'status'"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[group_by('status',match_expr=F().length()<5)] errors on displaying view", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -442,7 +493,7 @@ class TestClassViewStages:
         prompt = "Find all incorrect detections where model_date is earlier than June 2020"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[filter_labels('predictions',F('eval00')!='tp' & F('model_date')<datetime.datetime(2020,6))]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -450,7 +501,7 @@ class TestClassViewStages:
         prompt = "Restrict the labels to just the keypoints"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[select_fields('landmarks')]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -458,7 +509,7 @@ class TestClassViewStages:
         prompt = "Restrict the labels to just the keypoints (video dataset)"
         dataset = foz.load_zoo_dataset("quickstart-video")
         expected_view = create_view_from_stages("[select_fields('frames.landmarks')]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -466,7 +517,7 @@ class TestClassViewStages:
         prompt = "Find all images tagged as AnnotationError but not Reviewer2"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[match_tags('AnnotationError'), match_tags('Reviewer2',bool=False)]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -474,7 +525,7 @@ class TestClassViewStages:
         prompt = "Find all labels tagged as AnnotationError but not Reviewer2"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[select_labels(tags='AnnotationError'), exclude_labels(tags='Reviewer2')]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -482,7 +533,7 @@ class TestClassViewStages:
         prompt = "Sort the images in decreasing order of the ‘hazard’ statistic"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[sort_by('hazard',reverse=True)]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -490,7 +541,7 @@ class TestClassViewStages:
         prompt = "Find all images that do not have a “fall_hazard” statistic computed"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[match(~F('fall_hazard'))]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -498,7 +549,7 @@ class TestClassViewStages:
         prompt = "Find all frames captured within one day of June 4, 2023"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[match( abs(F('timestamp') - datetime.datetime(2023,6,4)) < datetime.timedelta(days=1) )]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -506,7 +557,7 @@ class TestClassViewStages:
         prompt = "Exclude all samples where the status is ‘released’"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[match( F('status')!='released' )]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -514,7 +565,7 @@ class TestClassViewStages:
         prompt = "Isolate object index 5 in a trajectories view"
         dataset = foz.load_zoo_dataset("quickstart-video")
         expected_view = create_view_from_stages("[filter_labels('frames.detections',F('index')==5), to_trajectories('frames.detections')]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -522,7 +573,7 @@ class TestClassViewStages:
         prompt = "Create a frames view for every 10th frame in each video"
         dataset = foz.load_zoo_dataset("quickstart-video")
         expected_view = create_view_from_stages("[match_frames(F('frame_number') % 10 == 0)]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -530,7 +581,7 @@ class TestClassViewStages:
         prompt = "Return a view with every 10th sample"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[match(F('filepath').is_in(dataset.values('filepath')[::10]))]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -538,7 +589,7 @@ class TestClassViewStages:
         prompt = "Show any sample where the model made a mistake in prediction"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[match( (F('eval00_fp')>0) | (F('eval00_fn')>0) )]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -546,7 +597,7 @@ class TestClassViewStages:
         prompt = "Find all missed detections of license plates"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[filter_labels('ground_truth',F('eval00')=='fn' & F('label')=='license plate'), to_evaluation_patches('eval00')]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -554,6 +605,6 @@ class TestClassViewStages:
         prompt = "Which samples have a store id?"
         dataset = foz.load_zoo_dataset("quickstart")
         expected_view = create_view_from_stages("[exists('store_id')]", dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view_text_no_history(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
