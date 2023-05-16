@@ -64,11 +64,12 @@ def generate_query_validator_prompt(query):
 
     return prefix + query_validator_prompt.format(input=query)
 
+
 def moderate_query(query):
-    get_moderator().run(query)
+    return get_moderator().run(query)
+
 
 def validate_query(query):
-    moderate_query(query)
     prompt = generate_query_validator_prompt(query)
     res = get_llm().call_as_llm(prompt).strip()
     if res == "N":
