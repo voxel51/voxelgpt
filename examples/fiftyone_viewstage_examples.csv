@@ -110,7 +110,7 @@ show 'vehicle' detections in the 'detections' field,"[filter_labels('frames.dete
 Frames with at least 10 detections,[match_frames(F('detections.detections').length() > 10)],Jacob,video,FALSE,FALSE,FALSE,FALSE,FALSE,detection,,,,,,,,,,,,video,FALSE,FALSE,FALSE,FALSE,FALSE
 select just the first and last frames in the first sample,"[select_frames([dataset.first().frames.first().id, dataset.last().frames.last().id])]",Jacob,video,FALSE,FALSE,FALSE,FALSE,FALSE,all,,,,,,,,,,,,video,FALSE,FALSE,FALSE,FALSE,FALSE
 Create a clips view with one clip per event,[to_clips('events')],Jacob,video,FALSE,FALSE,FALSE,FALSE,FALSE,all,,,,,,,,,,,,video,FALSE,FALSE,FALSE,FALSE,FALSE
-Create a clips view that contains one clip for each contiguous segment that contains at least two road signs in every frame,[to_clips(F('detections.detections').filter(F('label') == 'road sign').length() >= 2)],Jacob,video,FALSE,FALSE,FALSE,FALSE,FALSE,detection,,,,,,,,,,,,video,FALSE,FALSE,FALSE,FALSE,FALSE
+Create a clips view that contains one clip for each contiguous segment that contains at least two road signs in every frame,[to_clips(F('detections.detections').filter(F('label') == 'road sign').length() >= 2)],Jacob,video,FALSE,FALSE,FALSE,FALSE,FALSE,detection,,,,,,,,,,,,video,FALSE,FALSE,FALSE,FALSE,TRUE
 frames with set filepath,[to_frames()],Jacob,video,FALSE,FALSE,FALSE,FALSE,FALSE,all,,,,,,,,,,,,video,FALSE,FALSE,FALSE,FALSE,TRUE
 Create a frame patches view,"[to_frames(sample_frames=True), to_patches('detections')]",Jacob,video,FALSE,FALSE,FALSE,FALSE,FALSE,detection,,,,,,,,,,,,video,FALSE,FALSE,FALSE,FALSE,TRUE
 Frames view,[to_frames(sample_frames=True)],Jacob,video,FALSE,FALSE,FALSE,FALSE,FALSE,all,,,,,,,,,,,,video,FALSE,FALSE,FALSE,FALSE,TRUE
@@ -124,13 +124,13 @@ videos with frame rate higher than 30 fps,"[match(F(""metadata.frame_rate"") > 3
 videos that are wider than they are tall,"[match(F(""metadata.frame_width"")>F(""metadata.frame_height""))]",Jacob,video,FALSE,FALSE,FALSE,FALSE,TRUE,all,,,,,,,,,,,,video,FALSE,FALSE,FALSE,FALSE,TRUE
 videos that are approximately square,"[match(abs(F(""metadata.frame_width"")-F(""metadata.frame_height""))<1)]",Jacob,video,FALSE,FALSE,FALSE,FALSE,TRUE,all,,,,,,,,,,,,video,FALSE,FALSE,FALSE,FALSE,TRUE
 all the videos whose frames are at least 1.5 times as tall as they are wide,"[match(1.5*F(""metadata.frame_width"")<F(""metadata.frame_height""))]",Jacob,video,FALSE,FALSE,FALSE,FALSE,TRUE,all,,,,,,,,,,,,video,FALSE,FALSE,FALSE,FALSE,TRUE
-retrieve all movies that have between 50 and 100 frames,"[match(F(""metadata.total_frame_count"") > 50), match(F(""metadata.total_frame_count"") < 50)]",Jacob,video,FALSE,FALSE,FALSE,FALSE,TRUE,all,,,,,,,,,,,,video,FALSE,FALSE,FALSE,FALSE,TRUE
-show me the videos with more than 75 frames,"[match(F(""metadata.total_frame_count"") > 75)]",Jacob,video,FALSE,FALSE,FALSE,FALSE,TRUE,all,,,,,,,,,,,,video,FALSE,FALSE,FALSE,FALSE,FALSE
+retrieve all movies that have between 50 and 100 frames,"[match(F(""metadata.total_frame_count"") > 50), match(F(""metadata.total_frame_count"") < 50)]",Jacob,video,FALSE,FALSE,FALSE,FALSE,TRUE,all,,,,,,,,,,,,video,FALSE,FALSE,FALSE,FALSE,FALSE
+show me the videos with more than 75 frames,"[match(F(""metadata.total_frame_count"") > 75)]",Jacob,video,FALSE,FALSE,FALSE,FALSE,TRUE,all,,,,,,,,,,,,video,FALSE,FALSE,FALSE,TRUE,FALSE
 only show videos that are longer than 4 seconds,"[match(F(""metadata.duration"") > 4)]",Jacob,video,FALSE,FALSE,FALSE,FALSE,TRUE,all,,,,,,,,,,,,video,FALSE,FALSE,FALSE,TRUE,FALSE
 give me the 10 longest videos,"[sort_by(F(""metadata.duration""), reverse=True), limit(10)]",Jacob,video,FALSE,FALSE,FALSE,FALSE,TRUE,all,,,,,,,,,,,,video,FALSE,FALSE,FALSE,TRUE,FALSE
 "Restrict to frames which have field ""my_field""","[dataset.match_frames(F(""my_field""))]",Jacob,video,FALSE,FALSE,FALSE,FALSE,FALSE,all,,,,,,,,,,,,video,FALSE,FALSE,FALSE,TRUE,FALSE
-Sort by the total number of false positives across all frames in the video,"[sort_by(""EVAL_KEY_fp"")]",Jacob,video,FALSE,FALSE,FALSE,TRUE,FALSE,all,,,,,,,,,,,,video,FALSE,FALSE,FALSE,TRUE,FALSE
-Give me all vids with at least 1k total false negatives,"[match(F(""EVAL_KEY_fn"")>1000)]",Jacob,video,FALSE,FALSE,FALSE,TRUE,FALSE,all,,,,,,,,,,,,video,FALSE,TRUE,FALSE,FALSE,FALSE
+Sort by the total number of false positives across all frames in the video,"[sort_by(""EVAL_KEY_fp"")]",Jacob,video,FALSE,FALSE,FALSE,TRUE,FALSE,all,,,,,,,,,,,,video,FALSE,TRUE,FALSE,FALSE,FALSE
+Give me all vids with at least 1k total false negatives,"[match(F(""EVAL_KEY_fn"")>1000)]",Jacob,video,FALSE,FALSE,FALSE,TRUE,FALSE,all,,,,,,,,,,,,,,,,,
 show all frames with more than 5 TP predictions,"[match_frames(F(""EVAL_KEY_tp"") > 5)]",Jacob,video,FALSE,FALSE,FALSE,TRUE,FALSE,all,,,,,,,,,,,,,,,,,
 any frames with 2 or more FPs and 3 or more FNs,"[match_frames(F(""EVAL_KEY_fp"") > 2), match_frames(F(""EVAL_KEY_fn"") > 3)]",Jacob,video,FALSE,FALSE,FALSE,TRUE,FALSE,all,,,,,,,,,,,,,,,,,
 Give me the 5 frames that look most like it is raining out,"[to_frames(), sort_by_similarity(""rainy"", brain_key=""TEXT_SIM_KEY"", k = 5)]",Jacob,video,FALSE,TRUE,FALSE,FALSE,FALSE,all,,,,,,,,,,,,,,,,,
@@ -188,7 +188,7 @@ kites high in the air,"[sort_by_similarity('kites high in the air', k=15, brain_
 "show me the 50 images that most resemble night-time, and return the similarity scores","[sort_by_similarity('night time', k=50, brain_key='TEXT_SIM_KEY', dist_field = True)]",Jacob,image,FALSE,TRUE,FALSE,FALSE,FALSE,all,,,,,,,,,,,,,,,,,
 Sort samples by their similarity to sample with ID uigweuyf and give me the top 5,"[sort_by_similarity('uigweuyf', k=5, brain_key='IMAGE_SIM_KEY')]",Jacob,image,FALSE,FALSE,TRUE,FALSE,FALSE,all,,,,,,,,,,,,,,,,,
 show me the 20 most similar imagages to the first image,"[sort_by_similarity(dataset.first().id, k=20, brain_key='IMAGE_SIM_KEY')]",Jacob,image,FALSE,FALSE,TRUE,FALSE,FALSE,all,,,,,,,,,,,,,,,,,
-sort by similarity to the first image with a cat,"[sort_by_similarity(dataset.match(F('ground_truth.detections.label').contains('cat')).first(), brain_key='IMAGE_SIM_KEY', k = 25)]",Jacob,image,FALSE,FALSE,TRUE,FALSE,FALSE,all,,,,,,,,,,,,,,,,,
+sort by similarity to the first image with a cat,"[sort_by_similarity(dataset.match(F('ground_truth.detections.label').contains('cat')).first().id, brain_key='IMAGE_SIM_KEY', k = 25)]",Jacob,image,FALSE,FALSE,TRUE,FALSE,FALSE,all,,,,,,,,,,,,,,,,,
 sort by similarity to image 10,"[sort_by_similarity(dataset.skip(9).id, brain_key='IMAGE_SIM_KEY')]",Jacob,image,FALSE,FALSE,TRUE,FALSE,FALSE,all,,,,,,,,,,,,,,,,,
 "first sort images in descending order by number of detections. For samples with the same number of predictions, sort in ascending order by uniqueness","[sort_by([(F('predictions.detections').length(), -1),('uniqueness', 1),])]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,detection,,,,,,,,,,,,,,,,,
 sort predictions by number of detections,[sort_by( F('ground_truth.detections').length())],Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,detection,,,,,,,,,,,,,,,,,
@@ -246,7 +246,7 @@ all images with a potentially spurious gt label,"[match(F(""possible_spurious"")
 most false positive predictions,"[sort_by(""EVAL_KEY_fp"", reverse=True)]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,all,,,,,,,,,,,,,,,,,
 dog detections in all images with a bird,"[match(F(""detections.detections.label"").contains([""bird""])), filter_labels(""detections"", F(""label"") == ""dog"")]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,detection,,,,,,,,,,,,,,,,,
 dinner time images with a pizza,"[sort_by_similarity(""family eating dinner"", k = 100, brain_key='TEXT_SIM_KEY'), match(F(""ground_truth.detections.label"").contains(""pizza""))]",Jacob,image,FALSE,TRUE,FALSE,FALSE,FALSE,detection,,,,,,,,,,,,,,,,,
-images classified as '3',"[dataset.match(F(""predicted_number.label"") == '3')]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,classification,,,,,,,,,,,,,,,,,
+images classified as '3',"[match(F(""predicted_number.label"") == '3')]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,classification,,,,,,,,,,,,,,,,,
 samples predicted as blue or green,"[match(F(""prediction.label"").is_in(['blue', 'green']))]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,classification,,,,,,,,,,,,,,,,,
 retrieve any samples classified as a basketball by model1 and as a baseball by model2,"[match(F(""model1.label"") == 'basketball'), match(F(""model2.label"") == 'baseball')]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,classification,,,,,,,,,,,,,,,,,
 a random selection of samples that were predicted as 'building' by modelA or modelB ,"[match((F(""modelA.label"") == ""building"") | (F(""modelB.label"") == ""building"")), take(20)]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,classification,,,,,,,,,,,,,,,,,
@@ -285,7 +285,7 @@ show me images with llamas,"[sort_by_similarity('llama', brain_key='TEXT_SIM_KEY
 "100 images that resemble a Gameboy Advance, with distances, evaluated with 'pinecone' key","[sort_by_similarity('a Game Boy Advance', k=100, brain_key='TEXT_SIM_KEY', dist_field = True)]",Jacob,image,FALSE,TRUE,FALSE,FALSE,FALSE,all,,,,,,,,,,,,,,,,,
 3 images that look the most like sample with ID uigweuyf,"[sort_by_similarity('uigweuyf', k=3, brain_key='IMAGE_SIM_KEY')]",Jacob,image,FALSE,FALSE,TRUE,FALSE,FALSE,all,,,,,,,,,,,,,,,,,
 show me the 13 most similar images to the 4th image,"[sort_by_similarity(dataset.skip(3).first().id, k=13, brain_key='IMAGE_SIM_KEY')]",Jacob,image,FALSE,FALSE,TRUE,FALSE,FALSE,all,,,,,,,,,,,,,,,,,
-"sort by similarity to the last image with a table, with key 'text_sim'","[sort_by_similarity(dataset.match(F('ground_truth.detections.label').contains('table')).last(), brain_key='IMAGE_SIM_KEY']",Jacob,image,FALSE,FALSE,TRUE,FALSE,FALSE,detection,,,,,,,,,,,,,,,,,
+"sort by similarity to the last image with a table, with key 'text_sim'","[sort_by_similarity(dataset.match(F('ground_truth.detections.label').contains('table')).last().id, brain_key='IMAGE_SIM_KEY']",Jacob,image,FALSE,FALSE,TRUE,FALSE,FALSE,detection,,,,,,,,,,,,,,,,,
 sort the samples with a car prediction by how gloomy the scene is,"[match(F('pred.detections.label').contains('Car')), sort_by_similarity('gloomy', k = 25, brain_key='TEXT_SIM_KEY')]",Jacob,image,FALSE,FALSE,TRUE,FALSE,FALSE,detection,,,,,,,,,,,,,,,,,
 take the images of buildings and find the ones that are most run down,"[match(F('classif.label') =='Building'), sort_by_similarity('run down', k = 10, brain_key='TEXT_SIM_KEY')]",Jacob,image,FALSE,FALSE,TRUE,FALSE,FALSE,classification,,,,,,,,,,,,,,,,,
 get 50 random samples and find the one that is brightest,"[take(50), sort_by_similarity('bright', k = 50, brain_key = 'TEXT_SIM_KEY')]",Jacob,image,FALSE,TRUE,FALSE,FALSE,FALSE,all,,,,,,,,,,,,,,,,,
@@ -314,7 +314,7 @@ Just show me false positive predictions,"[filter_labels(""predictions"", F(""EVA
 Give me 10 random images with a false positive prediction,"[match(F(""EVAL_KEY_fp"")>0), take(10)]",Jacob,image,FALSE,FALSE,FALSE,TRUE,FALSE,all,,,,,,,,,,,,,,,,,
 Images with llamas,"[match(F(""ground_truth.detections.label"").contains(""llama""))]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,detection,,,,,,,,,,,,,,,,,
 cats,"[match(F(""ground_truth.label"") == ""Cat"")]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,classification,,,,,,,,,,,,,,,,,
-Samples whose image is less than 48 KB,[match(F('metadata.size_bytes') < 48 * 1024)],Jacob,all,FALSE,FALSE,FALSE,FALSE,TRUE,all,,,,,,,,,,,,,,,,,
+Samples whose image is less than 48 KB,[match(F('metadata.size_bytes') < 48 * 1024)],Jacob,image,FALSE,FALSE,FALSE,FALSE,TRUE,all,,,,,,,,,,,,,,,,,
 show me the 10 haziest images,"[sort_by_similarity(""hazy"", brain_key = ""TEXT_SIM_KEY"", k = 10)]",Jacob,image,FALSE,TRUE,FALSE,FALSE,FALSE,all,,,,,,,,,,,,,,,,,
 photos that look like they were taken in the woods,"[sort_by_similarity(""the woods"", brain_key = ""TEXT_SIM_KEY"", k = 25)]",Jacob,image,FALSE,TRUE,FALSE,FALSE,FALSE,all,,,,,,,,,,,,,,,,,
 50 blurry images,"[sort_by_similarity(""blurry"", brain_key = ""TEXT_SIM_KEY"", k = 50)]",Jacob,image,FALSE,TRUE,FALSE,FALSE,FALSE,all,,,,,,,,,,,,,,,,,
