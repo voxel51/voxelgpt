@@ -17,6 +17,7 @@ llm = None
 embedding_function = None
 moderator = None
 
+
 def get_openai_key():
     api_key = os.environ.get("OPENAI_API_KEY", None)
     if api_key is None:
@@ -61,10 +62,18 @@ def get_embedding_function():
 
     return embedding_function
 
+
+class FiftyOneModeration(OpenAIModerationChain):
+    def _moderate(self, text: str, results: dict) -> str:
+        if max(list(results["category_scores"].values())) > 0.5:
+            return False
+        return True
+
+
 def get_moderator():
     global moderator
 
     if moderator is None:
-        moderator = OpenAIModerationChain(error=True)
+        moderator = FiftyOneModeration()
 
     return moderator

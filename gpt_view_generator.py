@@ -43,7 +43,6 @@ def ask_gpt_interactive(sample_collection, session=None):
             chat_history.clear()
             continue
 
-        moderate_query(query)
         _log_chat_history(query, "User", chat_history)
 
         response = ask_gpt(sample_collection, query, chat_history=chat_history)
@@ -68,15 +67,23 @@ def ask_gpt(sample_collection, query, chat_history=None):
 
 
 def ask_gpt_generator(sample_collection, query, chat_history=None, raw=False):
-    if chat_history is None:
-        chat_history = []
-
     if sample_collection.media_type not in ("image", "video"):
         raise Exception("Only image or video collections are supported")
+
+    if chat_history is None:
+        chat_history = []
 
     def _log(message):
         _log_chat_history(message, "GPT", chat_history)
         return message if raw else _emit_log(message)
+
+    if not moderate_query(query):
+        yield _log(
+            "I'm sorry, this query does not abide by OpenAI's guidelines"
+        )
+        if chat_history:
+            chat_history.pop()
+        return
 
     # Continuing an existing conversation
     if len(chat_history) > 2:
@@ -113,13 +120,10 @@ def ask_gpt_generator(sample_collection, query, chat_history=None, raw=False):
     if any(len(v) > 0 for v in label_classes.values()):
         _label_classes = _format_label_classes(label_classes)
         yield _log(f"Identified potential label classes: {_label_classes}")
-    
+
     examples = generate_view_stage_examples_prompt(
-        sample_collection, 
-        query,
-        runs,
-        label_classes
-        )
+        sample_collection, query, runs, label_classes
+    )
     view_stage_descriptions = generate_view_stage_descriptions_prompt(examples)
 
     # View stages
