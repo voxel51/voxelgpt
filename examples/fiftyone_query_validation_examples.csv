@@ -67,3 +67,13 @@ sort the samples with a car prediction by how gloomy the scene is,Y,Jacob
 "sort by similarity to the last image with a table, with key 'text_sim'",Y,Jacob
 a winter wonderland,Y,Jacob
 a dark and stormy scene,Y,Jacob
+cats,Y,Jacob
+Samples whose image is less than 48 KB,Y,Jacob
+show me the 10 haziest images,Y,Jacob
+photos that look like they were taken in the woods,Y,Jacob
+50 blurry images,Y,Jacob
+an elizabethan estate,Y,Jacob
+retrieve the images that are similar to a rubber duck,Y,Jacob
+"get the 100 images that look most like they come from an animated film, and shuffle them",Y,Jacob
+samples that look really crowded,Y,Jacob
+A grassy knoll,Y,Jacob

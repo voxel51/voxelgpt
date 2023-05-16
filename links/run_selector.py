@@ -141,7 +141,7 @@ class RunSelector(object):
 
     def select_run(self, query):
         available_runs = self.get_available_runs()
-        if available_runs:
+        if not available_runs:
             print(self.compute_run_message())
             return None
 
