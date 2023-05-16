@@ -7,7 +7,7 @@ GPT view generator.
 """
 import fiftyone as fo
 
-from links.query_validator import validate_query
+from links.query_validator import moderate_query, validate_query
 from links.view_stage_example_selector import (
     generate_view_stage_examples_prompt,
 )
@@ -43,6 +43,7 @@ def ask_gpt_interactive(sample_collection, session=None):
             chat_history.clear()
             continue
 
+        moderate_query(query)
         _log_chat_history(query, "User", chat_history)
 
         response = ask_gpt(sample_collection, query, chat_history=chat_history)
@@ -113,8 +114,6 @@ def ask_gpt_generator(sample_collection, query, chat_history=None, raw=False):
         _label_classes = _format_label_classes(label_classes)
         yield _log(f"Identified potential label classes: {_label_classes}")
     
-    # _label_fields = list(label_classes.keys())
-
     examples = generate_view_stage_examples_prompt(
         sample_collection, 
         query,
