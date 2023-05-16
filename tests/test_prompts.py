@@ -95,13 +95,12 @@ class TestClassViewStages:
     def test_query1(self):
         prompt = "Create a view excluding samples whose `my_field` field have values in ['a', 'b', 'e', '1']"
         dataset = foz.load_zoo_dataset("quickstart")
-        expected_view = create_view_from_stages(
-            "[exclude_by('my_field', ['a', 'b', 'e', '1'])]", dataset
-        )
-        gpt_response = get_gpt_view_text(dataset, prompt)
-        print(gpt_response)
-        view = create_view_from_stages(gpt_response, dataset)
-        assert self.EvaluateResults(expected_view, view)
+        stages =  "[exclude_by('my_field', ['a', 'b', 'e', '1'])]"
+        stages = split_into_stages(stages)
+        expected_view = create_view_from_stages(stages,dataset)
+        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view = create_view_from_stages(gpt_view_stages, dataset)
+        self.EvaluateResults(expected_view, gpt_view)
 
     '''
     def test_query2(self):
@@ -256,7 +255,7 @@ class TestClassViewStages:
     def test_show_me_images_with_no_detections(self):
         prompt = "Show me images with no detections"
         dataset = foz.load_zoo_dataset("quickstart")
-        stages = "[match(F('detections.detections').length() == 0)]"
+        stages = "[match(F('predictions.detections').length() == 0)]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
         gpt_view_stages = get_gpt_view_text(dataset, prompt)
