@@ -7,7 +7,7 @@ GPT view generator.
 """
 import fiftyone as fo
 
-from links.query_validator import validate_query
+from links.query_validator import moderate_query, validate_query
 from links.view_stage_example_selector import (
     generate_view_stage_examples_prompt,
 )
@@ -67,15 +67,23 @@ def ask_gpt(sample_collection, query, chat_history=None):
 
 
 def ask_gpt_generator(sample_collection, query, chat_history=None, raw=False):
-    if chat_history is None:
-        chat_history = []
-
     if sample_collection.media_type not in ("image", "video"):
         raise Exception("Only image or video collections are supported")
+
+    if chat_history is None:
+        chat_history = []
 
     def _log(message):
         _log_chat_history(message, "GPT", chat_history)
         return message if raw else _emit_log(message)
+
+    if not moderate_query(query):
+        yield _log(
+            "I'm sorry, this query does not abide by OpenAI's guidelines"
+        )
+        if chat_history:
+            chat_history.pop()
+        return
 
     # Continuing an existing conversation
     if len(chat_history) > 2:
@@ -84,14 +92,6 @@ def ask_gpt_generator(sample_collection, query, chat_history=None, raw=False):
     if not validate_query(query):
         yield _log("I'm sorry, I don't understand")
         return
-
-    examples = generate_view_stage_examples_prompt(sample_collection, query)
-    view_stage_descriptions = generate_view_stage_descriptions_prompt(examples)
-
-    # View stages
-    view_stages = get_most_relevant_view_stages(examples)
-    if view_stages:
-        yield _log(f"Identified potential view stages: {view_stages}")
 
     # Algorithms
     algorithms = select_algorithms(query)
@@ -111,13 +111,25 @@ def ask_gpt_generator(sample_collection, query, chat_history=None, raw=False):
 
     # Label classes
     label_classes = select_label_classes(sample_collection, query, fields)
-    if label_classes == "_CONFUSED_":
+    if label_classes == "_CONFUSED_" and "text_similarity" not in runs:
         yield _log("I'm sorry, I don't understand")
         return
+    elif label_classes == "_CONFUSED_":
+        label_classes = {}
 
     if any(len(v) > 0 for v in label_classes.values()):
         _label_classes = _format_label_classes(label_classes)
         yield _log(f"Identified potential label classes: {_label_classes}")
+
+    examples = generate_view_stage_examples_prompt(
+        sample_collection, query, runs, label_classes
+    )
+    view_stage_descriptions = generate_view_stage_descriptions_prompt(examples)
+
+    # View stages
+    view_stages = get_most_relevant_view_stages(examples)
+    if view_stages:
+        yield _log(f"Identified potential view stages: {view_stages}")
 
     examples = _reformat_query(examples, label_classes)
 
