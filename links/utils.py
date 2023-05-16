@@ -65,9 +65,7 @@ def get_embedding_function():
 
 class FiftyOneModeration(OpenAIModerationChain):
     def _moderate(self, text: str, results: dict) -> str:
-        if max(list(results["category_scores"].values())) > 0.5:
-            return False
-        return True
+        return not results["flagged"]
 
 
 def get_moderator():
