@@ -11,7 +11,7 @@ from langchain.prompts import PromptTemplate, FewShotPromptTemplate
 import pandas as pd
 
 # pylint: disable=relative-beyond-top-level
-from .utils import get_llm
+from .utils import get_llm, get_moderator
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -66,6 +66,7 @@ def generate_query_validator_prompt(query):
 
 
 def validate_query(query):
+    get_moderator().run(query)
     prompt = generate_query_validator_prompt(query)
     res = get_llm().call_as_llm(prompt).strip()
     if res == "N":
