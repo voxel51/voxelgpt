@@ -1,6 +1,6 @@
 fiftyone:
-  version: "*"
-name: "@voxel51/fiftyone-gpt"
+  version: '*'
+name: '@voxel51/fiftyone-gpt'
 description: FiftyOne ChatGPT Integration
 license: MIT
 version: 1.0.0
@@ -8,3 +8,4 @@ js_bundle: dist/index.umd.js
 operators:
   - ask_gpt
   - create_view_with_gpt
+  - open_voxel_gpt_panel

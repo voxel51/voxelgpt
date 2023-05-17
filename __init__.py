@@ -142,6 +142,7 @@ class CreateViewWithGPT(foo.Operator):
     @property
     def resolve_inputs(self):
         inputs = types.Object()
+        inputs.str("query", label="Query", required=True)
         return types.Property(inputs)
 
     async def execute(self, ctx):
@@ -150,8 +151,10 @@ class CreateViewWithGPT(foo.Operator):
         else:
             sample_collection = ctx.dataset
 
+        query = ctx.params["query"]
+
         # @todo feed these as input
-        query = "show me 10 random samples"
+        # query = "show me 10 random samples"
         chat_history = None
 
         try:
@@ -204,6 +207,29 @@ class CreateViewWithGPT(foo.Operator):
         )
 
 
+class OpenVoxelGPTPanel(foo.Operator):
+    @property
+    def config(self):
+        return foo.OperatorConfig(
+            name="open_voxel_gpt_panel",
+            label="Open VoxelGPT Panel",
+            unlisted=True
+        )
+
+    def resolve_placement(self, ctx):
+        return types.Placement(
+            types.Places.SAMPLES_GRID_ACTIONS,
+            types.Button(label="Open VoxelGPT", icon="/assets/chatgpt.svg")
+        )
+
+    def execute(self, ctx):
+        return ctx.trigger(
+            "open_panel",
+            params=dict(name="gpt_search"),
+        )
+
+
 def register(p):
     p.register(AskGPT)
     p.register(CreateViewWithGPT)
+    p.register(OpenVoxelGPTPanel)
