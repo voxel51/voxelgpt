@@ -1,5 +1,5 @@
 """
-GPT view generator.
+VoxelGPT: a GPT-powered FiftyOne view generator.
 
 | Copyright 2017-2023, Voxel51, Inc.
 | `voxel51.com <https://voxel51.com/>`_
