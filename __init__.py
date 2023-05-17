@@ -66,7 +66,7 @@ class CreateViewWithGPT(foo.Operator):
 
         try:
             with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
-                from gpt_view_generator import ask_gpt_generator
+                from voxelgpt import ask_gpt_generator
 
                 for response in ask_gpt_generator(
                     sample_collection, query, chat_history=chat_history
