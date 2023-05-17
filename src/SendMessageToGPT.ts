@@ -32,7 +32,7 @@ export class SendMessageToGPT extends Operator {
       type: 'outgoing',
       content: ctx.params.message
     })
-    await executeOperator(`${this.pluginName}/create_view_with_gpt`, {message: ctx.params.message})
+    await executeOperator(`${this.pluginName}/create_view_with_gpt`, {query: ctx.params.message})
   }
 }
 
