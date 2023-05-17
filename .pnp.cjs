@@ -38,6 +38,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ]],\
             ["@rollup/plugin-node-resolve", "virtual:4896dff2adcc28c6a9f7a259787bb4359898db80eca5fd0cb6d9012fba582e250412773637e9744fca8eef17da2931b9bcf37f8f59556d0de543de291b70ae21#npm:15.0.2"],\
             ["@vitejs/plugin-react", "virtual:4896dff2adcc28c6a9f7a259787bb4359898db80eca5fd0cb6d9012fba582e250412773637e9744fca8eef17da2931b9bcf37f8f59556d0de543de291b70ae21#npm:4.0.0"],\
+            ["lodash", "npm:4.17.21"],\
             ["nodemon", "npm:2.0.22"],\
             ["react", "npm:18.2.0"],\
             ["react-is", "npm:18.2.0"],\
@@ -1247,6 +1248,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ]],\
             ["@rollup/plugin-node-resolve", "virtual:4896dff2adcc28c6a9f7a259787bb4359898db80eca5fd0cb6d9012fba582e250412773637e9744fca8eef17da2931b9bcf37f8f59556d0de543de291b70ae21#npm:15.0.2"],\
             ["@vitejs/plugin-react", "virtual:4896dff2adcc28c6a9f7a259787bb4359898db80eca5fd0cb6d9012fba582e250412773637e9744fca8eef17da2931b9bcf37f8f59556d0de543de291b70ae21#npm:4.0.0"],\
+            ["lodash", "npm:4.17.21"],\
             ["nodemon", "npm:2.0.22"],\
             ["react", "npm:18.2.0"],\
             ["react-is", "npm:18.2.0"],\
