@@ -29,7 +29,7 @@ const Chat = () => {
       );
 
       return () => {
-        refResizeObserver.disconnect();
+        refResizeObserver?.disconnect?.();
       };
     }
   }, []);
