@@ -22,30 +22,29 @@ from gpt_view_generator import ask_gpt_generator, ask_gpt
 
 
 get_gpt_view = ask_gpt
-'''
+"""
 def get_gpt_view_text(dataset, query):
     response = None
     for response in ask_gpt_generator(dataset, query, raw=True):
         pass
 
     return response
-'''
+"""
 
 
 def remove_whitespace(stage_str):
     return re.sub(
-        r'\s+', lambda m: ' ' if len(m.group(0)) == 1 else '',
-        stage_str
-        )
+        r"\s+", lambda m: " " if len(m.group(0)) == 1 else "", stage_str
+    )
 
 
 def split_into_stages(stages_text):
     with open("view_stages_list.txt", "r") as f:
         view_stages = f.read().splitlines()
-    pattern = ','+'|,'.join(view_stages)[:-1]
+    pattern = "," + "|,".join(view_stages)[:-1]
 
-    st = stages_text[1:-1].replace(', ', ',').replace('\n', '')
-    st = st.replace('\r', '').replace('\'', "\"")
+    st = stages_text[1:-1].replace(", ", ",").replace("\n", "")
+    st = st.replace("\r", "").replace("'", '"')
     x = re.finditer(pattern, st)
 
     stages = []
@@ -56,11 +55,11 @@ def split_into_stages(stages_text):
     spans = spans[::-1]
     for i, span in enumerate(spans):
         if i == 0:
-            stages.append(st[span[0]+1:])
+            stages.append(st[span[0] + 1 :])
         else:
-            stages.append(st[span[0]+1:spans[i-1][0]])
+            stages.append(st[span[0] + 1 : spans[i - 1][0]])
     if len(stages) != 0:
-        stages.append(st[:spans[-1][0]])
+        stages.append(st[: spans[-1][0]])
     else:
         stages.append(st)
 
@@ -75,7 +74,7 @@ def create_view_from_stages(text, dataset):
     for element in text[:-1]:
         all_text += element + "."
     all_text += text[-1]
-    code = 'dataset.' + all_text
+    code = "dataset." + all_text
     print(code)
     try:
         view = eval(code)
@@ -86,96 +85,96 @@ def create_view_from_stages(text, dataset):
 
 
 def create_or_load_qs_keypts():
-    if fo.dataset_exists('qs-keypts'):
-        ds = fo.load_dataset('qs-keypts')
+    if fo.dataset_exists("qs-keypts"):
+        ds = fo.load_dataset("qs-keypts")
         return ds
-        
-    ds = foz.load_zoo_dataset('quickstart')
+
+    ds = foz.load_zoo_dataset("quickstart")
     ds = ds.limit(30).clone()
-    ds.name = 'qs-keypts'
+    ds.name = "qs-keypts"
     ds.persistent = True
 
-    ds.rename_sample_field('ground_truth','labels')
-    ds.rename_sample_field('predictions','model')
+    ds.rename_sample_field("ground_truth", "labels")
+    ds.rename_sample_field("predictions", "model")
 
     haz_max = 10
-    hazard = haz_max*np.random.random(len(ds))
-    status = ['released','admitted',None]*(len(ds)//3)
+    hazard = haz_max * np.random.random(len(ds))
+    status = ["released", "admitted", None] * (len(ds) // 3)
     fall_hazard = np.random.random(len(ds)).tolist()
     fall_hazard[3] = None
     fall_hazard[7] = None
-    ds.set_values('hazard',hazard)
-    ds.set_values('status',status)
-    ds.set_values('fall_hazard',fall_hazard)
+    ds.set_values("hazard", hazard)
+    ds.set_values("status", status)
+    ds.set_values("fall_hazard", fall_hazard)
 
     # sample-level tags
-    REVIEW_STATE_TAGS = ['NeedsReview', 'ReviewOK', 'ReviewInProg']
-    REVIEWER_TAGS = ['Reviewer01', 'Reviewer02']
+    REVIEW_STATE_TAGS = ["NeedsReview", "ReviewOK", "ReviewInProg"]
+    REVIEWER_TAGS = ["Reviewer01", "Reviewer02"]
 
-    for i,s in enumerate(ds):
+    for i, s in enumerate(ds):
         tag_state = REVIEW_STATE_TAGS[i % len(REVIEW_STATE_TAGS)]
-        tag_revwr = REVIEWER_TAGS[i% len(REVIEWER_TAGS)]
+        tag_revwr = REVIEWER_TAGS[i % len(REVIEWER_TAGS)]
         s.tags.append(tag_state)
         s.tags.append(tag_revwr)
         s.save()
 
     # label-level tags
-    REVIEW_STATE_TAGS = ['ReviewOK', 'ReviewFlag', 'ReviewProg']
-    REVIEWER_TAGS = ['Reviewer01', 'Reviewer02', 'Reviewer03']
-    keypt_classes = ['head','armL','armR','legL','legR']
+    REVIEW_STATE_TAGS = ["ReviewOK", "ReviewFlag", "ReviewProg"]
+    REVIEWER_TAGS = ["Reviewer01", "Reviewer02", "Reviewer03"]
+    keypt_classes = ["head", "armL", "armR", "legL", "legR"]
     nclass = len(keypt_classes)
 
     for s in ds:
         keypts = []
         for det in s.labels.detections:
-            cls = keypt_classes[np.random.randint(0,nclass)]
-            pts = np.random.rand(nclass,2)
-            kp = fo.Keypoint(label=cls,points=pts)
+            cls = keypt_classes[int(np.random.randint(0, nclass))]
+            pts = np.random.rand(nclass, 2)
+            kp = fo.Keypoint(label=cls, points=pts)
             keypts.append(kp)
-        s['labels_kpts'] = fo.Keypoints(keypoints=keypts)
-        #s.save()
-        
+        s["labels_kpts"] = fo.Keypoints(keypoints=keypts)
+        # s.save()
+
         keypts = []
         for det in s.model.detections:
-            cls = keypt_classes[np.random.randint(0,nclass)]
-            pts = np.random.rand(nclass,2)
-            kp = fo.Keypoint(label=cls,points=pts)
+            cls = keypt_classes[int(np.random.randint(0, nclass))]
+            pts = np.random.rand(nclass, 2)
+            kp = fo.Keypoint(label=cls, points=pts)
             keypts.append(kp)
-        s['model_kpts'] = fo.Keypoints(keypoints=keypts)
-        #s.save()
+        s["model_kpts"] = fo.Keypoints(keypoints=keypts)
+        # s.save()
 
-        
-        for i,det in enumerate(s.model.detections):
+        for i, det in enumerate(s.model.detections):
             det.tags = []
             tag_state = REVIEW_STATE_TAGS[i % len(REVIEW_STATE_TAGS)]
-            tag_revwr = REVIEWER_TAGS[i% len(REVIEWER_TAGS)]
+            tag_revwr = REVIEWER_TAGS[i % len(REVIEWER_TAGS)]
             det.tags.append(tag_state)
             det.tags.append(tag_revwr)
-        #s.save()
-        
-        for i,kpt in enumerate(s.model_kpts.keypoints):
+        # s.save()
+
+        for i, kpt in enumerate(s.model_kpts.keypoints):
             kpt.tags = []
             tag_state = REVIEW_STATE_TAGS[i % len(REVIEW_STATE_TAGS)]
-            tag_revwr = REVIEWER_TAGS[i% len(REVIEWER_TAGS)]
+            tag_revwr = REVIEWER_TAGS[i % len(REVIEWER_TAGS)]
             kpt.tags.append(tag_state)
             kpt.tags.append(tag_revwr)
-        #s.save()
+        # s.save()
 
-        dt = datetime.date(2020,6,15)
-        randint = random.randint(-50,50)
+        dt = datetime.date(2020, 6, 15)
+        randint = random.randint(-50, 50)
         dt += datetime.timedelta(days=randint)
         for det in s.model.detections:
-            det['model_date'] = dt
-        
-        dt = datetime.date(2020,6,15)
-        randint = random.randint(-50,50)
+            det["model_date"] = dt
+
+        dt = datetime.date(2020, 6, 15)
+        randint = random.randint(-50, 50)
         dt += datetime.timedelta(days=randint)
         for kp in s.model_kpts.keypoints:
-            kp['model_date'] = dt
-        
+            kp["model_date"] = dt
+
         s.save()
 
     return ds
+
 
 class TestClassViewStages:
     # def MockDataset(self, test_name):
@@ -183,57 +182,66 @@ class TestClassViewStages:
     #     return dataset
 
     def EvaluateResults(self, ground_truth, gpt_response):
-        assert gpt_response.stats()['samples_count'] == ground_truth.stats()['samples_count']
-        assert sorted(gpt_response.values("id")) == sorted(ground_truth.values("id"))
-        assert sorted(gpt_response.values("filepath")) == sorted(ground_truth.values("filepath"))
-        #assert gpt_response.values("ground_truth.detections.label") == ground_truth.values("ground_truth.detections.label")
-        assert gpt_response.get_field_schema() == ground_truth.get_field_schema()
-        
+        assert (
+            gpt_response.stats()["samples_count"]
+            == ground_truth.stats()["samples_count"]
+        )
+        assert sorted(gpt_response.values("id")) == sorted(
+            ground_truth.values("id")
+        )
+        assert sorted(gpt_response.values("filepath")) == sorted(
+            ground_truth.values("filepath")
+        )
+        # assert gpt_response.values("ground_truth.detections.label") == ground_truth.values("ground_truth.detections.label")
+        assert (
+            gpt_response.get_field_schema() == ground_truth.get_field_schema()
+        )
 
     def test_sample_tags(self):
         prompt = "Find all images tagged as NeedsReview but not Reviewer02"
         dataset = create_or_load_qs_keypts()
-        stages =  "[match_tags('NeedsReview'), match_tags('Reviewer02',bool=False)]"
+        stages = (
+            "[match_tags('NeedsReview'), match_tags('Reviewer02',bool=False)]"
+        )
         stages = split_into_stages(stages)
-        expected_view = create_view_from_stages(stages,dataset)
+        expected_view = create_view_from_stages(stages, dataset)
         gpt_view = get_gpt_view(dataset, prompt)
-        #gpt_view = create_view_from_stages(gpt_view_stages, dataset)
+        # gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
-
 
     def test_hazard_stat(self):
-        prompt = "Sort the images in decreasing order of the ‘hazard’ statistic"
+        prompt = (
+            "Sort the images in decreasing order of the ‘hazard’ statistic"
+        )
         dataset = create_or_load_qs_keypts()
-        stages =  "[sort_by(F('hazard'),reverse=True)]"
+        stages = "[sort_by(F('hazard'),reverse=True)]"
         stages = split_into_stages(stages)
-        expected_view = create_view_from_stages(stages,dataset)
+        expected_view = create_view_from_stages(stages, dataset)
         gpt_view = get_gpt_view(dataset, prompt)
-        #gpt_view = create_view_from_stages(gpt_view_stages, dataset)
+        # gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
-
 
     def test_restrict_keypts(self):
         prompt = "Restrict the labels to just keypoints"
         dataset = create_or_load_qs_keypts()
-        stages =  "[select_fields(['labels_kpts','model_kpts'])]"
+        stages = "[select_fields(['labels_kpts','model_kpts'])]"
         stages = split_into_stages(stages)
-        expected_view = create_view_from_stages(stages,dataset)
+        expected_view = create_view_from_stages(stages, dataset)
         gpt_view = get_gpt_view(dataset, prompt)
-        #gpt_view = create_view_from_stages(gpt_view_stages, dataset)
+        # gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
-
 
     def test_query1(self):
         prompt = "Create a view excluding samples whose `my_field` field have values in ['a', 'b', 'e', '1']"
         dataset = foz.load_zoo_dataset("quickstart")
-        stages =  "[exclude_by('my_field', ['a', 'b', 'e', '1'])]"
+        stages = "[exclude_by('my_field', ['a', 'b', 'e', '1'])]"
         stages = split_into_stages(stages)
-        expected_view = create_view_from_stages(stages,dataset)
+        expected_view = create_view_from_stages(stages, dataset)
         gpt_view = get_gpt_view(dataset, prompt)
-        #gpt_view = create_view_from_stages(gpt_view_stages, dataset)
+        # gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
-    '''
+    """
     def test_query2(self):
         prompt = (
             "remove samples with 1, 3, 5, 7, or 9 in 'num_predictions' field"
@@ -246,7 +254,7 @@ class TestClassViewStages:
         print(gpt_response)
         view = create_view_from_stages(gpt_response, dataset)
         self.EvaluateResults(expected_view,view)
-    '''
+    """
 
     def test_100_random_samples_of_dogs_with_people(self):
         prompt = "100 random samples of dogs with people"
@@ -255,10 +263,10 @@ class TestClassViewStages:
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages, dataset)
         gpt_view = get_gpt_view(dataset, prompt)
-        #gpt_view = create_view_from_stages(gpt_view_stages, dataset)
+        # gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
-    '''
+    """
     def test_hardest_sample_of_a_random_sampling_of_69_samples(self):
         prompt = "Hardest sample of a random sampling of 69 samples"
         dataset = foz.load_zoo_dataset("quickstart")
@@ -358,7 +366,7 @@ class TestClassViewStages:
         gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
-    '''
+    """
 
     def test_give_me_all_videos_that_are_longer_than_5_seconds(self):
         prompt = "Give me all videos that are longer than 5 seconds"
@@ -366,12 +374,12 @@ class TestClassViewStages:
         dataset.compute_metadata()
         stages = "[match(F('metadata.duration') > 5)]"
         stages = split_into_stages(stages)
-        expected_view = create_view_from_stages(stages,dataset)
+        expected_view = create_view_from_stages(stages, dataset)
         gpt_view = get_gpt_view(dataset, prompt)
-        #gpt_view = create_view_from_stages(gpt_view_stages, dataset)
+        # gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
-    '''
+    """
     def test_show_me_80_hardest_samples_with_incorrect_predicti(self):
         prompt = "Show me 80 hardest samples with incorrect predictions having confidence above 0.82"
         dataset = foz.load_zoo_dataset("quickstart")
@@ -381,19 +389,19 @@ class TestClassViewStages:
         gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
-    '''
+    """
 
     def test_show_me_images_with_no_detections(self):
         prompt = "Show me images with no predicted detections"
         dataset = foz.load_zoo_dataset("quickstart")
         stages = "[match(F('predictions.detections').length() == 0)]"
         stages = split_into_stages(stages)
-        expected_view = create_view_from_stages(stages,dataset)
+        expected_view = create_view_from_stages(stages, dataset)
         gpt_view = get_gpt_view(dataset, prompt)
-        #gpt_view = create_view_from_stages(gpt_view_stages, dataset)
+        # gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
-    '''
+    """
     def test_missed_predictions_with_no_annotation_mistakes(self):
         prompt = "Missed predictions with no annotation mistakes"
         dataset = foz.load_zoo_dataset("quickstart")
@@ -899,4 +907,4 @@ class TestClassViewStages:
         gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
-    '''
+    """
