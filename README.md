@@ -50,7 +50,7 @@ export OPENAI_API_KEY=XXXXXXXX
 import fiftyone as fo
 import fiftyone.zoo as foz
 
-from gpt_view_generator import ask_gpt_interactive
+from voxelgpt import ask_gpt_interactive
 
 dataset = foz.load_zoo_dataset("quickstart")
 session = fo.launch_app(dataset)
