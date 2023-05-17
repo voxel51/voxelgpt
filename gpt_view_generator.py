@@ -240,7 +240,11 @@ def _log_view_stage_list(view_stage_names, chat_history, raw):
 
 
 def _format_label_and_classes(label_field, class_names):
-    return f"  \n - **{label_field}**:  \t{', '.join(class_names)}"
+    prefix = f"  \n - **{label_field}**:"
+    if class_names:
+        return prefix + f" \t{', '.join(class_names)}"
+    else:
+        return prefix + f" \t*no classes found*"
 
 
 def _log_label_classes(label_classes, chat_history, raw):
