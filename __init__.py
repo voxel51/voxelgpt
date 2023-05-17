@@ -225,7 +225,7 @@ class OpenVoxelGPTPanel(foo.Operator):
     def execute(self, ctx):
         return ctx.trigger(
             "open_panel",
-            params=dict(name="gpt_search"),
+            params=dict(name="gpt_search", isActive=True),
         )
 
 
