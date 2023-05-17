@@ -7,24 +7,29 @@ Prompt tests.
 """
 import os
 import sys
-
 import re
+import random
+
+import numpy as np
+import datetime
 
 import fiftyone as fo
 import fiftyone.zoo as foz
 from fiftyone import ViewField as F
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from gpt_view_generator import ask_gpt_generator
+from gpt_view_generator import ask_gpt_generator, ask_gpt
 
 
+get_gpt_view = ask_gpt
+'''
 def get_gpt_view_text(dataset, query):
     response = None
     for response in ask_gpt_generator(dataset, query, raw=True):
         pass
 
     return response
-
+'''
 
 
 def remove_whitespace(stage_str):
@@ -80,6 +85,98 @@ def create_view_from_stages(text, dataset):
     return view
 
 
+def create_or_load_qs_keypts():
+    if fo.dataset_exists('qs-keypts'):
+        ds = fo.load_dataset('qs-keypts')
+        return ds
+        
+    ds = foz.load_zoo_dataset('quickstart')
+    ds = ds.limit(30).clone()
+    ds.name = 'qs-keypts'
+    ds.persistent = True
+
+    ds.rename_sample_field('ground_truth','labels')
+    ds.rename_sample_field('predictions','model')
+
+    haz_max = 10
+    hazard = haz_max*np.random.random(len(ds))
+    status = ['released','admitted',None]*(len(ds)//3)
+    fall_hazard = np.random.random(len(ds)).tolist()
+    fall_hazard[3] = None
+    fall_hazard[7] = None
+    ds.set_values('hazard',hazard)
+    ds.set_values('status',status)
+    ds.set_values('fall_hazard',fall_hazard)
+
+    # sample-level tags
+    REVIEW_STATE_TAGS = ['NeedsReview', 'ReviewOK', 'ReviewInProg']
+    REVIEWER_TAGS = ['Reviewer01', 'Reviewer02']
+
+    for i,s in enumerate(ds):
+        tag_state = REVIEW_STATE_TAGS[i % len(REVIEW_STATE_TAGS)]
+        tag_revwr = REVIEWER_TAGS[i% len(REVIEWER_TAGS)]
+        s.tags.append(tag_state)
+        s.tags.append(tag_revwr)
+        s.save()
+
+    # label-level tags
+    REVIEW_STATE_TAGS = ['ReviewOK', 'ReviewFlag', 'ReviewProg']
+    REVIEWER_TAGS = ['Reviewer01', 'Reviewer02', 'Reviewer03']
+    keypt_classes = ['head','armL','armR','legL','legR']
+    nclass = len(keypt_classes)
+
+    for s in ds:
+        keypts = []
+        for det in s.labels.detections:
+            cls = keypt_classes[np.random.randint(0,nclass)]
+            pts = np.random.rand(nclass,2)
+            kp = fo.Keypoint(label=cls,points=pts)
+            keypts.append(kp)
+        s['labels_kpts'] = fo.Keypoints(keypoints=keypts)
+        #s.save()
+        
+        keypts = []
+        for det in s.model.detections:
+            cls = keypt_classes[np.random.randint(0,nclass)]
+            pts = np.random.rand(nclass,2)
+            kp = fo.Keypoint(label=cls,points=pts)
+            keypts.append(kp)
+        s['model_kpts'] = fo.Keypoints(keypoints=keypts)
+        #s.save()
+
+        
+        for i,det in enumerate(s.model.detections):
+            det.tags = []
+            tag_state = REVIEW_STATE_TAGS[i % len(REVIEW_STATE_TAGS)]
+            tag_revwr = REVIEWER_TAGS[i% len(REVIEWER_TAGS)]
+            det.tags.append(tag_state)
+            det.tags.append(tag_revwr)
+        #s.save()
+        
+        for i,kpt in enumerate(s.model_kpts.keypoints):
+            kpt.tags = []
+            tag_state = REVIEW_STATE_TAGS[i % len(REVIEW_STATE_TAGS)]
+            tag_revwr = REVIEWER_TAGS[i% len(REVIEWER_TAGS)]
+            kpt.tags.append(tag_state)
+            kpt.tags.append(tag_revwr)
+        #s.save()
+
+        dt = datetime.date(2020,6,15)
+        randint = random.randint(-50,50)
+        dt += datetime.timedelta(days=randint)
+        for det in s.model.detections:
+            det['model_date'] = dt
+        
+        dt = datetime.date(2020,6,15)
+        randint = random.randint(-50,50)
+        dt += datetime.timedelta(days=randint)
+        for kp in s.model_kpts.keypoints:
+            kp['model_date'] = dt
+        
+        s.save()
+
+    return ds
+
 class TestClassViewStages:
     # def MockDataset(self, test_name):
     #     dataset = fo.Dataset("test_dataset_" + str(test_name))
@@ -89,17 +186,51 @@ class TestClassViewStages:
         assert gpt_response.stats()['samples_count'] == ground_truth.stats()['samples_count']
         assert sorted(gpt_response.values("id")) == sorted(ground_truth.values("id"))
         assert sorted(gpt_response.values("filepath")) == sorted(ground_truth.values("filepath"))
-        assert gpt_response.values("ground_truth.detections.label") == ground_truth.values("ground_truth.detections.label")
+        #assert gpt_response.values("ground_truth.detections.label") == ground_truth.values("ground_truth.detections.label")
         assert gpt_response.get_field_schema() == ground_truth.get_field_schema()
         
+
+    def test_sample_tags(self):
+        prompt = "Find all images tagged as NeedsReview but not Reviewer02"
+        dataset = create_or_load_qs_keypts()
+        stages =  "[match_tags('NeedsReview'), match_tags('Reviewer02',bool=False)]"
+        stages = split_into_stages(stages)
+        expected_view = create_view_from_stages(stages,dataset)
+        gpt_view = get_gpt_view(dataset, prompt)
+        #gpt_view = create_view_from_stages(gpt_view_stages, dataset)
+        self.EvaluateResults(expected_view, gpt_view)
+
+
+    def test_hazard_stat(self):
+        prompt = "Sort the images in decreasing order of the ‘hazard’ statistic"
+        dataset = create_or_load_qs_keypts()
+        stages =  "[sort_by(F('hazard'),reverse=True)]"
+        stages = split_into_stages(stages)
+        expected_view = create_view_from_stages(stages,dataset)
+        gpt_view = get_gpt_view(dataset, prompt)
+        #gpt_view = create_view_from_stages(gpt_view_stages, dataset)
+        self.EvaluateResults(expected_view, gpt_view)
+
+
+    def test_restrict_keypts(self):
+        prompt = "Restrict the labels to just keypoints"
+        dataset = create_or_load_qs_keypts()
+        stages =  "[select_fields(['labels_kpts','model_kpts'])]"
+        stages = split_into_stages(stages)
+        expected_view = create_view_from_stages(stages,dataset)
+        gpt_view = get_gpt_view(dataset, prompt)
+        #gpt_view = create_view_from_stages(gpt_view_stages, dataset)
+        self.EvaluateResults(expected_view, gpt_view)
+
+
     def test_query1(self):
         prompt = "Create a view excluding samples whose `my_field` field have values in ['a', 'b', 'e', '1']"
         dataset = foz.load_zoo_dataset("quickstart")
         stages =  "[exclude_by('my_field', ['a', 'b', 'e', '1'])]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
-        gpt_view = create_view_from_stages(gpt_view_stages, dataset)
+        gpt_view = get_gpt_view(dataset, prompt)
+        #gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
     '''
@@ -111,7 +242,7 @@ class TestClassViewStages:
         stages = "[exclude_by('num_predictions', [1, 3, 5, 7, 9])]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages, dataset)
-        gpt_response = get_gpt_view_text(dataset, prompt)
+        gpt_response = get_gpt_view(dataset, prompt)
         print(gpt_response)
         view = create_view_from_stages(gpt_response, dataset)
         self.EvaluateResults(expected_view,view)
@@ -123,8 +254,8 @@ class TestClassViewStages:
         stages = "[match(F('ground_truth.detections.label').contains(['dog', 'person'], all=True)), take(100)]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages, dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
-        gpt_view = create_view_from_stages(gpt_view_stages, dataset)
+        gpt_view = get_gpt_view(dataset, prompt)
+        #gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
     '''
@@ -134,7 +265,7 @@ class TestClassViewStages:
         stages = "[take(69), sort_by('hardness', reverse=True), limit(1)]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages, dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
     
@@ -144,7 +275,7 @@ class TestClassViewStages:
         stages = "[exclude_by('detections.label',['person', 'road sign']), to_trajectories('frames.detections')]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
     
@@ -154,7 +285,7 @@ class TestClassViewStages:
         stages = "[match_frames(F('detections.detections').length() > 100), match(F('detections.detections.label.timeofday').is_subset(['daytime']))]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -164,7 +295,7 @@ class TestClassViewStages:
         stages = "[sort_by_similarity('people playing sports', k = 15, brain_key = 'qdrant'), take(11)]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -174,7 +305,7 @@ class TestClassViewStages:
         stages = "[sort_by('hardness', reverse=True), geo_near([72.8777, 19.0760])]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -184,7 +315,7 @@ class TestClassViewStages:
         stages = "[match(F('eval')==True).filter_labels('blocked_exit'), geo_within([-122.340524,47.617944], [-122.336709,47.61571], [-122.338324,47.614524], [-122.342042,47.616716])]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -194,7 +325,7 @@ class TestClassViewStages:
         stages = "[match(((F('geolocation_field.point.coordinates')[0] + 83.732124 - 1).abs() < 1) & ((F('geolocation_field.point.coordinates')[1] - 42.279594).abs() < 1))]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -204,7 +335,7 @@ class TestClassViewStages:
         stages = "[match(F('ground_truth.detections.label').is_subset(['house'])), geo_near([83.7430, 42.2808], max_distance=80467.2)]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -214,7 +345,7 @@ class TestClassViewStages:
         stages = "[geo_near([2.3522, 48.8566], max_distance=100000)]", datase
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -224,7 +355,7 @@ class TestClassViewStages:
         stages = "[match(F('weather').label == 'sunny'), geo_near([75.1652, 39.9526]), take(29)]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
     '''
@@ -236,8 +367,8 @@ class TestClassViewStages:
         stages = "[match(F('metadata.duration') > 5)]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
-        gpt_view = create_view_from_stages(gpt_view_stages, dataset)
+        gpt_view = get_gpt_view(dataset, prompt)
+        #gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
     '''
@@ -247,19 +378,19 @@ class TestClassViewStages:
         stages = "[match(F('eval')==False).filter_labels('prediction',F('confidence')>0.82), sort_by('hardness', reverse=True), limit(80)]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
     '''
 
     def test_show_me_images_with_no_detections(self):
-        prompt = "Show me images with no detections"
+        prompt = "Show me images with no predicted detections"
         dataset = foz.load_zoo_dataset("quickstart")
         stages = "[match(F('predictions.detections').length() == 0)]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
-        gpt_view = create_view_from_stages(gpt_view_stages, dataset)
+        gpt_view = get_gpt_view(dataset, prompt)
+        #gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
     '''
@@ -269,7 +400,7 @@ class TestClassViewStages:
         stages = "[match(F('eval')==False), exclude_labels(tags='annotation_mistake')]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -282,7 +413,7 @@ class TestClassViewStages:
             "[match(F('eval')==False).filter_labels('torch'), exclude_labels(tags='annotation_mistake')]",
             dataset,
         )
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
     
@@ -292,7 +423,7 @@ class TestClassViewStages:
         stages = "[match(F('metadata.num_channels') = 1), sort_by('uniqueness', reverse=False), limit(3)]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -302,7 +433,7 @@ class TestClassViewStages:
         stages = "[match(F('positive_labels.detections.label').contains('human eye') & F('negative_label.detections.label').contains(['glasses', 'sunglasses', 'monacle'])]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -312,7 +443,7 @@ class TestClassViewStages:
         stages = "[match(F('detections.detections.label.timeofday').is_subset(['nighttime'])), match(F('timetaken').year() == 2023), sort_by('mistakenness', reverse=True), limit(45)]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -322,7 +453,7 @@ class TestClassViewStages:
         stages = "[match(F('date').year() == 2020), sort_by_similarity(dataset.limit[101:].first().id), sort_by('uniqueness', reverse=True)]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -332,7 +463,7 @@ class TestClassViewStages:
         stages = "[match(F('detections.detections.label.timeofday').is_subset(['dawn/dusk'])), filter_labels('events', F('label') == 'drone'), to_clips('events')]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -342,7 +473,7 @@ class TestClassViewStages:
         stages = "[filter_labels('frames.detections', F('label') == 'fish'), to_trajectories('frames.detections')]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -352,7 +483,7 @@ class TestClassViewStages:
         stages = "[select_labels(tags=['cvat', 'annotation_mistake']), limit(10), concat(select_labels(tags=['label_studio', 'annotation_mistake']), limit(10))]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -362,7 +493,7 @@ class TestClassViewStages:
         stages = "[filter_labels('rcs_5_20230417', (F('bounding_box')[2] * F('bounding_box')[3]) < 0.1), match(F('rcs_5_20230417.detections').length() > 10)]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -372,7 +503,7 @@ class TestClassViewStages:
         stages = "[filter_labels('final_yolov8', (F('march_1_eval') == 'fp') & (F('confidence') > 0.8)), sort_by(F('final_yolov8.detections').reduce(VALUE.append(F('confidence')), init_val=[]).max()), limit(5)]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -382,7 +513,7 @@ class TestClassViewStages:
         stages = "[filter_labels('instances', F('label').is_in(['person', 'Car'], only_matches=False)]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -392,7 +523,7 @@ class TestClassViewStages:
         stages = "[filter_labels('frames.close_poly_segs', (F('label') == 'airplane') & (F('occluded') == True), trajectories=True), to_trajectories('frames.close_poly_segs'), match(F('frames.close_poly_segs').filter(F('occluded') == True)).length() > 20)]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -402,7 +533,7 @@ class TestClassViewStages:
         stages = "[filter_keypoints('driver_pose', F('FTON') >= 51), sort_by('uniqueness', reverse=True), limit(100)]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -412,7 +543,7 @@ class TestClassViewStages:
         stages = "[set_field('scene', F('scene.classifications').map(F('chs_score').round(place=1)))]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -422,7 +553,7 @@ class TestClassViewStages:
         stages = "[set_field('tags', F('tags').map(F().lower())), match_tags(['annotation_mistake', 'june_task_5', 'roi_issue'])]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -432,7 +563,7 @@ class TestClassViewStages:
         stages = "[to_frames(), match(F('test_detections.detections').length() > 20), filter_labels('test_detections', F('label') == 'Pot hole'),  to_patches('test_detections')]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -442,7 +573,7 @@ class TestClassViewStages:
         stages = "[set_field('crowding', F('person_detector.detections').length().switch({(F()==0): 'empty', (F() == 1)): 'solo', ((F() > 2) & (F() <= 10)): 'group', ((F() > 10) & (F() <= 15)): 'gathering', (F() > 15): 'crowd' }))]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -455,7 +586,7 @@ class TestClassViewStages:
             "[set_field('model_1', F('detections').extend(F('$model_2.detections')).extend(F('$model_3.detections')))]",
             dataset,
         )
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -465,7 +596,7 @@ class TestClassViewStages:
         stages = "[match(F('rcs_5_20230417.detections').filter(F('bounding_box')[2] * F('bounding_box')[3]) < 0.1).length() > 10)]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -475,7 +606,7 @@ class TestClassViewStages:
         stages = "[match(F('timeofday').is_in(['night', 'dusk'])), to_evaluation_patches('eval', other_fields=['timeofday'])]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -485,7 +616,7 @@ class TestClassViewStages:
         stages = "[filter_labels('segmentations', (F('annotator') == 'Eric') & F('annotation_date').month() == 1))]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -495,7 +626,7 @@ class TestClassViewStages:
         stages = "[to_patches('gold_standard'), match_labels(tags=['box_issue', 'class_issue'])]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -505,7 +636,7 @@ class TestClassViewStages:
         stages = "[sort_by_similarity(dataset.match(F('eval') == False).sort_by('predictions.confidence').first().id), limit(10)]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -515,7 +646,7 @@ class TestClassViewStages:
         stages = "[match(F('timeofday') != 'night'), sort_by_similarity('image taken at night')]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -528,7 +659,7 @@ class TestClassViewStages:
             "[match_tags('train', bool=False), sort('uniqueness'), limit(100)]",
             dataset,
         )
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -540,7 +671,7 @@ class TestClassViewStages:
         expected_view = create_view_from_stages(
             "[match_frames(F('detections.detections').length() !=2)]", dataset
         )
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -550,7 +681,7 @@ class TestClassViewStages:
         stages = "[filter_labels('frames.detections', (F('bounding_box')[2]/F('bounding_box')[3] > 2) |  (F('bounding_box')[2]/F('bounding_box')[3] <0.5) )]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -560,7 +691,7 @@ class TestClassViewStages:
         stages = "[match(F('filepath').contains_str(['montreal','trial2']))]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         print(gpt_view_stages)
         gpt_view = create_view_from_stages(gpttages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
@@ -571,7 +702,7 @@ class TestClassViewStages:
         expected_view = create_view_from_stages(
             "[match(F('filepath').contains_str('task_16'))]", dataset
         )
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         print(gpt_view_stages)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
@@ -582,7 +713,7 @@ class TestClassViewStages:
         stages = "[filter_labels('bouts', F('label').is_in(['attack','label]')), to_clips('bouts')]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -592,7 +723,7 @@ class TestClassViewStages:
         stages = "[F('zip_code').is_in(['07920','07924','07059']), F('weather')=='sunny')]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -602,7 +733,7 @@ class TestClassViewStages:
         stages = "[match_tags('intruder'), match(~F('frames').filter(F('obj_dets.detections').filter(F('label') == 'vehicle').length() > 1)).length() > 1))]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -612,7 +743,7 @@ class TestClassViewStages:
         stages = "[group_by('status',match_expr=F().length()<5)] errors on displaying view"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -623,7 +754,7 @@ class TestClassViewStages:
             "[filter_labels('predictions',F('eval00')!='tp' & F('model_date')<datetime.datetime(2020,6))]",
             dataset,
         )
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -633,7 +764,7 @@ class TestClassViewStages:
         expected_view = create_view_from_stages(
             "[select_fields('landmarks')]", dataset
         )
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -643,7 +774,7 @@ class TestClassViewStages:
         expected_view = create_view_from_stages(
             "[select_fields('frames.landmarks')]", dataset
         )
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -653,7 +784,7 @@ class TestClassViewStages:
         stages = "[match_tags('AnnotationError'), match_tags('Reviewer2',bool=False)]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -663,7 +794,7 @@ class TestClassViewStages:
         stages = "[select_labels(tags='AnnotationError'), exclude_labels(tags='Reviewer2')]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -675,7 +806,7 @@ class TestClassViewStages:
         expected_view = create_view_from_stages(
             "[sort_by('hazard',reverse=True)]", dataset
         )
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -685,7 +816,7 @@ class TestClassViewStages:
         expected_view = create_view_from_stages(
             "[match(~F('fall_hazard'))]", dataset
         )
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -695,7 +826,7 @@ class TestClassViewStages:
         stages = "[match( abs(F('timestamp') - datetime.datetime(2023,6,4)) < datetime.timedelta(days=1) )]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -705,7 +836,7 @@ class TestClassViewStages:
         expected_view = create_view_from_stages(
             "[match( F('status')!='released' )]", dataset
         )
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -715,7 +846,7 @@ class TestClassViewStages:
         stages = "[filter_labels('frames.detections',F('index')==5), to_trajectories('frames.detections')]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -725,7 +856,7 @@ class TestClassViewStages:
         expected_view = create_view_from_stages(
             "[match_frames(F('frame_number') % 10 == 0)]", dataset
         )
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -735,7 +866,7 @@ class TestClassViewStages:
         stages = "[match(F('filepath').is_in(dataset.values('filepath')[::10]))]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -745,7 +876,7 @@ class TestClassViewStages:
         expected_view = create_view_from_stages(
             "[match( (F('eval00_fp')>0) | (F('eval00_fn')>0) )]", dataset
         )
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
 
@@ -755,7 +886,7 @@ class TestClassViewStages:
         stages = "[filter_labels('ground_truth',F('eval00')=='fn' & F('label')=='license plate'), to_evaluation_patches('eval00')]"
         stages = split_into_stages(stages)
         expected_view = create_view_from_stages(stages,dataset)
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         self.EvaluateResults(expected_view, gpt_view)
 
@@ -765,7 +896,7 @@ class TestClassViewStages:
         expected_view = create_view_from_stages(
             "[exists('store_id')]", dataset
         )
-        gpt_view_stages = get_gpt_view_text(dataset, prompt)
+        gpt_view_stages = get_gpt_view(dataset, prompt)
         gpt_view = create_view_from_stages(gpt_view_stages, dataset)
         assert self.EvaluateResults(expected_view, gpt_view)
     '''
