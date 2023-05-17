@@ -125,6 +125,7 @@ class AskVoxelGPTInteractive(foo.Operator):
     @property
     def resolve_inputs(self):
         inputs = types.Object()
+        inputs.str("query", label="Query", required=True)
         return types.Property(inputs)
 
     async def execute(self, ctx):
@@ -133,8 +134,10 @@ class AskVoxelGPTInteractive(foo.Operator):
         else:
             sample_collection = ctx.dataset
 
+        query = ctx.params["query"]
+
         # @todo feed these as input
-        query = "show me 10 random samples"
+        # query = "show me 10 random samples"
         chat_history = None
 
         try:
