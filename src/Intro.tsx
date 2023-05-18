@@ -10,12 +10,11 @@ import {
   Typography
 } from '@mui/material'
 
-import {
-  Dataset,
-  EmojiObjects,
-  Psychology,
-  QuestionAnswer
-} from '@mui/icons-material'
+import Dataset from '@mui/icons-material/Dataset';
+import EmojiObjects from '@mui/icons-material/EmojiObjects';
+import Psychology from '@mui/icons-material/Psychology';
+import QuestionAnswer from '@mui/icons-material/QuestionAnswer';
+
 
 import { useSetRecoilState } from 'recoil'
 import { atoms } from './state'
