@@ -53,7 +53,7 @@ export function MessageWrapper({ type, messages, receiving, last }) {
               />
             </Grid>
           ))}
-          {true && (
+          {receiving && (
             <Grid container item xs={12}>
               <Grid item>
                 <LoadingIndicator />
