@@ -126,19 +126,24 @@ class AskVoxelGPTInteractive(foo.Operator):
     def resolve_inputs(self):
         inputs = types.Object()
         inputs.str("query", label="Query", required=True)
+        inputs.define_property("history", types.List(types.Object()))
         return types.Property(inputs)
 
     async def execute(self, ctx):
-        if ctx.view is not None:
-            sample_collection = ctx.view
-        else:
-            sample_collection = ctx.dataset
+        # ideal it should overwrite anything added to the view after the session
+        # started
+        sample_collection = ctx.dataset
+        # if ctx.view is not None:
+        #     sample_collection = ctx.view
+        # else:
+        #     sample_collection = ctx.dataset
 
         query = ctx.params["query"]
+        message_history = ctx.params["history"]
+        chat_history = [item["content"] for item in message_history]
 
-        # @todo feed these as input
-        # query = "show me 10 random samples"
-        chat_history = None
+        # should this be needed?
+        chat_history.append(query)
 
         try:
             with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
@@ -163,25 +168,33 @@ class AskVoxelGPTInteractive(foo.Operator):
         view = data["view"]
         return ctx.trigger("set_view", params=dict(view=view._serialize()))
 
-    def message(self, ctx, data):
-        message = data["message"]
+    def show_message(self, ctx, content, viewType):
+        outputs = types.Object()
+        outputs.str("message", view=viewType)
 
         return ctx.trigger(
             f"{self.plugin_name}/show_message",
-            params=dict(message=message),
+            params=dict(
+                outputs=types.Property(outputs).to_json(),
+                data=dict(message=content),
+                content=content,
+            ),
         )
+
+    def markdown(self, ctx, src):
+        return self.show_message(ctx, src, types.MarkdownView())
+
+    def log(self, ctx, data):
+        message = data["message"]
+        return self.markdown(ctx, message)
 
     def error(self, ctx, data):
         exception = data["exception"]
 
         message = str(exception)
         trace = traceback.format_exc()
-        msg = "%s\n\nTraceback\n%s" % (message, trace)
 
-        return ctx.trigger(
-            f"{self.plugin_name}/show_message",
-            params=dict(message=msg),
-        )
+        return self.show_message(ctx, message, types.ErrorView(label=message, description=trace))
 
     def done(self, ctx):
         return ctx.trigger(

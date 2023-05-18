@@ -1,34 +1,39 @@
 import React from 'react'
 import Avatar from '@mui/material/Avatar'
-import Typography from '@mui/material/Typography'
 import ReactMarkdown from 'react-markdown'
 import { useTheme } from '@fiftyone/components'
-import { Grid, Paper, Typography } from '@mui/material'
-import useTypewriterEffect from './useTypewriterEffect'
+import { Grid, Box, Typography } from '@mui/material'
+import {OperatorIO, types} from "@fiftyone/operators"
+import LoadingIndicator from './LoadingIndicator'
+import { ChatGPTAvatar } from './avatars'
 
-export const Message = ({ type, avatar, content = '', button }) => {
-  const animatedContent = useTypewriterEffect(
-    type === 'incoming' ? content : '',
-    5
-  )
+export const Message = ({ type, avatar, content = '', outputs, data }) => {
+  if (outputs)
+    return (
+      <OperatorIO
+        schema={types.Property.fromJSON(outputs)}
+        data={data}
+        type="output"
+      />
+    )
 
-  return (
-    <Typography component="div" style={{ marginLeft: 2 }}>
-      <ReactMarkdown>
-        {type === 'incoming'
-          ? animatedContent.length === content.length
-            ? content
-            : animatedContent
-          : content}
-      </ReactMarkdown>
-    </Typography>
-  )
+  if (content)
+    return (
+      <Box>
+        <Typography component="p" m={"14px 0"}>
+          {content}
+        </Typography>
+      </Box>
+    )
+
+  return null
 }
 
-export function MessageWrapper({ index, type, avatar, messages }) {
+export function MessageWrapper({ type, messages, receiving, last }) {
   const theme = useTheme()
+  const isIncoming = type === 'incoming'
   const background =
-    type === 'incoming' ? theme.background.header : theme.background.level1
+    isIncoming ? theme.background.header : theme.background.level1
 
   return (
     <Grid
@@ -37,16 +42,24 @@ export function MessageWrapper({ index, type, avatar, messages }) {
       justifyContent="center"
     >
       <Grid container item lg={8} spacing={2}>
-        <Grid item>{avatar || <Avatar alt={type} />}</Grid>
-        <Grid item xs>
+        <Grid item>{isIncoming ? <ChatGPTAvatar /> : <Avatar alt="you" />}</Grid>
+        <Grid container item xs>
           {messages.map((message, index) => (
-            <Message
-              key={index}
-              type={message.type}
-              content={message.content}
-              button={message.button}
-            />
+            <Grid item>
+              <Message
+                key={index}
+                type={message.type}
+                {...message}
+              />
+            </Grid>
           ))}
+          {true && (
+            <Grid container item xs={12}>
+              <Grid item>
+                <LoadingIndicator />
+              </Grid>
+            </Grid>
+          )}
         </Grid>
       </Grid>
     </Grid>

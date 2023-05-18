@@ -15,6 +15,7 @@ export class SendMessageToGPT extends Operator {
   useHooks() {
     const [messages, setMessages] = useRecoilState(state.atoms.messages)
     return {
+      messages,
       addMessage: (message) => {
         setMessages(current => [...current, message])
       }

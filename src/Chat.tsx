@@ -6,11 +6,13 @@ import { MessageWrapper } from "./Message";
 import { ChatGPTAvatar } from "./avatars";
 import * as state from "./state";
 import { SCROLL_TO_BOTTOM_THROTTLE } from "./constants";
+import LoadingIndicator from "./LoadingIndicator";
 
 const Chat = () => {
   const ref = useRef(null);
   const bottomRef = useRef(null);
   const messages = useRecoilValue(state.atoms.messages);
+  const receiving = useRecoilValue(state.atoms.receiving);
 
   const scrollToBottom = useCallback(
     throttle(() => {
@@ -18,13 +20,14 @@ const Chat = () => {
         bottomRef.current.scrollIntoView({ behavior: "smooth" });
       }
     }, SCROLL_TO_BOTTOM_THROTTLE),
-    []
+    [throttle]
   );
 
   useEffect(() => {
     const refElem = ref.current;
     if (refElem) {
-      const refResizeObserver = new ResizeObserver(scrollToBottom).observe(
+      const refResizeObserver = new ResizeObserver(scrollToBottom)
+      refResizeObserver.observe(
         refElem
       );
 
@@ -38,57 +41,46 @@ const Chat = () => {
     incoming: <ChatGPTAvatar />,
   };
 
+  const groupedMessages = groupConsecutiveMessages(messages, receiving);
+
   return (
     <div style={{ overflow: "auto" }} ref={ref}>
       <Grid container direction="row">
-        {groupMessages(messages, avatars)}
+        {groupedMessages.map((group) => (
+          <MessageWrapper {...group} />
+        ))}
       </Grid>
       <div ref={bottomRef} />
     </div>
   );
 };
 
-function groupMessages(messages, avatars) {
-  const els = [];
+// a function that groups consecutive messages of the same type
+function groupConsecutiveMessages(messages, receiving) {
+  const groups = [];
   let currentGroup = [];
-  let idx = 0;
   for (const message of messages) {
-    idx += 1;
     // group messages by type
     if (currentGroup.length > 0 && currentGroup[0].type !== message.type) {
-      console.log(message);
-      const groupMessage = currentGroup[0];
-      els.push(
-        <MessageWrapper
-          avatar={
-            groupMessage.type === "incoming"
-              ? avatars.incoming
-              : avatars.outgoing
-          }
-          type={groupMessage.type}
-          index={idx}
-          messages={currentGroup}
-        />
-      );
+      groups.push({type: currentGroup[0].type, messages: currentGroup});
       currentGroup = [message];
     } else {
       currentGroup.push(message);
     }
   }
   if (currentGroup.length > 0) {
-    const groupMessage = currentGroup[0];
-    els.push(
-      <MessageWrapper
-        avatar={
-          groupMessage.type === "incoming" ? avatars.incoming : avatars.outgoing
-        }
-        type={groupMessage.type}
-        index={idx}
-        messages={currentGroup}
-      />
-    );
+    groups.push({type: currentGroup[0].type, messages: currentGroup});
   }
-  return els;
+  if (groups.length > 0) {
+    const lastGroup = groups[groups.length - 1];
+    lastGroup.last = true;
+    if (lastGroup.type === "incoming") {
+      lastGroup.receiving = receiving;
+    } else {
+      groups.push({type: "incoming", messages: [], receiving: true});
+    }
+  }
+  return groups;
 }
 
 export default Chat;
