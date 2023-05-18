@@ -123,7 +123,9 @@ def ask_gpt_generator(sample_collection, query, chat_history=None, raw=False):
         label_classes = {}
 
     if any(len(v) > 0 for v in label_classes.values()):
-        _label_classes = _format_label_classes(label_classes)
+        _label_classes, _unmatched_classes = _format_label_classes(
+            label_classes
+        )
         yield _log_label_classes(_label_classes, chat_history, raw)
 
     examples = generate_view_stage_examples_prompt(
@@ -138,11 +140,14 @@ def ask_gpt_generator(sample_collection, query, chat_history=None, raw=False):
 
     examples = _reformat_query(examples, label_classes)
 
+    _label_classes, _unmatched_classes = _format_label_classes(label_classes)
+
     stages = get_gpt_view_stage_strings(
         sample_collection,
         runs,
         fields,
-        _format_label_classes(label_classes),
+        _label_classes,
+        _unmatched_classes,
         view_stage_descriptions,
         examples,
     )
@@ -240,7 +245,11 @@ def _log_view_stage_list(view_stage_names, chat_history, raw):
 
 
 def _format_label_and_classes(label_field, class_names):
-    return f"  \n - **{label_field}**:  \t{', '.join(class_names)}"
+    prefix = f"  \n - **{label_field}**:"
+    if class_names:
+        return prefix + f" \t{', '.join(class_names)}"
+    else:
+        return prefix + f" \t*no classes found*"
 
 
 def _log_label_classes(label_classes, chat_history, raw):
@@ -294,6 +303,8 @@ def _reformat_query(examples, label_classes):
 
 
 def _format_label_classes(label_classes):
+    unmatched_entities = []
+
     label_fields = list(label_classes.keys())
     label_class_dict = {}
     for field in label_fields:
@@ -304,11 +315,12 @@ def _format_label_classes(label_classes):
             if type(el_val) == str:
                 field_list.append(el_val)
             else:
+                unmatched_entities.append(list(el.keys())[0])
                 field_list += el_val
 
         label_class_dict[field] = field_list
 
-    return label_class_dict
+    return label_class_dict, unmatched_entities
 
 
 def _emit_log(message):
