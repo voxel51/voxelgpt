@@ -219,7 +219,8 @@ class OpenVoxelGPTPanel(foo.Operator):
     def resolve_placement(self, ctx):
         return types.Placement(
             types.Places.SAMPLES_GRID_ACTIONS,
-            types.Button(label="Open VoxelGPT", icon="/assets/chatgpt.svg")
+            types.Button(label="Open VoxelGPT",
+                         icon="/assets/chatgpt.svg", prompt=False)
         )
 
     def execute(self, ctx):
