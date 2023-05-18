@@ -77,6 +77,9 @@ def ask_gpt_generator(sample_collection, query, chat_history=None, raw=False):
         _log_chat_history(message, "GPT", chat_history)
         return message if raw else _emit_log(message)
 
+    def _log_message_with_list(message, list):
+        return _log(message + f"{', '.join(list)}")
+
     if not moderate_query(query):
         yield _log(
             "I'm sorry, this query does not abide by OpenAI's guidelines"
@@ -96,7 +99,8 @@ def ask_gpt_generator(sample_collection, query, chat_history=None, raw=False):
     # Algorithms
     algorithms = select_algorithms(query)
     if algorithms:
-        yield _log(f"Identified potential algorithms: {algorithms}")
+        message = f"Identified potential algorithms: "
+        yield _log_message_with_list(message, algorithms)
 
     # Runs
     runs = select_runs(sample_collection, query, algorithms)
@@ -107,7 +111,8 @@ def ask_gpt_generator(sample_collection, query, chat_history=None, raw=False):
     # Fields
     fields = select_fields(sample_collection, query)
     if fields:
-        yield _log(f"Identified potential fields: {fields}")
+        message = f"Identified potential fields: "
+        yield _log_message_with_list(message, fields)
 
     # Label classes
     label_classes = select_label_classes(sample_collection, query, fields)
@@ -118,8 +123,10 @@ def ask_gpt_generator(sample_collection, query, chat_history=None, raw=False):
         label_classes = {}
 
     if any(len(v) > 0 for v in label_classes.values()):
-        _label_classes = _format_label_classes(label_classes)
-        yield _log(f"Identified potential label classes: {_label_classes}")
+        _label_classes, _unmatched_classes = _format_label_classes(
+            label_classes
+        )
+        yield _log_label_classes(_label_classes, chat_history, raw)
 
     examples = generate_view_stage_examples_prompt(
         sample_collection, query, runs, label_classes
@@ -129,15 +136,18 @@ def ask_gpt_generator(sample_collection, query, chat_history=None, raw=False):
     # View stages
     view_stages = get_most_relevant_view_stages(examples)
     if view_stages:
-        yield _log(f"Identified potential view stages: {view_stages}")
+        yield _log_view_stage_list(view_stages, chat_history, raw)
 
     examples = _reformat_query(examples, label_classes)
+
+    _label_classes, _unmatched_classes = _format_label_classes(label_classes)
 
     stages = get_gpt_view_stage_strings(
         sample_collection,
         runs,
         fields,
-        _format_label_classes(label_classes),
+        _label_classes,
+        _unmatched_classes,
         view_stage_descriptions,
         examples,
     )
@@ -164,7 +174,7 @@ def ask_gpt_generator(sample_collection, query, chat_history=None, raw=False):
     view_str = _build_view_str(sample_collection, stages)
 
     if view_str:
-        yield _log("Okay, I'm going to load %s" % view_str)
+        yield _log_load_dataset_message(view_str, chat_history, raw)
 
         try:
             view = _build_view(sample_collection, view_str)
@@ -209,12 +219,67 @@ def _log_chat_history(text, speaker, history):
     history.append(f"{speaker}: {text}")
 
 
-def _format_stages(stages):
-    stages_text = ""
-    for i, stage in enumerate(stages):
-        stages_text += f"Stage {i+1}: {stage}\n"
+def _get_stage_doc_link(stage_name):
+    return f"https://docs.voxel51.com/api/fiftyone.core.collections.html#fiftyone.core.collections.SampleCollection.{stage_name}"
 
-    return stages_text
+
+def _wrap_stage_name(stage_name):
+    return f"[{stage_name}()]({_get_stage_doc_link(stage_name)})"
+
+
+def _log_view_stage_list(view_stage_names, chat_history, raw):
+    gpt_message = f"Identified potential view stages: "
+    raw_message = gpt_message + f"{view_stage_names}"
+    _log_chat_history(raw_message, "GPT", chat_history)
+
+    if raw:
+        return raw_message
+    else:
+
+        formatted_stage_names = [
+            _wrap_stage_name(stage_name) for stage_name in view_stage_names
+        ]
+
+        formatted_message = gpt_message + f"{', '.join(formatted_stage_names)}"
+        return _emit_log(formatted_message)
+
+
+def _format_label_and_classes(label_field, class_names):
+    prefix = f"  \n - **{label_field}**:"
+    if class_names:
+        return prefix + f" \t{', '.join(class_names)}"
+    else:
+        return prefix + f" \t*no classes found*"
+
+
+def _log_label_classes(label_classes, chat_history, raw):
+    gpt_message = f"Identified potential label classes: "
+    raw_message = gpt_message + f"{label_classes}"
+    _log_chat_history(raw_message, "GPT", chat_history)
+
+    if raw:
+        return raw_message
+    else:
+        formatted_label_classes = [
+            _format_label_and_classes(k, v) for k, v in label_classes.items()
+        ]
+
+        formatted_message = (
+            gpt_message + f"{' '.join(formatted_label_classes)}"
+        )
+        return _emit_log(formatted_message)
+
+
+def _log_load_dataset_message(view_str, chat_history, raw):
+    gpt_message = f"Okay, I'm going to load "
+    raw_message = gpt_message + f"{view_str}"
+    _log_chat_history(raw_message, "GPT", chat_history)
+
+    if raw:
+        return raw_message
+    else:
+        formatted_message = gpt_message + f"`{view_str}`"
+        return _emit_log(formatted_message)
 
 
 def _reformat_query(examples, label_classes):
@@ -238,6 +303,8 @@ def _reformat_query(examples, label_classes):
 
 
 def _format_label_classes(label_classes):
+    unmatched_entities = []
+
     label_fields = list(label_classes.keys())
     label_class_dict = {}
     for field in label_fields:
@@ -248,11 +315,12 @@ def _format_label_classes(label_classes):
             if type(el_val) == str:
                 field_list.append(el_val)
             else:
+                unmatched_entities.append(list(el.keys())[0])
                 field_list += el_val
 
         label_class_dict[field] = field_list
 
-    return label_class_dict
+    return label_class_dict, unmatched_entities
 
 
 def _emit_log(message):
