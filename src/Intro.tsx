@@ -63,8 +63,8 @@ export const Intro = () => {
           VoxelGPT
         </Typography>
       </Grid>
-      <Grid item sm={12} lg={4}>
-        <Paper elevation={3} sx={{ padding: '20px', marginBottom: '16px' }}>
+      <Grid item sm={12} lg={4} sx={{alignSelf: 'stretch'}}>
+        <Paper elevation={3} sx={{height: '100%', padding: '20px', marginBottom: '16px' }}>
           <Typography variant="h4" gutterBottom style={{ textAlign: 'center' }}>
             Examples
           </Typography>
@@ -87,8 +87,8 @@ export const Intro = () => {
           </List>
         </Paper>
       </Grid>
-      <Grid item sm={12} lg={4}>
-        <Paper elevation={3} sx={{ padding: '20px', marginBottom: '16px' }}>
+      <Grid item sm={12} lg={4} sx={{alignSelf: 'stretch'}}>
+        <Paper elevation={3} sx={{ height: '100%', padding: '20px', marginBottom: '16px' }}>
           <Typography variant="h4" gutterBottom style={{ textAlign: 'center' }}>
             Capabilities
           </Typography>
