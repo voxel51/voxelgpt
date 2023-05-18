@@ -320,7 +320,7 @@ def _convert_matches_to_text_similarities(
         new_stage = ''.join(
             [
                 f"sort_by_similarity('{entity}'",
-                f", brain_key = '{text_sim_key}', k = 25)"
+                f", brain_key = '{text_sim_key}', k = 100)"
             ])
         return new_stage
     
