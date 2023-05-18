@@ -1,7 +1,8 @@
 import {Grid, Button} from '@mui/material'
 import * as state from "./state";
 import {useRecoilValue, useResetRecoilState} from "recoil";
-import {Replay, StopCircle} from '@mui/icons-material';
+import Replay from '@mui/icons-material/Replay';
+import StopCircle from '@mui/icons-material/StopCircle';
 
 export function Actions() {
   const receiving = useRecoilValue(state.atoms.receiving);
