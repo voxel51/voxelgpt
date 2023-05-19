@@ -388,21 +388,20 @@ def _runs_message(runs):
     prefix = "Identified potential runs: "
 
     # Markdown
-    # markdown = ", ".join(f"`{v}` (`{k}`)" for k, v in runs.items())
     runs_map = defaultdict(list)
-    for run_type, key in runs.items():
+    for key, run_type in runs.items():
         runs_map[run_type].append(key)
 
     chunks = []
     for run_type, keys in runs_map.items():
-        chunks.append(f"\n - `{run_type}`: ")
+        chunks.append(f"\n - `{run_type}` runs: ")
         chunks.append(", ".join(f"`{k}`" for k in keys))
 
     markdown = "".join(chunks)
 
     return {
         "string": prefix + str(runs),
-        "markdown": prefix + _runs_markdown(runs),
+        "markdown": prefix + markdown,
     }
 
 
@@ -437,10 +436,7 @@ def _label_classes_message(label_classes):
 
 def _view_stages_message(view_stages):
     prefix = "Identified potential view stages: "
-
-    # Markdown
     markdown = ", ".join(_wrap_stage_name(name) for name in view_stages)
-
     return {
         "string": prefix + str(view_stages),
         "markdown": prefix + markdown,
