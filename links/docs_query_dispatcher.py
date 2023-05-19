@@ -25,9 +25,6 @@ DOCS_EMBEDDINGS_DIR = os.path.join(ROOT_DIR, ".fiftyone_docs_embeddings")
 
 CHROMADB_DIR = ".fiftyone_docs_db"
 
-FIFTYONE_DIR = os.getenv("FIFTYONE_DIR")
-FIFTYONE_DOCS_DIR = os.path.join(FIFTYONE_DIR, "docs", "build", "html")
-
 DOC_TYPES = (
     "cheat_sheets",
     "cli",
@@ -43,17 +40,24 @@ DOC_TYPES = (
 )
 
 
+def _get_docs_build_dir():
+    import fiftyone as fo
+
+    fo_repo_dir = os.path.dirname(os.path.dirname(fo.__file__))
+    return os.path.join(fo_repo_dir, "docs", "build", "html")
+
+
 def _generate_embeddings():
-    """Generates embeddings for all the docs in the fiftyone docs.
+    """Generates embeddings for the FiftyOne documentation.
 
-    Only needs to be run once!
-
-    Requires the fiftyone docs to be cloned locally, and that
-    ``bash docs/generate_docs.bash`` has been run.
+    This is a developer method that only needs to be run once after each
+    release. It requires a source install of FiftyOne with the fresh docs
+    build.
     """
+    docs_dir = _get_docs_build_dir()
     for doc_type in DOC_TYPES:
         print(f"Generating embeddings for {doc_type}...")
-        doc_type_dir = os.path.join(FIFTYONE_DOCS_DIR, doc_type)
+        doc_type_dir = os.path.join(docs_dir, doc_type)
         doc_type_embeddings_file = os.path.join(
             DOCS_EMBEDDINGS_DIR,
             doc_type + "_embeddings.json",
