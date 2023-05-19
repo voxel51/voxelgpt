@@ -38,8 +38,8 @@ def ask_voxelgpt_interactive(
     VoxelGPT will be printed to stdout, and any views created are automatically
     loaded in the App.
 
-    If you provide a ``chat_history``, your query and any VoxelGPT responses
-    will be added to it.
+    If you provide a chat history, your query and VoxelGPT's responses will be
+    added to it.
 
     Args:
         sample_collection: a
@@ -64,21 +64,15 @@ def ask_voxelgpt_interactive(
             query, sample_collection, chat_history=chat_history
         )
 
-        # If we're continuing a conversation
-        if (
-            response is None
-            and session is not None
-            and session._collection != sample_collection
-        ):
-            response = sample_collection
-
         if response is not None and session is None:
             session = fo.launch_app(sample_collection, auto=False)
 
         if isinstance(response, fo.DatasetView):
-            session.view = response
+            if session.view != response:
+                session.view = response
         elif isinstance(response, fo.Dataset):
-            session.dataset = response
+            if session.dataset != response:
+                session.dataset = response
 
 
 def ask_voxelgpt(query, sample_collection, chat_history=None):
@@ -87,8 +81,8 @@ def ask_voxelgpt(query, sample_collection, chat_history=None):
 
     If your query is understood as a view to load, it will be returned.
 
-    If you provide a ``chat_history``, your query and any VoxelGPT responses
-    will be added to it.
+    If you provide a chat history, your query and VoxelGPT's responses will be
+    added to it.
 
     Args:
         query: a prompt string
@@ -103,7 +97,10 @@ def ask_voxelgpt(query, sample_collection, chat_history=None):
     view = None
 
     for response in ask_voxelgpt_generator(
-        query, sample_collection, chat_history=chat_history
+        query,
+        sample_collection,
+        chat_history=chat_history,
+        dialect="string",
     ):
         type = response["type"]
         data = response["data"]
@@ -135,11 +132,10 @@ def ask_voxelgpt_generator(
 
         {"type": "view", "data": {"view": view}}
 
-    You can use the ``dialect`` parameter to configure the format of the
-    emitted messages.
+    You can use the ``dialect`` parameter to configure the message format.
 
-    If you provide a ``chat_history``, your query and any of VoxelGPT responses
-    will be added to it.
+    If you provide a chat history, your query and VoxelGPT's responses will be
+    added to it.
 
     Args:
         query: a prompt string
@@ -283,7 +279,8 @@ def ask_voxelgpt_generator(
         except Exception as e:
             yield _respond(_invalid_view_message())
     else:
-        yield _respond(_full_view_message(sample_collection))
+        yield _respond(_full_collection_message(sample_collection))
+        yield _emit_view(sample_collection)
 
 
 def _format_label_classes(label_classes):
@@ -465,13 +462,13 @@ def _invalid_view_message():
     return "I tested the view and it was invalid. Please try again"
 
 
-def _full_view_message(sample_collection):
+def _full_collection_message(sample_collection):
     if isinstance(sample_collection, fo.DatasetView):
         ctype = "view"
     else:
         ctype = "dataset"
 
-    return f"Lets look at your entire {ctype}"
+    return f"Okay, let's load your entire {ctype}"
 
 
 def _emit_message(message):

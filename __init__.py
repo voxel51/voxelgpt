@@ -74,9 +74,9 @@ class AskVoxelGPT(foo.Operator):
         except Exception as e:
             yield self.error(ctx, dict(exception=e))
 
-    def view(self, ctx, data):
-        view = data["view"]
-        return ctx.trigger("set_view", params=dict(view=view._serialize()))
+    def view(self, ctx, view):
+        if view != ctx.view:
+            return ctx.trigger("set_view", params=dict(view=view._serialize()))
 
     def message(self, ctx, data, messages):
         message = data["message"]
@@ -164,9 +164,9 @@ class AskVoxelGPTInteractive(foo.Operator):
         finally:
             yield self.done(ctx)
 
-    def view(self, ctx, data):
-        view = data["view"]
-        return ctx.trigger("set_view", params=dict(view=view._serialize()))
+    def view(self, ctx, view):
+        if view != ctx.view:
+            return ctx.trigger("set_view", params=dict(view=view._serialize()))
 
     def show_message(self, ctx, content, viewType):
         outputs = types.Object()
