@@ -13,12 +13,12 @@ import fiftyone.zoo as foz
 from fiftyone import ViewField as F
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from gpt_view_generator import ask_gpt_generator
+from voxelgpt import ask_voxelgpt_generator
 
 
 def get_gpt_view_text(dataset, query):
     response = None
-    for response in ask_gpt_generator(dataset, query, raw=True):
+    for response in ask_voxelgpt_generator(query, dataset, dialect="raw"):
         pass
 
     return response

@@ -1,51 +1,86 @@
-import React, { useEffect, useRef } from 'react';
-import { useRecoilValue } from 'recoil';
-import Message, { MessageWrapper } from './Message';
-import * as state from './state';
+import { Grid } from "@mui/material";
+import { throttle } from "lodash";
+import React, { useCallback, useEffect, useRef } from "react";
+import { useRecoilValue } from "recoil";
+import { MessageWrapper } from "./Message";
+import { ChatGPTAvatar } from "./avatars";
+import * as state from "./state";
+import { SCROLL_TO_BOTTOM_THROTTLE } from "./constants";
+import LoadingIndicator from "./LoadingIndicator";
 
-const Chat = ({ incomingAvatar, outgoingAvatar }) => {
+const Chat = () => {
+  const ref = useRef(null);
   const bottomRef = useRef(null);
   const messages = useRecoilValue(state.atoms.messages);
+  const receiving = useRecoilValue(state.atoms.receiving);
+
+  const scrollToBottom = useCallback(
+    throttle(() => {
+      if (bottomRef.current && messages.length > 0) {
+        bottomRef.current.scrollIntoView({ behavior: "smooth" });
+      }
+    }, SCROLL_TO_BOTTOM_THROTTLE),
+    [throttle]
+  );
 
   useEffect(() => {
-    if (bottomRef.current && messages.length > 0) {
-      bottomRef.current.scrollIntoView({ behavior: 'smooth' });
+    const refElem = ref.current;
+    if (refElem) {
+      const refResizeObserver = new ResizeObserver(scrollToBottom)
+      refResizeObserver.observe(
+        refElem
+      );
+
+      return () => {
+        refResizeObserver?.disconnect?.();
+      };
     }
-  }, [messages]);
+  }, []);
+
+  const avatars = {
+    incoming: <ChatGPTAvatar />,
+  };
+
+  const groupedMessages = groupConsecutiveMessages(messages, receiving);
 
   return (
-    <div style={{ overflow: 'auto' }}>
-      {groupMessages(messages)}
+    <div style={{ overflow: "auto" }} ref={ref}>
+      <Grid container direction="row">
+        {groupedMessages.map((group) => (
+          <MessageWrapper {...group} />
+        ))}
+      </Grid>
       <div ref={bottomRef} />
     </div>
   );
 };
 
-function groupMessages(messages) {
-  const els = [];
+// a function that groups consecutive messages of the same type
+function groupConsecutiveMessages(messages, receiving) {
+  const groups = [];
   let currentGroup = [];
-  let idx = 0;
   for (const message of messages) {
-    idx += 1;
     // group messages by type
     if (currentGroup.length > 0 && currentGroup[0].type !== message.type) {
-      const groupMessage = currentGroup[0]
-      els.push(
-        <MessageWrapper avatar={groupMessage.avatar} type={groupMessage.type} index={idx} messages={currentGroup} />
-      );
+      groups.push({type: currentGroup[0].type, messages: currentGroup});
       currentGroup = [message];
     } else {
       currentGroup.push(message);
     }
   }
   if (currentGroup.length > 0) {
-    const groupMessage = currentGroup[0]
-    els.push(
-      <MessageWrapper avatar={groupMessage.avatar} type={groupMessage.type} index={idx} messages={currentGroup} />
-    );
+    groups.push({type: currentGroup[0].type, messages: currentGroup});
   }
-  return els
+  if (groups.length > 0) {
+    const lastGroup = groups[groups.length - 1];
+    lastGroup.last = true;
+    if (lastGroup.type === "incoming") {
+      lastGroup.receiving = receiving;
+    } else {
+      groups.push({type: "incoming", messages: [], receiving: true});
+    }
+  }
+  return groups;
 }
-
 
 export default Chat;

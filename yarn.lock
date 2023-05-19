@@ -565,6 +565,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@mui/icons-material@npm:^5.11.16":
+  version: 5.11.16
+  resolution: "@mui/icons-material@npm:5.11.16"
+  dependencies:
+    "@babel/runtime": ^7.21.0
+  peerDependencies:
+    "@mui/material": ^5.0.0
+    "@types/react": ^17.0.0 || ^18.0.0
+    react: ^17.0.0 || ^18.0.0
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+  checksum: db70426b6ede049307b951fc622c6ab3b156a24589242bebbc7effd4b0df2d3c7aca93796ed8dfdf20776248778a798724c7a112f8f687c3b4a1ae813f98fb17
+  languageName: node
+  linkType: hard
+
 "@mui/material@npm:^5.13.0":
   version: 5.13.0
   resolution: "@mui/material@npm:5.13.0"
@@ -891,10 +907,12 @@ __metadata:
   dependencies:
     "@emotion/react": ^11.11.0
     "@emotion/styled": ^11.11.0
+    "@mui/icons-material": ^5.11.16
     "@mui/material": ^5.13.0
     "@mui/styled-engine": ^5.12.3
     "@rollup/plugin-node-resolve": ^15.0.2
     "@vitejs/plugin-react": ^4.0.0
+    lodash: ^4.17.21
     nodemon: ^2.0.19
     react: ^18.2.0
     react-is: ^18.2.0
