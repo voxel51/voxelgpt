@@ -72,7 +72,7 @@ const ChatPanel = () => {
 };
 
 registerComponent({
-  name: "gpt_search",
+  name: "voxelgpt",
   label: "VoxelGPT",
   component: ChatPanel,
   type: PluginComponentType.Panel,
