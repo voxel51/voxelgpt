@@ -79,15 +79,7 @@ def _generate_docs_embeddings():
 
         with open(doc_type_embeddings_file, "w") as f:
             json.dump(embeddings_dict, f)
-
-
-# self._client_settings = chromadb.config.Settings()
-#     if persist_directory is not None:
-#         self._client_settings = chromadb.config.Settings(
-#             chroma_db_impl="duckdb+parquet",
-#             persist_directory=persist_directory,
-#         )
-# self._client = chromadb.Client(self._client_settings)
+            
 
 def _create_docs_vectorstore():
     docs_db = Chroma(

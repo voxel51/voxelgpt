@@ -197,9 +197,9 @@ def _parse_runs_and_labels(runs, label_fields):
 
     return reduced_runs, reduced_label_fields
 
-def get_similar_examples(sample_collection, query, runs, label_fields):
-    client = get_chromadb_client()
 
+def _load_examples_vectorstore():
+    client = get_chromadb_client()
     try:
         collection = client.get_collection(
             CHROMADB_COLLECTION_NAME,
@@ -207,6 +207,25 @@ def get_similar_examples(sample_collection, query, runs, label_fields):
         )
     except:
         collection = create_chroma_collection(client)
+    return collection
+
+def initialize_examples_vectorstore():
+    examples_db = _load_examples_vectorstore()
+    globals()['examples_db'] = examples_db
+
+def get_similar_examples(sample_collection, query, runs, label_fields):
+    # client = get_chromadb_client()
+
+    # try:
+    #     collection = client.get_collection(
+    #         CHROMADB_COLLECTION_NAME,
+    #         embedding_function=get_embedding_function(),
+    #     )
+    # except:
+    #     collection = create_chroma_collection(client)
+    if 'examples_db' not in globals():
+        initialize_examples_vectorstore()
+    examples_db = globals()['examples_db']
 
     red_runs, red_label_fields = _parse_runs_and_labels(runs, label_fields)
 
@@ -256,7 +275,7 @@ def get_similar_examples(sample_collection, query, runs, label_fields):
     for cond, new_str in zip(conds, strs):
         _filter = add_and_to_filter(_filter, new_str) if not cond else _filter
 
-    res = collection.query(
+    res = examples_db.query(
         query_texts=[query], n_results=20, where=_filter, include=["metadatas"]
     )["metadatas"][0]
 
