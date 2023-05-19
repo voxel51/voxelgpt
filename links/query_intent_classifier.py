@@ -22,9 +22,8 @@ QUERY_INTENT_EXAMPLES_PATH = os.path.join(
     EXAMPLES_DIR, "fiftyone_query_intent_examples.csv"
 )
 INTENT_TASK_RULES_PATH = os.path.join(
-    PROMPTS_DIR, 
-    "intent_classification_task_rules.txt"
-    )
+    PROMPTS_DIR, "intent_classification_task_rules.txt"
+)
 
 
 def load_query_classifier_prefix():
@@ -77,11 +76,11 @@ def classify_query_intent(query):
     prompt = generate_query_classifier_prompt(query)
     res = get_llm().call_as_llm(prompt).strip()
 
-    if 'display' in res:
-        return 'display'
-    elif 'documentation' in res:
-        return 'documentation'
-    elif 'computer vision' in res:
-        return 'computer_vision'
+    if "display" in res:
+        return "display"
+    elif "documentation" in res:
+        return "documentation"
+    elif "computer vision" in res:
+        return "computer_vision"
     else:
-        return 'confused'
+        return "confused"
