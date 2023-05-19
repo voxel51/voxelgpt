@@ -33,7 +33,6 @@ export class SendMessageToGPT extends Operator {
       type: 'outgoing',
       content: ctx.params.message
     })
-    await executeOperator(`${this.pluginName}/create_view_with_gpt`, {query: ctx.params.message, history: ctx.hooks.messages})
+    await executeOperator(`${this.pluginName}/ask_voxelgpt_interactive`, {query: ctx.params.message, history: ctx.hooks.messages})
   }
 }
-

@@ -1,5 +1,5 @@
 """
-VoxelGPT: a GPT-powered FiftyOne view generator.
+VoxelGPT entrypoints.
 
 | Copyright 2017-2023, Voxel51, Inc.
 | `voxel51.com <https://voxel51.com/>`_
@@ -26,19 +26,33 @@ from links.dataset_view_generator import get_gpt_view_stage_strings
 from links.effective_query_generator import generate_effective_query
 
 
-def ask_gpt_interactive(sample_collection, session=None):
-    chat_history = []
+_SUPPORTED_DIALECTS = ("string", "markdown", "raw")
 
-    if session is None:
-        session = fo.launch_app(sample_collection, auto=False)
+
+def ask_voxelgpt_interactive(
+    sample_collection, session=None, chat_history=None
+):
+    """Starts an interactive session with VoxelGPT.
+
+    You will be prompted by ``input()`` to provide queries, any responses from
+    VoxelGPT will be printed to stdout, and any views created are automatically
+    loaded in the App.
+
+    If you provide a ``chat_history``, your query and any VoxelGPT responses
+    will be added to it.
+
+    Args:
+        sample_collection: a
+            :class:`fiftyone.core.collections.SampleCollection` to query
+        session (None): an optional :class:`fiftyone.core.session.Session` to
+            load views in. By default, a new App session is launched
+        chat_history (None): an optional chat history list
+    """
+    if chat_history is None:
+        chat_history = []
 
     while True:
-        prompt = "How can I help you?"
-        if not chat_history:
-            _log_chat_history(prompt, "GPT", chat_history)
-
-        query = input(prompt + " ")
-
+        query = input("How can I help you? ")
         if not query or query == "exit":
             break
 
@@ -46,9 +60,20 @@ def ask_gpt_interactive(sample_collection, session=None):
             chat_history.clear()
             continue
 
-        _log_chat_history(query, "User", chat_history)
+        response = ask_voxelgpt(
+            query, sample_collection, chat_history=chat_history
+        )
 
-        response = ask_gpt(sample_collection, query, chat_history=chat_history)
+        # If we're continuing a conversation
+        if (
+            response is None
+            and session is not None
+            and session._collection != sample_collection
+        ):
+            response = sample_collection
+
+        if response is not None and session is None:
+            session = fo.launch_app(sample_collection, auto=False)
 
         if isinstance(response, fo.DatasetView):
             session.view = response
@@ -56,43 +81,110 @@ def ask_gpt_interactive(sample_collection, session=None):
             session.dataset = response
 
 
-def ask_gpt(sample_collection, query, chat_history=None):
-    for response in ask_gpt_generator(
-        sample_collection, query, chat_history=chat_history
+def ask_voxelgpt(query, sample_collection, chat_history=None):
+    """Prompts VoxelGPT with the given query with respect to the given sample
+    collection.
+
+    If your query is understood as a view to load, it will be returned.
+
+    If you provide a ``chat_history``, your query and any VoxelGPT responses
+    will be added to it.
+
+    Args:
+        query: a prompt string
+        sample_collection: a
+            :class:`fiftyone.core.collections.SampleCollection` to query
+        chat_history (None): an optional chat history list
+
+    Returns:
+        a :class:`fiftyone.core.view.DatasetView`, or None if the query did not
+        result in a view creation
+    """
+    view = None
+
+    for response in ask_voxelgpt_generator(
+        query, sample_collection, chat_history=chat_history
     ):
         type = response["type"]
         data = response["data"]
 
         if type == "view":
-            return data["view"]
-        elif type == "log":
+            view = data["view"]
+        elif type == "message":
             print(data["message"])
 
+    return view
 
-def ask_gpt_generator(sample_collection, query, chat_history=None, raw=False):
+
+def ask_voxelgpt_generator(
+    query,
+    sample_collection,
+    chat_history=None,
+    dialect="string",
+):
+    """Generator that emits responses from VoxelGPT with respect to the given
+    query against the given sample collection.
+
+    The generator may emit the following types of content:
+
+    -   Messages in the format::
+
+        {"type": "message", "data": {"message": message}}
+
+    -   Views in the format::
+
+        {"type": "view", "data": {"view": view}}
+
+    You can use the ``dialect`` parameter to configure the format of the
+    emitted messages.
+
+    If you provide a ``chat_history``, your query and any of VoxelGPT responses
+    will be added to it.
+
+    Args:
+        query: a prompt string
+        sample_collection: a
+            :class:`fiftyone.core.collections.SampleCollection` to query
+        chat_history (None): an optional chat history list
+        dialect ("string"): the response format to return. Supported values are
+            ``("string", "markdown", "raw")``
+    """
     if sample_collection.media_type not in ("image", "video"):
-        raise Exception("Only image or video collections are supported")
+        raise ValueError("Only image or video collections are supported")
+
+    if dialect not in _SUPPORTED_DIALECTS:
+        raise ValueError(
+            f"Unsupported dialect '{dialect}'. Supported: {_SUPPORTED_DIALECTS}"
+        )
 
     if chat_history is None:
         chat_history = []
 
-    def _log(message):
-        _log_chat_history(message, "GPT", chat_history)
-        return message if raw else _emit_log(message)
+    def _respond(message):
+        if isinstance(message, str):
+            message = {"string": message, "markdown": message}
 
-    def _log_message_with_list(message, list):
-        return _log(message + f"{', '.join(list)}")
+        # Log string message
+        str_msg = message.get("string", None)
+        if str_msg:
+            _log_chat_history("GPT", str_msg, chat_history)
+
+        # but return proper dialect
+        if dialect == "raw":
+            return str_msg
+
+        msg = message.get(dialect, None)
+        if msg:
+            return _emit_message(msg)
 
     if not moderate_query(query):
-        yield _log(
-            "I'm sorry, this query does not abide by OpenAI's guidelines"
-        )
-        if chat_history:
-            chat_history.pop()
+        yield _respond(_moderation_fail_message())
         return
 
-    # Continuing an existing conversation
-    if len(chat_history) > 2:
+    _log_chat_history("User", query, chat_history)
+
+    # Generate a new query that incorporates the chat history
+    if chat_history:
         query = generate_effective_query(chat_history)
 
     # Intent classification
@@ -111,34 +203,32 @@ def ask_gpt_generator(sample_collection, query, chat_history=None, raw=False):
     # Algorithms
     algorithms = select_algorithms(query)
     if algorithms:
-        message = f"Identified potential algorithms: "
-        yield _log_message_with_list(message, algorithms)
+        yield _respond(_algorithms_message(algorithms))
 
     # Runs
     runs = select_runs(sample_collection, query, algorithms)
     if runs:
-        run_keys = {k: v["key"] for k, v in runs.items()}
-        yield _log(f"Identified potential runs: {run_keys}")
+        yield _respond(_runs_message(runs))
 
     # Fields
     fields = select_fields(sample_collection, query)
     if fields:
-        message = f"Identified potential fields: "
-        yield _log_message_with_list(message, fields)
+        yield _respond(_fields_message(fields))
 
     # Label classes
     label_classes = select_label_classes(sample_collection, query, fields)
-    if label_classes == "_CONFUSED_" and "text_similarity" not in runs:
-        yield _log("I'm sorry, I don't understand")
-        return
-    elif label_classes == "_CONFUSED_":
-        label_classes = {}
+    if label_classes == "_CONFUSED_":
+        if "text_similarity" in runs:
+            label_classes = {}
+        else:
+            yield _respond(_clarify_message())
+            return
 
     if any(len(v) > 0 for v in label_classes.values()):
         _label_classes, _unmatched_classes = _format_label_classes(
             label_classes
         )
-        yield _log_label_classes(_label_classes, chat_history, raw)
+        yield _respond(_label_classes_message(_label_classes))
 
     examples = generate_view_stage_examples_prompt(
         sample_collection, query, runs, label_classes
@@ -148,10 +238,9 @@ def ask_gpt_generator(sample_collection, query, chat_history=None, raw=False):
     # View stages
     view_stages = get_most_relevant_view_stages(examples)
     if view_stages:
-        yield _log_view_stage_list(view_stages, chat_history, raw)
+        yield _respond(_view_stages_message(view_stages))
 
     examples = _reformat_query(examples, label_classes)
-
     _label_classes, _unmatched_classes = _format_label_classes(label_classes)
 
     stages = get_gpt_view_stage_strings(
@@ -167,151 +256,34 @@ def ask_gpt_generator(sample_collection, query, chat_history=None, raw=False):
     if "metadata" in ".".join(stages) and "metadata" not in runs:
         stages = "_NEED_METADATA_"
 
-    if raw:
+    if dialect == "raw":
         yield stages
         return
 
     if stages == "_NEED_METADATA_":
-        yield _log("Please compute metadata first")
+        yield _respond(_metadata_message())
         return
 
     if stages == "_MORE_":
-        yield _log("Please be more specific")
+        yield _respond(_specific_message())
         return
 
     if stages == "_CONFUSED_":
-        yield _log("I'm sorry, I don't understand")
+        yield _respond(_clarify_message())
         return
 
-    view_str = _build_view_str(sample_collection, stages)
+    stages = _format_stages(sample_collection, stages)
 
-    if view_str:
-        yield _log_load_dataset_message(view_str, chat_history, raw)
+    if stages:
+        yield _respond(_load_view_message(stages))
 
         try:
-            view = _build_view(sample_collection, view_str)
+            view = _build_view(sample_collection, stages)
             yield _emit_view(view)
         except Exception as e:
-            yield _log("Looks like the view was invalid. Please try again")
+            yield _respond(_invalid_view_message())
     else:
-        if isinstance(sample_collection, fo.DatasetView):
-            yield _log("I'm returning your entire view")
-        else:
-            yield _log("I'm returning your entire dataset")
-
-        yield _emit_view(sample_collection)
-
-
-def _build_view_str(sample_collection, stages):
-    stages_str = ".".join(stages)
-    if not stages_str:
-        return None
-
-    if isinstance(sample_collection, fo.DatasetView):
-        return "view." + stages_str
-
-    return "dataset." + stages_str
-
-
-def _build_view(sample_collection, view_str):
-    import fiftyone as fo
-    from fiftyone import ViewField as F
-
-    if isinstance(sample_collection, fo.DatasetView):
-        view = sample_collection
-        dataset = view._root_dataset
-    else:
-        dataset = sample_collection
-        view = dataset.view()
-
-    return eval(view_str)
-
-
-def _log_chat_history(text, speaker, history):
-    history.append(f"{speaker}: {text}")
-
-
-def _get_stage_doc_link(stage_name):
-    return f"https://docs.voxel51.com/api/fiftyone.core.collections.html#fiftyone.core.collections.SampleCollection.{stage_name}"
-
-
-def _wrap_stage_name(stage_name):
-    return f"[{stage_name}()]({_get_stage_doc_link(stage_name)})"
-
-
-def _log_view_stage_list(view_stage_names, chat_history, raw):
-    gpt_message = f"Identified potential view stages: "
-    raw_message = gpt_message + f"{view_stage_names}"
-    _log_chat_history(raw_message, "GPT", chat_history)
-
-    if raw:
-        return raw_message
-    else:
-
-        formatted_stage_names = [
-            _wrap_stage_name(stage_name) for stage_name in view_stage_names
-        ]
-
-        formatted_message = gpt_message + f"{', '.join(formatted_stage_names)}"
-        return _emit_log(formatted_message)
-
-
-def _format_label_and_classes(label_field, class_names):
-    prefix = f"  \n - **{label_field}**:"
-    if class_names:
-        return prefix + f" \t{', '.join(class_names)}"
-    else:
-        return prefix + f" \t*no classes found*"
-
-
-def _log_label_classes(label_classes, chat_history, raw):
-    gpt_message = f"Identified potential label classes: "
-    raw_message = gpt_message + f"{label_classes}"
-    _log_chat_history(raw_message, "GPT", chat_history)
-
-    if raw:
-        return raw_message
-    else:
-        formatted_label_classes = [
-            _format_label_and_classes(k, v) for k, v in label_classes.items()
-        ]
-
-        formatted_message = (
-            gpt_message + f"{' '.join(formatted_label_classes)}"
-        )
-        return _emit_log(formatted_message)
-
-
-def _log_load_dataset_message(view_str, chat_history, raw):
-    gpt_message = f"Okay, I'm going to load "
-    raw_message = gpt_message + f"{view_str}"
-    _log_chat_history(raw_message, "GPT", chat_history)
-
-    if raw:
-        return raw_message
-    else:
-        formatted_message = gpt_message + f"`{view_str}`"
-        return _emit_log(formatted_message)
-
-
-def _reformat_query(examples, label_classes):
-    example_lines = examples.split("\n")
-    query = example_lines[-2]
-
-    label_classes_list = list(label_classes.values())
-    label_classes_list = [
-        item for sublist in label_classes_list for item in sublist
-    ]
-    class_name_map = {k: v for d in label_classes_list for k, v in d.items()}
-    for k, v in class_name_map.items():
-        if type(v) == str:
-            query = query.replace(k, v)
-        elif v:
-            clarification = f" where by {k} I mean any of {v}"
-            query += clarification
-
-    example_lines[-2] = query
-    return "\n".join(example_lines)
+        yield _respond(_full_view_message(sample_collection))
 
 
 def _format_label_classes(label_classes):
@@ -335,8 +307,175 @@ def _format_label_classes(label_classes):
     return label_class_dict, unmatched_entities
 
 
-def _emit_log(message):
-    return {"type": "log", "data": {"message": message}}
+def _reformat_query(examples, label_classes):
+    example_lines = examples.split("\n")
+    query = example_lines[-2]
+
+    label_classes_list = list(label_classes.values())
+    label_classes_list = [
+        item for sublist in label_classes_list for item in sublist
+    ]
+    class_name_map = {k: v for d in label_classes_list for k, v in d.items()}
+    for k, v in class_name_map.items():
+        if type(v) == str:
+            query = query.replace(k, v)
+        elif v:
+            clarification = f" where by {k} I mean any of {v}"
+            query += clarification
+
+    example_lines[-2] = query
+    return "\n".join(example_lines)
+
+
+def _format_stages(sample_collection, stages):
+    stages = [s for s in stages if s.strip() not in ("", "None")]
+
+    if not stages:
+        return None
+
+    if isinstance(sample_collection, fo.DatasetView):
+        ctype = "view"
+    else:
+        ctype = "dataset"
+
+    return [ctype] + stages
+
+
+def _build_view(sample_collection, stages):
+    import fiftyone as fo
+    from fiftyone import ViewField as F
+
+    if isinstance(sample_collection, fo.DatasetView):
+        view = sample_collection
+        dataset = view._root_dataset
+    else:
+        dataset = sample_collection
+        view = dataset.view()
+
+    view = eval(".".join(stages))
+
+    # Ensures view is valid
+    _ = view.count()
+
+    return view
+
+
+def _log_chat_history(speaker, text, chat_history):
+    chat_history.append(f"{speaker}: {text}")
+
+
+def _moderation_fail_message():
+    return "I'm sorry, this query does not abide by OpenAI's guidelines"
+
+
+def _metadata_message():
+    return {
+        "string": "Please compute metadata and then try again",
+        "markdown": (
+            "Please run `compute_metadata()` on your samples and then try "
+            "again"
+        ),
+    }
+
+
+def _clarify_message():
+    return "I'm sorry, I don't understand. Can you clarify what you're asking?"
+
+
+def _specific_message():
+    return "I'm sorry, I don't understand. Can you be more specific?"
+
+
+def _algorithms_message(algorithms):
+    prefix = "Identified potential algorithms: "
+    return {
+        "string": prefix + ", ".join(algorithms),
+        "markdown": prefix + ", ".join(f"`{a}" for a in algorithms),
+    }
+
+
+def _runs_message(runs):
+    prefix = "Identified potential runs: "
+    return {
+        "string": prefix + str(runs),
+        "markdown": prefix + ", ".join(f"{v} ({k})" for k, v in runs.items()),
+    }
+
+
+def _fields_message(fields):
+    prefix = "Identified potential fields: "
+    return {
+        "string": prefix + ", ".join(fields),
+        "markdown": prefix + ", ".join(f"`{f}" for f in fields),
+    }
+
+
+def _label_classes_message(label_classes):
+    prefix = "Identified potential label classes: "
+    markdown = " ".join(
+        _format_label_and_classes(k, v) for k, v in label_classes.items()
+    )
+    return {
+        "string": prefix + str(label_classes),
+        "markdown": prefix + markdown,
+    }
+
+
+def _format_label_and_classes(label_field, class_names):
+    prefix = f"  \n - **{label_field}**:"
+    if class_names:
+        return prefix + f" \t{', '.join(class_names)}"
+
+    return prefix + f" \t*no classes found*"
+
+
+def _view_stages_message(view_stages):
+    prefix = "Identified potential view stages: "
+    markdown = ", ".join(_wrap_stage_name(name) for name in view_stages)
+    return {
+        "string": prefix + str(view_stages),
+        "markdown": prefix + markdown,
+    }
+
+
+def _wrap_stage_name(stage_name):
+    return f"[{stage_name}()]({_get_stage_doc_link(stage_name)})"
+
+
+def _get_stage_doc_link(stage_name):
+    return f"https://docs.voxel51.com/api/fiftyone.core.collections.html#fiftyone.core.collections.SampleCollection.{stage_name}"
+
+
+def _load_view_message(stages):
+    prefix = "Okay, I'm going to load "
+    view_str = ".".join(stages)
+    if len(view_str) < 80 or len(stages) <= 2:
+        view_md = f":\n```py\n{view_str}\n```"
+    else:
+        stages_str = "".join(f"    .{s}\n" for s in stages[1:])
+        view_md = f":\n```py\nview = (\n    {stages[0]}\n{stages_str})\n```"
+
+    return {
+        "string": prefix + view_str,
+        "markdown": prefix + view_md,
+    }
+
+
+def _invalid_view_message():
+    return "I tested the view and it was invalid. Please try again"
+
+
+def _full_view_message(sample_collection):
+    if isinstance(sample_collection, fo.DatasetView):
+        ctype = "view"
+    else:
+        ctype = "dataset"
+
+    return f"Lets look at your entire {ctype}"
+
+
+def _emit_message(message):
+    return {"type": "message", "data": {"message": message}}
 
 
 def _emit_view(view):
