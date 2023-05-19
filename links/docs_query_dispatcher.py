@@ -116,7 +116,7 @@ def load_vectorstore():
 
     return docs_db
 
-def query_docs(query):
+def run_docs_query(query):
     """
     Queries the fiftyone docs for the given query.
     """
