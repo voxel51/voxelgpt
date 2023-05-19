@@ -7,7 +7,10 @@ GPT view generator.
 """
 import fiftyone as fo
 
-from links.query_validator import moderate_query, validate_query
+from links.query_validator import moderate_query
+from links.query_intent_classifier import classify_query_intent
+from links.docs_query_dispatcher import run_docs_query
+from links.computer_vision_query_dispatcher import run_computer_vision_query
 from links.view_stage_example_selector import (
     generate_view_stage_examples_prompt,
 )
@@ -92,9 +95,18 @@ def ask_gpt_generator(sample_collection, query, chat_history=None, raw=False):
     if len(chat_history) > 2:
         query = generate_effective_query(chat_history)
 
-    if not validate_query(query):
+    # Intent classification
+    intent = classify_query_intent(query)
+    if intent == 'documentation':
+        yield _log(run_docs_query(query))
+        return
+    elif intent == 'computer_vision':
+        yield _log(run_computer_vision_query(query))
+        return
+    elif intent != 'display':
         yield _log("I'm sorry, I don't understand")
         return
+    ### else intent == 'display' --> continue
 
     # Algorithms
     algorithms = select_algorithms(query)
