@@ -15,23 +15,18 @@ from .utils import get_llm, get_embedding_function
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOCS_EMBEDDINGS_DIR = os.path.join(ROOT_DIR, ".fiftyone_docs_embeddings")
 
-CHROMADB_DIR = '.fiftyone_docs_db'
+CHROMADB_DIR = ".fiftyone_docs_db"
 
 FIFTYONE_DIR = os.getenv("FIFTYONE_DIR")
-FIFTYONE_DOCS_DIR = os.path.join(
-    FIFTYONE_DIR, 
-    "docs",
-    "build",
-    "html"
-    )
+FIFTYONE_DOCS_DIR = os.path.join(FIFTYONE_DIR, "docs", "build", "html")
 
 DOC_TYPES = (
-    "cheat_sheets", 
-    "cli", 
-    "environments", 
-    "faq", 
-    "getting_started", 
-    "integrations", 
+    "cheat_sheets",
+    "cli",
+    "environments",
+    "faq",
+    "getting_started",
+    "integrations",
     "plugins",
     "recipes",
     "teams",
@@ -39,10 +34,11 @@ DOC_TYPES = (
     "user_guide",
 )
 
+
 def _generate_embeddings():
     """
     Only run once. Generates embeddings for all the docs in the fiftyone docs.
-    Requires the fiftyone docs to be cloned locally, and that 
+    Requires the fiftyone docs to be cloned locally, and that
     `bash docs/generate_docs.bash` has been run.
     """
 
@@ -50,10 +46,10 @@ def _generate_embeddings():
         print(f"Generating embeddings for {doc_type}...")
         doc_type_dir = os.path.join(FIFTYONE_DOCS_DIR, doc_type)
         doc_type_embeddings_file = os.path.join(
-            DOCS_EMBEDDINGS_DIR, 
+            DOCS_EMBEDDINGS_DIR,
             doc_type + "_embeddings.json",
-            )
-        
+        )
+
         loader = DirectoryLoader(doc_type_dir, glob="**/*.html")
         documents = loader.load()
         text_splitter = TokenTextSplitter(chunk_size=200, chunk_overlap=0)
@@ -64,15 +60,13 @@ def _generate_embeddings():
         embeddings = get_embedding_function()(contents)
 
         embeddings_dict = {
-            id: {
-            "content": content,
-            "embedding": embedding
-            }
+            id: {"content": content, "embedding": embedding}
             for id, content, embedding in zip(ids, contents, embeddings)
         }
 
         with open(doc_type_embeddings_file, "w") as f:
             json.dump(embeddings_dict, f)
+
 
 def _create_vectorstore():
     """
@@ -81,9 +75,9 @@ def _create_vectorstore():
     docs_db = Chroma(
         embedding_function=OpenAIEmbeddings(),
         persist_directory=CHROMADB_DIR,
-        )
+    )
     docs_db.persist()
-    
+
     docs_embeddings_files = glob(os.path.join(DOCS_EMBEDDINGS_DIR, "*.json"))
     for docs_embeddings_file in docs_embeddings_files:
         ids = []
@@ -99,11 +93,12 @@ def _create_vectorstore():
             documents.append(doc["content"])
 
         docs_db._collection.add(
-            metadatas=None, 
-            embeddings=embeddings, 
-            documents=documents, 
+            metadatas=None,
+            embeddings=embeddings,
+            documents=documents,
             ids=ids,
         )
+
 
 def load_vectorstore():
     """
@@ -112,9 +107,10 @@ def load_vectorstore():
     docs_db = Chroma(
         embedding_function=OpenAIEmbeddings(),
         persist_directory=CHROMADB_DIR,
-        )
+    )
 
     return docs_db
+
 
 def run_docs_query(query):
     """
@@ -122,10 +118,7 @@ def run_docs_query(query):
     """
     docs_db = load_vectorstore()
     docs_qa = RetrievalQA.from_chain_type(
-        llm=get_llm(), 
-        chain_type="stuff", 
-        retriever=docs_db.as_retriever()
-        )
+        llm=get_llm(), chain_type="stuff", retriever=docs_db.as_retriever()
+    )
 
     return docs_qa.run(query)
-

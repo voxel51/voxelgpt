@@ -9,13 +9,14 @@ ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROMPTS_DIR = os.path.join(ROOT_DIR, "prompts")
 
 CV_QUERY_TASK_RULES_PATH = os.path.join(
-    PROMPTS_DIR, 
-    "computer_vision_query_task_rules.txt"
-    )
+    PROMPTS_DIR, "computer_vision_query_task_rules.txt"
+)
+
 
 def load_query_prefix():
     with open(CV_QUERY_TASK_RULES_PATH, "r") as f:
         return f.read()
+
 
 def run_computer_vision_query(query):
     """
