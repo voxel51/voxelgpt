@@ -30,7 +30,9 @@ _SUPPORTED_DIALECTS = ("string", "markdown", "raw")
 
 
 def ask_voxelgpt_interactive(
-    sample_collection, session=None, chat_history=None
+    sample_collection=None,
+    session=None,
+    chat_history=None,
 ):
     """Starts an interactive session with VoxelGPT.
 
@@ -42,7 +44,7 @@ def ask_voxelgpt_interactive(
     added to it.
 
     Args:
-        sample_collection: a
+        sample_collection (None): a
             :class:`fiftyone.core.collections.SampleCollection` to query
         session (None): an optional :class:`fiftyone.core.session.Session` to
             load views in. By default, a new App session is launched
@@ -60,24 +62,26 @@ def ask_voxelgpt_interactive(
             chat_history.clear()
             continue
 
-        response = ask_voxelgpt(
-            query, sample_collection, chat_history=chat_history
+        coll = ask_voxelgpt(
+            query,
+            sample_collection=sample_collection,
+            chat_history=chat_history,
         )
 
-        if response is None:
+        if coll is None:
             continue
 
         if session is None:
             session = fo.launch_app(sample_collection, auto=False)
 
-        if session._collection != response:
-            if isinstance(response, fo.Dataset):
-                session.dataset = response
-            elif isinstance(response, fo.DatasetView):
-                session.view = response
+        if session._collection != coll:
+            if isinstance(coll, fo.Dataset):
+                session.dataset = coll
+            elif isinstance(coll, fo.DatasetView):
+                session.view = coll
 
 
-def ask_voxelgpt(query, sample_collection, chat_history=None):
+def ask_voxelgpt(query, sample_collection=None, chat_history=None):
     """Prompts VoxelGPT with the given query with respect to the given sample
     collection.
 
@@ -88,7 +92,7 @@ def ask_voxelgpt(query, sample_collection, chat_history=None):
 
     Args:
         query: a prompt string
-        sample_collection: a
+        sample_collection (None): a
             :class:`fiftyone.core.collections.SampleCollection` to query
         chat_history (None): an optional chat history list
 
@@ -117,12 +121,12 @@ def ask_voxelgpt(query, sample_collection, chat_history=None):
 
 def ask_voxelgpt_generator(
     query,
-    sample_collection,
+    sample_collection=None,
     chat_history=None,
     dialect="string",
 ):
     """Generator that emits responses from VoxelGPT with respect to the given
-    query against the given sample collection.
+    query.
 
     The generator may emit the following types of content:
 
@@ -141,15 +145,12 @@ def ask_voxelgpt_generator(
 
     Args:
         query: a prompt string
-        sample_collection: a
+        sample_collection (None): a
             :class:`fiftyone.core.collections.SampleCollection` to query
         chat_history (None): an optional chat history list
         dialect ("string"): the response format to return. Supported values are
             ``("string", "markdown", "raw")``
     """
-    if sample_collection.media_type not in ("image", "video"):
-        raise ValueError("Only image or video collections are supported")
-
     if dialect not in _SUPPORTED_DIALECTS:
         raise ValueError(
             f"Unsupported dialect '{dialect}'. Supported: {_SUPPORTED_DIALECTS}"
@@ -196,6 +197,9 @@ def ask_voxelgpt_generator(
     elif intent != "display":
         yield _respond(_clarify_message())
         return
+
+    if sample_collection.media_type not in ("image", "video"):
+        raise ValueError("Only image or video collections are supported")
 
     # Algorithms
     algorithms = select_algorithms(query)
