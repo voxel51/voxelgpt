@@ -288,12 +288,66 @@ def split_into_stages(stages_text):
 
     return stages
 
+def _get_first_image_text_similarity_key(sample_collection):
+    for run in sample_collection.list_brain_runs():
+        info = sample_collection.get_brain_info(run)
+        if (
+            "Similarity" in info.config.cls
+            and info.config.supports_prompts
+            and not info.config.patches_field
+        ):
+            return run
+    return None
+
+def _convert_matches_to_text_similarities(
+    stages,
+    sample_collection,
+    required_brain_runs,
+    unmatched_classes
+):
+    '''
+    if model picks a non-existent class and you have text similarity run,
+    convert the match to a text similarity stage
+    '''
+    if 'text_similarity' not in required_brain_runs:
+        text_sim_key = _get_first_image_text_similarity_key(sample_collection)
+        if not text_sim_key:
+            return stages
+    else:
+        text_sim_key = required_brain_runs['text_similarity']['key']
+    
+    def _replace_stage(entity):
+        new_stage = ''.join(
+            [
+                f"sort_by_similarity('{entity}'",
+                f", brain_key = '{text_sim_key}', k = 100)"
+            ])
+        return new_stage
+    
+    def _loop_over_unmatched_classes(stage):
+        if 'sort_by_similarity' in stage:
+            return stage
+        for entity in unmatched_classes:
+            if entity in stage:
+                return _replace_stage(entity)
+        return stage
+        
+    verified_stages = []
+    for stage in stages:
+        if 'match' in stage and 'label' in stage:
+            verified_stages.append(_loop_over_unmatched_classes(stage))
+        elif 'filter_labels' in stage:
+            verified_stages.append(_loop_over_unmatched_classes(stage))
+        else:
+            verified_stages.append(stage)
+    return verified_stages
 
 def get_gpt_view_stage_strings(
     sample_collection,
     required_brain_runs,
     available_fields,
     label_classes,
+    unmatched_classes,
     view_stage_descriptions,
     examples_prompt,
 ):
@@ -314,4 +368,11 @@ def get_gpt_view_stage_strings(
     elif "_CONFUSED_" in response:
         return "_CONFUSED_"
     else:
-        return split_into_stages(response)
+        stages = split_into_stages(response)
+        stages = _convert_matches_to_text_similarities(
+            stages,
+            sample_collection,
+            required_brain_runs,
+            unmatched_classes
+        )
+        return stages
