@@ -396,25 +396,28 @@ def _specific_message():
 
 def _algorithms_message(algorithms):
     prefix = "Identified potential algorithms: "
+    markdown = ", ".join(f"`{a}`" for a in algorithms)
     return {
         "string": prefix + ", ".join(algorithms),
-        "markdown": prefix + ", ".join(f"`{a}" for a in algorithms),
+        "markdown": prefix + markdown,
     }
 
 
 def _runs_message(runs):
     prefix = "Identified potential runs: "
+    markdown = ", ".join(f"`{v}` (`{k}`)" for k, v in runs.items())
     return {
         "string": prefix + str(runs),
-        "markdown": prefix + ", ".join(f"{v} ({k})" for k, v in runs.items()),
+        "markdown": prefix + markdown,
     }
 
 
 def _fields_message(fields):
     prefix = "Identified potential fields: "
+    markdown = ", ".join(f"`{f}`" for f in fields)
     return {
         "string": prefix + ", ".join(fields),
-        "markdown": prefix + ", ".join(f"`{f}" for f in fields),
+        "markdown": prefix + markdown,
     }
 
 
@@ -430,11 +433,11 @@ def _label_classes_message(label_classes):
 
 
 def _format_label_and_classes(label_field, class_names):
-    prefix = f"  \n - **{label_field}**:"
+    prefix = f"\n - `{label_field}`: "
     if class_names:
-        return prefix + f" \t{', '.join(class_names)}"
+        return prefix + ", ".join(f"`{c}`" for c in class_names)
 
-    return prefix + f" \t*no classes found*"
+    return prefix + "*no classes found*"
 
 
 def _view_stages_message(view_stages):
@@ -458,14 +461,14 @@ def _load_view_message(stages):
     prefix = "Okay, I'm going to load "
     view_str = ".".join(stages)
     if len(view_str) < 80 or len(stages) <= 2:
-        view_md = f":\n```py\n{view_str}\n```"
+        markdown = f":\n```py\n{view_str}\n```"
     else:
         stages_str = "".join(f"    .{s}\n" for s in stages[1:])
-        view_md = f":\n```py\nview = (\n    {stages[0]}\n{stages_str})\n```"
+        markdown = f":\n```py\nview = (\n    {stages[0]}\n{stages_str})\n```"
 
     return {
         "string": prefix + view_str,
-        "markdown": prefix + view_md,
+        "markdown": prefix + markdown,
     }
 
 
