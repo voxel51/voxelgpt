@@ -46,7 +46,7 @@ class AskVoxelGPT(foo.Operator):
             "query",
             label="query",
             required=True,
-            description="Tell VoxelGPT what you'd like to view",
+            description="What would you like to view?",
         )
         return types.Property(inputs)
 
