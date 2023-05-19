@@ -18,7 +18,6 @@ EFFECTIVE_PROMPT_GENERATOR_PREFIX_PATH = os.path.join(
     PROMPTS_DIR, "effective_prompt_generator_prefix.txt"
 )
 
-
 def load_effective_prompt_prefix_template():
     with open(EFFECTIVE_PROMPT_GENERATOR_PREFIX_PATH, "r") as f:
         return f.read()

@@ -1,6 +1,8 @@
 import {Grid, Button} from '@mui/material'
 import * as state from "./state";
 import {useRecoilValue, useResetRecoilState} from "recoil";
+import Replay from '@mui/icons-material/Replay';
+import StopCircle from '@mui/icons-material/StopCircle';
 
 export function Actions() {
   const receiving = useRecoilValue(state.atoms.receiving);
@@ -8,12 +10,12 @@ export function Actions() {
   const messages = useRecoilValue(state.atoms.messages);
 
   return (
-    <Grid container>
+    <Grid container justifyContent="center">
       {messages.length > 0 && !receiving && <Grid item>
-        <Button onClick={() => reset()}>Start Over</Button>
+        <Button color="secondary" variant="contained" startIcon={<Replay />} onClick={() => reset()}>Start Over</Button>
       </Grid>}
       <Grid item>
-        {receiving && <Button>Stop</Button>}
+        {receiving && <Button color="secondary" variant="contained" startIcon={<StopCircle />}>Stop</Button>}
       </Grid> 
     </Grid>
   )

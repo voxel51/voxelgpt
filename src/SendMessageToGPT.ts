@@ -15,6 +15,7 @@ export class SendMessageToGPT extends Operator {
   useHooks() {
     const [messages, setMessages] = useRecoilState(state.atoms.messages)
     return {
+      messages,
       addMessage: (message) => {
         setMessages(current => [...current, message])
       }
@@ -32,7 +33,7 @@ export class SendMessageToGPT extends Operator {
       type: 'outgoing',
       content: ctx.params.message
     })
-    await executeOperator(`${this.pluginName}/create_view_with_gpt`, {message: ctx.params.message})
+    await executeOperator(`${this.pluginName}/create_view_with_gpt`, {query: ctx.params.message, history: ctx.hooks.messages})
   }
 }
 

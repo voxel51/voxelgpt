@@ -1,0 +1,1 @@
+export const SCROLL_TO_BOTTOM_THROTTLE = 1500;
