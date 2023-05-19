@@ -1,3 +1,10 @@
+"""
+FiftyOne docs query dispatcher.
+
+| Copyright 2017-2023, Voxel51, Inc.
+| `voxel51.com <https://voxel51.com/>`_
+|
+"""
 from glob import glob
 import json
 import os
@@ -11,6 +18,7 @@ from langchain.vectorstores import Chroma
 
 # pylint: disable=relative-beyond-top-level
 from .utils import get_llm, get_embedding_function
+
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOCS_EMBEDDINGS_DIR = os.path.join(ROOT_DIR, ".fiftyone_docs_embeddings")
@@ -36,12 +44,13 @@ DOC_TYPES = (
 
 
 def _generate_embeddings():
-    """
-    Only run once. Generates embeddings for all the docs in the fiftyone docs.
-    Requires the fiftyone docs to be cloned locally, and that
-    `bash docs/generate_docs.bash` has been run.
-    """
+    """Generates embeddings for all the docs in the fiftyone docs.
 
+    Only needs to be run once!
+
+    Requires the fiftyone docs to be cloned locally, and that
+    ``bash docs/generate_docs.bash`` has been run.
+    """
     for doc_type in DOC_TYPES:
         print(f"Generating embeddings for {doc_type}...")
         doc_type_dir = os.path.join(FIFTYONE_DOCS_DIR, doc_type)
@@ -69,9 +78,6 @@ def _generate_embeddings():
 
 
 def _create_vectorstore():
-    """
-    Creates the vectorstore for the fiftyone docs.
-    """
     docs_db = Chroma(
         embedding_function=OpenAIEmbeddings(),
         persist_directory=CHROMADB_DIR,
@@ -101,24 +107,15 @@ def _create_vectorstore():
 
 
 def load_vectorstore():
-    """
-    Loads the vectorstore for the fiftyone docs.
-    """
-    docs_db = Chroma(
+    return Chroma(
         embedding_function=OpenAIEmbeddings(),
         persist_directory=CHROMADB_DIR,
     )
 
-    return docs_db
-
 
 def run_docs_query(query):
-    """
-    Queries the fiftyone docs for the given query.
-    """
     docs_db = load_vectorstore()
     docs_qa = RetrievalQA.from_chain_type(
         llm=get_llm(), chain_type="stuff", retriever=docs_db.as_retriever()
     )
-
     return docs_qa.run(query)
