@@ -76,7 +76,8 @@ class AskVoxelGPT(foo.Operator):
             yield self.error(ctx, e)
 
     def view(self, ctx, view):
-        return ctx.trigger("set_view", params=dict(view=view._serialize()))
+        if view != ctx.view:
+            return ctx.trigger("set_view", params=dict(view=view._serialize()))
 
     def message(self, ctx, message, messages):
         messages.append(message)
@@ -160,7 +161,8 @@ class AskVoxelGPTPanel(foo.Operator):
             yield self.done(ctx)
 
     def view(self, ctx, view):
-        return ctx.trigger("set_view", params=dict(view=view._serialize()))
+        if view != ctx.view:
+            return ctx.trigger("set_view", params=dict(view=view._serialize()))
 
     def message(self, ctx, message):
         return self.show_message(ctx, message, types.MarkdownView())
