@@ -7,4 +7,5 @@ version: 1.0.0
 js_bundle: dist/index.umd.js
 operators:
   - ask_voxelgpt
-  - ask_voxelgpt_interactive
+  - ask_voxelgpt_panel
+  - open_voxelgpt_panel

@@ -6,7 +6,6 @@ VoxelGPT plugin.
 |
 """
 import os
-import random
 import sys
 import traceback
 
@@ -51,35 +50,35 @@ class AskVoxelGPT(foo.Operator):
         return types.Property(inputs)
 
     async def execute(self, ctx):
-        if ctx.view is not None:
-            coll = ctx.view
-        else:
-            coll = ctx.dataset
-
         query = ctx.params["query"]
+        if ctx.view is not None:
+            sample_collection = ctx.view
+        else:
+            sample_collection = ctx.dataset
+
         messages = []
 
         try:
             with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
                 from voxelgpt import ask_voxelgpt_generator
 
-                for response in ask_voxelgpt_generator(query, coll):
+                for response in ask_voxelgpt_generator(
+                    query, sample_collection, dialect="string"
+                ):
                     type = response["type"]
                     data = response["data"]
 
                     if type == "view":
-                        yield self.view(ctx, data)
+                        yield self.view(ctx, data["view"])
                     elif type == "message":
-                        yield self.message(ctx, data, messages)
+                        yield self.message(ctx, data["message"], messages)
         except Exception as e:
-            yield self.error(ctx, dict(exception=e))
+            yield self.error(ctx, e)
 
-    def view(self, ctx, data):
-        view = data["view"]
+    def view(self, ctx, view):
         return ctx.trigger("set_view", params=dict(view=view._serialize()))
 
-    def message(self, ctx, data, messages):
-        message = data["message"]
+    def message(self, ctx, message, messages):
         messages.append(message)
 
         outputs = types.Object()
@@ -98,26 +97,28 @@ class AskVoxelGPT(foo.Operator):
             ),
         )
 
-    def error(self, ctx, data):
-        exception = data["exception"]
-
-        # @todo what's the right pattern to display this?
+    def error(self, ctx, exception):
+        message = str(exception)
+        trace = traceback.format_exc()
+        view = types.ErrorView(label=message, description=trace)
         outputs = types.Object()
-        outputs.str("message", view=types.Error(label=str(exception)))
-        outputs.str("trace", view=types.Error(label=traceback.format_exc()))
-
+        outputs.str("message", view=view)
         return ctx.trigger(
             "show_output",
-            params=dict(outputs=types.Property(outputs).to_json()),
+            params=dict(
+                outputs=types.Property(outputs).to_json(),
+                data=dict(message=message),
+                # content=message,
+            ),
         )
 
 
-class AskVoxelGPTInteractive(foo.Operator):
+class AskVoxelGPTPanel(foo.Operator):
     @property
     def config(self):
         return foo.OperatorConfig(
-            name="ask_voxelgpt_interactive",
-            label="Ask VoxelGPT Interactive",
+            name="ask_voxelgpt_panel",
+            label="Ask VoxelGPT Panel",
             execute_as_generator=True,
             unlisted=True,
         )
@@ -125,60 +126,50 @@ class AskVoxelGPTInteractive(foo.Operator):
     @property
     def resolve_inputs(self):
         inputs = types.Object()
+        inputs.str("query", label="query", required=True)
+        inputs.define_property("history", types.List(types.Object()))
         return types.Property(inputs)
 
     async def execute(self, ctx):
-        if ctx.view is not None:
-            sample_collection = ctx.view
-        else:
-            sample_collection = ctx.dataset
-
-        # @todo feed these as input
-        query = "show me 10 random samples"
-        chat_history = None
+        query = ctx.params["query"]
+        sample_collection = ctx.dataset
+        chat_history = ctx.params.get("history", None)
+        if chat_history:
+            chat_history = [item["content"] for item in chat_history]
 
         try:
             with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
                 from voxelgpt import ask_voxelgpt_generator
 
                 for response in ask_voxelgpt_generator(
-                    query, sample_collection, chat_history=chat_history
+                    query,
+                    sample_collection,
+                    chat_history=chat_history,
+                    dialect="markdown",
                 ):
                     type = response["type"]
                     data = response["data"]
 
                     if type == "view":
-                        yield self.view(ctx, data)
+                        yield self.view(ctx, data["view"])
                     elif type == "message":
-                        yield self.message(ctx, data)
+                        yield self.message(ctx, data["message"])
         except Exception as e:
-            yield self.error(ctx, dict(exception=e))
+            yield self.error(ctx, e)
         finally:
             yield self.done(ctx)
 
-    def view(self, ctx, data):
-        view = data["view"]
+    def view(self, ctx, view):
         return ctx.trigger("set_view", params=dict(view=view._serialize()))
 
-    def message(self, ctx, data):
-        message = data["message"]
+    def message(self, ctx, message):
+        return self.show_message(ctx, message, types.MarkdownView())
 
-        return ctx.trigger(
-            f"{self.plugin_name}/show_message",
-            params=dict(message=message),
-        )
-
-    def error(self, ctx, data):
-        exception = data["exception"]
-
+    def error(self, ctx, exception):
         message = str(exception)
         trace = traceback.format_exc()
-        msg = "%s\n\nTraceback\n%s" % (message, trace)
-
-        return ctx.trigger(
-            f"{self.plugin_name}/show_message",
-            params=dict(message=msg),
-        )
+        view = types.ErrorView(label=message, description=trace)
+        return self.show_message(ctx, message, view)
 
     def done(self, ctx):
         return ctx.trigger(
@@ -186,7 +177,46 @@ class AskVoxelGPTInteractive(foo.Operator):
             params=dict(done=True),
         )
 
+    def show_message(self, ctx, message, view_type):
+        outputs = types.Object()
+        outputs.str("message", view=view_type)
+        return ctx.trigger(
+            f"{self.plugin_name}/show_message",
+            params=dict(
+                outputs=types.Property(outputs).to_json(),
+                data=dict(message=message),
+                # content=message,
+            ),
+        )
+
+
+class OpenVoxelGPTPanel(foo.Operator):
+    @property
+    def config(self):
+        return foo.OperatorConfig(
+            name="open_voxelgpt_panel",
+            label="Open VoxelGPT Panel",
+            unlisted=True,
+        )
+
+    def resolve_placement(self, ctx):
+        return types.Placement(
+            types.Places.SAMPLES_GRID_ACTIONS,
+            types.Button(
+                label="Open VoxelGPT",
+                icon="/assets/chatgpt.svg",
+                prompt=False,
+            ),
+        )
+
+    def execute(self, ctx):
+        return ctx.trigger(
+            "open_panel",
+            params=dict(name="voxelgpt", isActive=True),
+        )
+
 
 def register(p):
     p.register(AskVoxelGPT)
-    p.register(AskVoxelGPTInteractive)
+    p.register(AskVoxelGPTPanel)
+    p.register(OpenVoxelGPTPanel)
