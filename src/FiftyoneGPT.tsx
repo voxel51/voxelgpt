@@ -4,13 +4,13 @@ import { usePanelStatePartial, usePanelTitle } from "@fiftyone/spaces";
 import React, { useEffect } from "react";
 import styled from "styled-components";
 import { scrollbarStyles } from "@fiftyone/utilities";
-import { OperatorPlacements, registerOperator, useOperatorExecutor } from "@fiftyone/operators";
-import Chat from "./Chat";
 import {
-  Grid,
-  Typography,
-  Link
-} from '@mui/material';
+  OperatorPlacements,
+  registerOperator,
+  useOperatorExecutor,
+} from "@fiftyone/operators";
+import Chat from "./Chat";
+import { Grid, Typography, Link } from "@mui/material";
 import InputBar from "./InputBar";
 import { ShowMessage } from "./ShowMessage";
 import { SendMessageToGPT } from "./SendMessageToGPT";
@@ -20,32 +20,49 @@ import { Actions } from "./Actions";
 import { Intro } from "./Intro";
 import { ChatGPTAvatar } from "./avatars";
 
-
-const PLUGIN_NAME = "@voxel51/fiftyone-gpt"
+const PLUGIN_NAME = "@voxel51/fiftyone-gpt";
 
 const ChatPanel = () => {
   const executor = useOperatorExecutor(`${PLUGIN_NAME}/send_message_to_gpt`);
   const messages = useRecoilValue(state.atoms.messages);
   const handleMessageSend = (message) => {
-    executor.execute({ message })
+    executor.execute({ message });
   };
   const receiving = useRecoilValue(state.atoms.receiving);
   const hasMessages = messages.length > 0;
 
   return (
-    <Grid container direction="row" spacing={2}
-      sx={{height: '100%'}} justifyContent="center">
+    <Grid
+      container
+      direction="row"
+      spacing={2}
+      sx={{ height: "100%" }}
+      justifyContent="center"
+    >
       {!hasMessages && <Intro />}
-      {hasMessages &&<Grid item lg={12}>
-        <Chat />
-      </Grid>}
-      <Grid item container sx={{marginTop: hasMessages ? 'auto' : undefined}} justifyContent="center">
+      {hasMessages && (
+        <Grid item lg={12}>
+          <Chat />
+        </Grid>
+      )}
+      <Grid
+        item
+        container
+        sx={{ marginTop: hasMessages ? "auto" : undefined }}
+        justifyContent="center"
+      >
         <Grid item sm={12} md={6} lg={8}>
           <Actions />
-          <InputBar hasMessages={hasMessages} disabled={receiving} onMessageSend={handleMessageSend} />
-          <Typography variant="caption" sx={{marginTop: '8px', display: 'block', textAlign: 'center'}}>
-            This is a pre-release beta. VoxelGPT may not understand certain queries.
-            {" "}
+          <InputBar
+            hasMessages={hasMessages}
+            disabled={receiving}
+            onMessageSend={handleMessageSend}
+          />
+          <Typography
+            variant="caption"
+            sx={{ marginTop: "8px", display: "block", textAlign: "center" }}
+          >
+            VoxelGPT is in beta and may not understand certain queries.{" "}
             <Link>Learn more</Link>
           </Typography>
         </Grid>
@@ -60,9 +77,8 @@ registerComponent({
   component: ChatPanel,
   type: PluginComponentType.Panel,
   activator: () => true,
-  Icon: () => <ChatGPTAvatar size={'1rem'} style={{marginRight: '0.5rem'}} />
+  Icon: () => <ChatGPTAvatar size={"1rem"} style={{ marginRight: "0.5rem" }} />,
 });
 
-registerOperator(ShowMessage, PLUGIN_NAME)
-registerOperator(SendMessageToGPT, PLUGIN_NAME)
-
+registerOperator(ShowMessage, PLUGIN_NAME);
+registerOperator(SendMessageToGPT, PLUGIN_NAME);

@@ -64,15 +64,17 @@ def ask_voxelgpt_interactive(
             query, sample_collection, chat_history=chat_history
         )
 
-        if response is not None and session is None:
+        if response is None:
+            continue
+
+        if session is None:
             session = fo.launch_app(sample_collection, auto=False)
 
-        if isinstance(response, fo.DatasetView):
-            if session.view != response:
-                session.view = response
-        elif isinstance(response, fo.Dataset):
-            if session.dataset != response:
+        if session._collection != response:
+            if isinstance(response, fo.Dataset):
                 session.dataset = response
+            elif isinstance(response, fo.DatasetView):
+                session.view = response
 
 
 def ask_voxelgpt(query, sample_collection, chat_history=None):
