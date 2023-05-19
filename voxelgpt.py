@@ -198,6 +198,12 @@ def ask_voxelgpt_generator(
         yield _respond(_clarify_message())
         return
 
+    if sample_collection is None:
+        raise ValueError(
+            "You must provide a sample collection in order for me to generate "
+            "views"
+        )
+
     if sample_collection.media_type not in ("image", "video"):
         raise ValueError("Only image or video collections are supported")
 
