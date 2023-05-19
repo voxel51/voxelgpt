@@ -1,5 +1,5 @@
 """
-GPT plugin.
+VoxelGPT plugin.
 
 | Copyright 2017-2023, Voxel51, Inc.
 | `voxel51.com <https://voxel51.com/>`_
@@ -31,63 +31,46 @@ class add_sys_path(object):
             pass
 
 
-class AskGPT(foo.Operator):
+class AskVoxelGPT(foo.Operator):
     @property
     def config(self):
         return foo.OperatorConfig(
-            name="ask_gpt",
-            label="Ask GPT",
+            name="ask_voxelgpt",
+            label="Ask VoxelGPT",
             execute_as_generator=True,
         )
 
     def resolve_input(self, ctx):
         inputs = types.Object()
-
         inputs.str(
             "query",
             label="query",
             required=True,
-            description="Tell ChatGPT what you'd like to do",
+            description="Tell VoxelGPT what you'd like to view",
         )
-
-        inputs.str(
-            "context",
-            label="context",
-            description="Context for this conversation",
-            required=False,
-        )
-
         return types.Property(inputs)
 
     async def execute(self, ctx):
         if ctx.view is not None:
-            sample_collection = ctx.view
+            coll = ctx.view
         else:
-            sample_collection = ctx.dataset
+            coll = ctx.dataset
 
         query = ctx.params["query"]
-        context = ctx.params.get("context", None)
-        if context:
-            chat_history = chat_history.split("\n")
-        else:
-            chat_history = None
-
-        logs = []
+        messages = []
 
         try:
             with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
-                from voxelgpt import ask_gpt_generator
+                from voxelgpt import ask_voxelgpt_generator
 
-                for response in ask_gpt_generator(
-                    sample_collection, query, chat_history=chat_history
-                ):
+                for response in ask_voxelgpt_generator(query, coll):
                     type = response["type"]
                     data = response["data"]
 
                     if type == "view":
                         yield self.view(ctx, data)
-                    elif type == "log":
-                        yield self.log(ctx, data, logs)
+                    elif type == "message":
+                        yield self.message(ctx, data, messages)
         except Exception as e:
             yield self.error(ctx, dict(exception=e))
 
@@ -95,16 +78,16 @@ class AskGPT(foo.Operator):
         view = data["view"]
         return ctx.trigger("set_view", params=dict(view=view._serialize()))
 
-    def log(self, ctx, data, logs):
+    def message(self, ctx, data, messages):
         message = data["message"]
-        logs.append(message)
+        messages.append(message)
 
         outputs = types.Object()
         outputs.str("query", label="You")
         results = dict(query=ctx.params["query"])
-        for i, msg in enumerate(logs, 1):
+        for i, msg in enumerate(messages, 1):
             field = "message" + str(i)
-            outputs.str(field, label="ChatGPT")
+            outputs.str(field, label="VoxelGPT")
             results[field] = msg
 
         return ctx.trigger(
@@ -129,12 +112,12 @@ class AskGPT(foo.Operator):
         )
 
 
-class CreateViewWithGPT(foo.Operator):
+class AskVoxelGPTInteractive(foo.Operator):
     @property
     def config(self):
         return foo.OperatorConfig(
-            name="create_view_with_gpt",
-            label="Create View with GPT",
+            name="ask_voxelgpt_interactive",
+            label="Ask VoxelGPT Interactive",
             execute_as_generator=True,
             unlisted=True,
         )
@@ -156,18 +139,18 @@ class CreateViewWithGPT(foo.Operator):
 
         try:
             with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
-                from voxelgpt import ask_gpt_generator
+                from voxelgpt import ask_voxelgpt_generator
 
-                for response in ask_gpt_generator(
-                    sample_collection, query, chat_history=chat_history
+                for response in ask_voxelgpt_generator(
+                    query, sample_collection, chat_history=chat_history
                 ):
                     type = response["type"]
                     data = response["data"]
 
                     if type == "view":
                         yield self.view(ctx, data)
-                    elif type == "log":
-                        yield self.log(ctx, data)
+                    elif type == "message":
+                        yield self.message(ctx, data)
         except Exception as e:
             yield self.error(ctx, dict(exception=e))
         finally:
@@ -177,7 +160,7 @@ class CreateViewWithGPT(foo.Operator):
         view = data["view"]
         return ctx.trigger("set_view", params=dict(view=view._serialize()))
 
-    def log(self, ctx, data):
+    def message(self, ctx, data):
         message = data["message"]
 
         return ctx.trigger(
@@ -205,5 +188,5 @@ class CreateViewWithGPT(foo.Operator):
 
 
 def register(p):
-    p.register(AskGPT)
-    p.register(CreateViewWithGPT)
+    p.register(AskVoxelGPT)
+    p.register(AskVoxelGPTInteractive)
