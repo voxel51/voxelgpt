@@ -19,7 +19,9 @@ from .utils import get_chromadb_client, get_embedding_function
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EXAMPLES_DIR = os.path.join(ROOT_DIR, "examples")
 
-EXAMPLE_EMBEDDINGS_PATH = os.path.join(EXAMPLES_DIR, "embeddings.json")
+EXAMPLE_EMBEDDINGS_PATH = os.path.join(
+    EXAMPLES_DIR,
+ "viewstage_embeddings.json")
 VIEW_STAGE_EXAMPLES_PATH = os.path.join(
     EXAMPLES_DIR, "fiftyone_viewstage_examples.csv"
 )
