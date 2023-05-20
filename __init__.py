@@ -30,7 +30,6 @@ class add_sys_path(object):
         except:
             pass
 
-
 class AskVoxelGPT(foo.Operator):
     @property
     def config(self):
@@ -133,17 +132,23 @@ class AskVoxelGPTInteractive(foo.Operator):
         # ideal it should overwrite anything added to the view after the session
         # started
         sample_collection = ctx.dataset
-        # if ctx.view is not None:
-        #     sample_collection = ctx.view
-        # else:
-        #     sample_collection = ctx.dataset
+        chat_history = ctx.params.get("history", None)
 
-        query = ctx.params["query"]
-        message_history = ctx.params["history"]
-        chat_history = [item["content"] for item in message_history]
+        # if query == "Hello!":
+        #     yield self.message(ctx, "Nice to meet you.")
+        #     yield self.done(ctx)
+        #     return
+        # elif query == "Goodbye!":
+        #     yield self.message(ctx, "See you soon!")
+        #     yield self.done(ctx)
+        #     return
+        # elif query == "options":
+        #     yield self.prompt_for_choices(ctx)
+        #     yield self.done(ctx)
+        #     return
 
-        # should this be needed?
-        chat_history.append(query)
+        if chat_history:
+            chat_history = [item["content"] for item in chat_history]
 
         try:
             with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
@@ -193,13 +198,48 @@ class AskVoxelGPTInteractive(foo.Operator):
 
         message = str(exception)
         trace = traceback.format_exc()
+        view = types.Error(label=message, description=trace)
+        return self.show_message(ctx, message, view)
 
-        return self.show_message(ctx, message, types.ErrorView(label=message, description=trace))
+    def prompt_for_choices(self, ctx):
+        outputs = types.Object()
+        outputs.view("hello", types.Button(
+            label="Say Hello",
+            space=1,
+            operator=f"{self.plugin_name}/send_message_to_gpt",
+            params=dict(message="Hello!"),
+        ))
+        outputs.view("goodbye", types.Button(
+            label="Say Goodbye",
+            space=1,
+            operator=f"{self.plugin_name}/send_message_to_gpt",
+            params=dict(message="Goodbye!"),
+        ))
+        return ctx.trigger(
+            f"{self.plugin_name}/show_message",
+            params=dict(
+                outputs=types.Property(outputs).to_json(),
+                data=dict(message=""),
+                content="",
+            ),
+        )
 
     def done(self, ctx):
         return ctx.trigger(
             f"{self.plugin_name}/show_message",
             params=dict(done=True),
+        )
+
+    def show_message(self, ctx, message, view_type):
+        outputs = types.Object()
+        outputs.str("message", view=view_type)
+        return ctx.trigger(
+            f"{self.plugin_name}/show_message",
+            params=dict(
+                outputs=types.Property(outputs).to_json(),
+                data=dict(message=message),
+                content=message,
+            ),
         )
 
 

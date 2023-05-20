@@ -7,9 +7,8 @@
     "script": "dist/index.umd.js"
   },
   "scripts": {
-    "dev": "nodemon --watch ./src --ext js,jsx,ts,tsx --exec 'yarn build'",
-    "build": "vite build",
-    "preview": "vite preview"
+    "dev": "IS_DEV=true && nodemon --watch ./src --ext js,jsx,ts,tsx --exec 'yarn build'",
+    "build": "vite build"
   },
   "dependencies": {
     "@emotion/react": "^11.11.0",
