@@ -60,7 +60,7 @@ def generate_query_classifier_prompt(query):
         examples=intent_examples,
         example_prompt=classification_prompt,
         prefix=prefix,
-        suffix="Query: {query}\Intent:",
+        suffix="Query: {query}\nIntent:",
         input_variables=["query"],
         example_separator="\n",
     )
