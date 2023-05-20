@@ -43,41 +43,51 @@ LABELS_WITH_CLASSES = (
 
 
 def get_label_class_selection_examples():
-    df = pd.read_csv(LABEL_CLASS_EXAMPLES_PATH)
-    examples = []
+    if "label_class_examples" not in globals():
+        df = pd.read_csv(LABEL_CLASS_EXAMPLES_PATH)
+        examples = []
 
-    for _, row in df.iterrows():
-        example = {
-            "query": row.query,
-            "field": row.field,
-            "label_classes": row.label_classes,
-        }
-        examples.append(example)
-    return examples
+        for _, row in df.iterrows():
+            example = {
+                "query": row.query,
+                "field": row.field,
+                "label_classes": row.label_classes,
+            }
+            examples.append(example)
+        globals()["label_class_examples"] = examples
+
+    return globals()["label_class_examples"]
 
 
 def get_semantic_class_selection_examples():
-    df = pd.read_csv(SEMANTIC_CLASS_SELECTOR_EXAMPLES_PATH)
-    examples = []
+    if 'semantic_examples' not in globals():
+        df = pd.read_csv(SEMANTIC_CLASS_SELECTOR_EXAMPLES_PATH)
+        examples = []
 
-    for _, row in df.iterrows():
-        example = {
-            "class_name": row.class_name,
-            "available_label_classes": row.available_label_classes,
-            "semantic_matches": row.semantic_matches,
-        }
-        examples.append(example)
-    return examples
+        for _, row in df.iterrows():
+            example = {
+                "class_name": row.class_name,
+                "available_label_classes": row.available_label_classes,
+                "semantic_matches": row.semantic_matches,
+            }
+            examples.append(example)
+        globals()['semantic_examples'] = examples
+
+    return globals()['semantic_examples']
 
 
 def load_class_selector_prefix():
-    with open(LABEL_CLASS_SELECTOR_PREFIX_PATH, "r") as f:
-        return f.read()
+    if 'label_class_prefix' not in globals():
+        with open(LABEL_CLASS_SELECTOR_PREFIX_PATH, "r") as f:
+            globals()['label_class_prefix'] = f.read()
+    return globals()['label_class_prefix']
 
 
 def load_semantic_class_selector_prefix():
-    with open(SEMANTIC_CLASS_SELECTOR_PREFIX_PATH, "r") as f:
-        return f.read()
+    if 'semantic_class_prefix' not in globals():
+        with open(SEMANTIC_CLASS_SELECTOR_PREFIX_PATH, "r") as f:
+            globals()['semantic_class_prefix'] = f.read()
+        return globals()['semantic_class_prefix']
 
 
 def generate_class_selector_prompt(query, label_field):

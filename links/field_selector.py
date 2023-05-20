@@ -27,23 +27,27 @@ FIELD_SELECTOR_PREFIX_PATH = os.path.join(
 
 
 def get_field_selection_examples():
-    df = pd.read_csv(FIELD_SELECTION_EXAMPLES_PATH)
-    examples = []
+    if 'examples' not in globals():
+        df = pd.read_csv(FIELD_SELECTION_EXAMPLES_PATH)
+        examples = []
 
-    for _, row in df.iterrows():
-        example = {
-            "query": row.query,
-            "available_fields": row.available_fields,
-            "required_fields": row.required_fields,
-        }
-        examples.append(example)
+        for _, row in df.iterrows():
+            example = {
+                "query": row.query,
+                "available_fields": row.available_fields,
+                "required_fields": row.required_fields,
+            }
+            examples.append(example)
+        globals()['examples'] = examples
 
-    return examples
+    return globals()['examples']
 
 
 def load_field_selector_prefix():
-    with open(FIELD_SELECTOR_PREFIX_PATH, "r") as f:
-        return f.read()
+    if 'prefix' not in globals():
+        with open(FIELD_SELECTOR_PREFIX_PATH, "r") as f:
+            globals()['prefix'] = f.read()
+    return globals()['prefix']
 
 
 def get_field_type(sample, field_name):

@@ -155,7 +155,7 @@ def ask_voxelgpt_generator(
         raise ValueError(
             f"Unsupported dialect '{dialect}'. Supported: {_SUPPORTED_DIALECTS}"
         )
-
+    
     if chat_history is None:
         chat_history = []
 

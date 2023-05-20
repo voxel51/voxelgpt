@@ -21,13 +21,15 @@ CV_QUERY_TASK_RULES_PATH = os.path.join(
 )
 
 
-def load_query_prefix():
-    with open(CV_QUERY_TASK_RULES_PATH, "r") as f:
-        return f.read()
+def _load_query_prefix():
+    if 'prefix' not in globals():
+        with open(CV_QUERY_TASK_RULES_PATH, "r") as f:
+            globals()['prefix'] = f.read()
+    return globals()['prefix']
 
 
 def run_computer_vision_query(query):
-    prefix = load_query_prefix()
+    prefix = _load_query_prefix()
     prompt = prefix + PromptTemplate(
         input_variables=["query"],
         template="Question: {query}\nAnswer:",

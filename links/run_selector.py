@@ -124,20 +124,24 @@ class RunSelector(object):
         )
 
     def get_examples(self):
-        with open(self.examples_path, "r") as f:
-            df = pd.read_csv(f)
+        run_examples_var = self.run_type + "_examples"
+        if run_examples_var not in globals():
+            with open(self.examples_path, "r") as f:
+                df = pd.read_csv(f)
 
-        examples = []
+            examples = []
 
-        for _, row in df.iterrows():
-            example = {
-                "query": row.query,
-                "available_runs": row.available_runs,
-                "selected_run": row.selected_run,
-            }
-            examples.append(example)
-
-        return examples
+            for _, row in df.iterrows():
+                example = {
+                    "query": row.query,
+                    "available_runs": row.available_runs,
+                    "selected_run": row.selected_run,
+                }
+                examples.append(example)
+            
+            globals()[run_examples_var] = examples
+        
+        return globals()[run_examples_var]
 
     def select_run(self, query):
         available_runs = self.get_available_runs()

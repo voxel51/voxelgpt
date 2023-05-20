@@ -214,15 +214,6 @@ def initialize_examples_vectorstore():
     globals()['examples_db'] = examples_db
 
 def get_similar_examples(sample_collection, query, runs, label_fields):
-    # client = get_chromadb_client()
-
-    # try:
-    #     collection = client.get_collection(
-    #         CHROMADB_COLLECTION_NAME,
-    #         embedding_function=get_embedding_function(),
-    #     )
-    # except:
-    #     collection = create_chroma_collection(client)
     if 'examples_db' not in globals():
         initialize_examples_vectorstore()
     examples_db = globals()['examples_db']

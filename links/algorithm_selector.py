@@ -46,36 +46,57 @@ def get_algorithm_examples():
         examples.append(example)
     return examples
 
+    # if "examples" not in globals():
+    #     df = pd.read_csv(ALGORITHM_EXAMPLES_PATH)
+    #     examples = []
+
+    #     for _, row in df.iterrows():
+    #         algorithms_used = [alg for alg in ALGORITHMS if row[alg] == "Y"]
+    #         example = {"query": row.prompt, "algorithms": algorithms_used}
+    #         examples.append(example)
+    #     globals()["examples"] = examples
+
+    # return globals()["examples"]
+
 
 def load_algorithm_selector_prefix():
     with open(ALGORITHM_SELECTOR_PREFIX_PATH, "r") as f:
         return f.read()
 
+    # if 'prefix' not in globals():
+    #     with open(ALGORITHM_SELECTOR_PREFIX_PATH, "r") as f:
+    #         globals()['prefix'] = f.read()
+    # return globals()['prefix']
+
 
 def generate_algorithm_selector_prompt(query):
-    prefix = load_algorithm_selector_prefix()
-    algorithm_examples = get_algorithm_examples()
+    if 'template' not in globals():
+        prefix = load_algorithm_selector_prefix()
+        algorithm_examples = get_algorithm_examples()
 
-    algorithm_example_formatter_template = """
-    Query: {query}
-    Algorithms used: {algorithms}\n
-    """
+        algorithm_example_formatter_template = """
+        Query: {query}
+        Algorithms used: {algorithms}\n
+        """
 
-    algorithms_prompt = PromptTemplate(
-        input_variables=["query", "algorithms"],
-        template=algorithm_example_formatter_template,
-    )
+        algorithms_prompt = PromptTemplate(
+            input_variables=["query", "algorithms"],
+            template=algorithm_example_formatter_template,
+        )
 
-    algorithm_selector_prompt = FewShotPromptTemplate(
-        examples=algorithm_examples,
-        example_prompt=algorithms_prompt,
-        prefix=prefix,
-        suffix="Query: {query}\nAlgorithms used:",
-        input_variables=["query"],
-        example_separator="\n",
-    )
+        template = FewShotPromptTemplate(
+            examples=algorithm_examples,
+            example_prompt=algorithms_prompt,
+            prefix=prefix,
+            suffix="Query: {query}\nAlgorithms used:",
+            input_variables=["query"],
+            example_separator="\n",
+        )
+        globals()['template'] = template
+    else:
+        template = globals()['template']
 
-    return algorithm_selector_prompt.format(query=query)
+    return template.format(query=query)
 
 
 def select_algorithms(query):

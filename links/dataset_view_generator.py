@@ -187,8 +187,10 @@ def generate_runs_prompt(sample_collection, runs):
 
 
 def load_dataset_view_prompt_prefix_template():
-    with open(VIEW_GENERATOR_PREFIX_PATH, "r") as f:
-        return f.read()
+    if 'prefix' not in globals():
+        with open(VIEW_GENERATOR_PREFIX_PATH, "r") as f:
+            globals()['prefix'] = f.read()
+    return globals()['prefix']
 
 
 def generate_dataset_view_prompt_prefix(available_fields, label_classes):

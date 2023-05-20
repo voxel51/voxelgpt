@@ -19,8 +19,10 @@ EFFECTIVE_PROMPT_GENERATOR_PREFIX_PATH = os.path.join(
 )
 
 def load_effective_prompt_prefix_template():
-    with open(EFFECTIVE_PROMPT_GENERATOR_PREFIX_PATH, "r") as f:
-        return f.read()
+    if 'prefix' not in globals():
+        with open(EFFECTIVE_PROMPT_GENERATOR_PREFIX_PATH, "r") as f:
+            globals()['prefix'] = f.read()
+    return globals()['prefix'] 
 
 
 def format_chat_history(chat_history):
