@@ -151,7 +151,27 @@ def generate_field_selector_prompt(sample_collection, query):
     )
 
 
-def format_response(response):
+def _add_label_field(sample_collection, response):
+    priority_fields = (
+        "ground_truth",
+        "gt_label",
+        "gt",
+        "detections",
+        "classification",
+        "predictions",
+        "prediction",
+        "pred"
+    )
+
+    if not response:
+        field_names = list(sample_collection.get_field_schema().keys())
+        for field_name in priority_fields:
+            if field_name in field_names:
+                return [field_name]
+    return response
+
+
+def format_response(sample_collection, response):
     if response[0] == "[" and response[-1] == "]":
         response = response[1:-1].split(",")
     elif len(response.split(",")) > 1:
@@ -160,7 +180,9 @@ def format_response(response):
         response = [response]
 
     response = [r.strip() for r in response]
-    return [r for r in response if r]
+    field_names = list(sample_collection.get_field_schema().keys())
+    response = [r for r in response if r in field_names]
+    return _add_label_field(sample_collection, response)
 
 
 def select_fields(sample_collection, query):
@@ -168,4 +190,4 @@ def select_fields(sample_collection, query):
         sample_collection, query
     )
     res = get_llm().call_as_llm(field_selector_prompt).strip()
-    return format_response(res)
+    return format_response(sample_collection, res)
