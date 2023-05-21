@@ -344,6 +344,50 @@ def _convert_matches_to_text_similarities(
             verified_stages.append(stage)
     return verified_stages
 
+
+def _correct_detection_match_stages(
+    stages,
+):
+    '''
+    if model predicts `match(F(field.detections.label) == "class_name")`, then
+    fix it by subbing in `contains()`.
+    '''
+
+    verified_stages = []
+
+    for stage in stages:
+        if 'match' in stage and 'detections.label' in stage:
+            if 'contains' in stage or 'is_subset' in stage:
+                verified_stages.append(stage)
+                continue
+            field_name = stage.split('F')[1].split('.')[0].strip()
+            class_name = stage.split('==')[1].strip()[:-1]
+            new_stage = f"match(F({field_name}.detections.label).contains('{class_name}'))"
+            verified_stages.append(new_stage)
+        else:
+            verified_stages.append(stage)
+    
+    return verified_stages
+
+def _correct_detection_filter_stages(
+    stages,
+):
+    '''
+    if model predicts 
+    `filter_labels(field, F(detections.label) == "class_name")`, then
+    fix it by removing `detections`.
+    '''
+
+    verified_stages = []
+
+    for stage in stages:
+        if 'filter_labels' in stage and 'detections.label' in stage:
+            verified_stages.append(stage.replace('detections.', ''))
+        else:
+            verified_stages.append(stage)
+    
+    return verified_stages
+
 def get_gpt_view_stage_strings(
     sample_collection,
     required_brain_runs,
@@ -377,4 +421,6 @@ def get_gpt_view_stage_strings(
             required_brain_runs,
             unmatched_classes
         )
+        stages = _correct_detection_match_stages(stages)
+        stages = _correct_detection_filter_stages(stages)
         return stages
