@@ -18566,7 +18566,7 @@ Please use another name.`);
   }
   const atom = window["recoil"].atom;
   const getBrowserStorageEffectForKey = window["__fos__"].getBrowserStorageEffectForKey;
-  const PLUGIN_NAME$1 = "@voxel51/fiftyone-gpt";
+  const PLUGIN_NAME$1 = "@voxel51/voxelgpt";
   const atoms = {
     messages: atom({
       key: "messages",
@@ -19017,7 +19017,7 @@ Please use another name.`);
   const Typography = window["__mui__"].Typography;
   const Link = window["__mui__"].Link;
   const useRecoilValue = window["recoil"].useRecoilValue;
-  const PLUGIN_NAME = "@voxel51/fiftyone-gpt";
+  const PLUGIN_NAME = "@voxel51/voxelgpt";
   const ChatPanel = () => {
     const executor = useOperatorExecutor(`${PLUGIN_NAME}/send_message_to_gpt`);
     const messages = useRecoilValue(atoms.messages);

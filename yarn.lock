@@ -906,9 +906,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@voxel51/fiftyone-gpt@workspace:.":
+"@voxel51/voxelgpt@workspace:.":
   version: 0.0.0-use.local
-  resolution: "@voxel51/fiftyone-gpt@workspace:."
+  resolution: "@voxel51/voxelgpt@workspace:."
   dependencies:
     "@emotion/react": ^11.11.0
     "@emotion/styled": ^11.11.0

@@ -20,7 +20,7 @@ import { Actions } from "./Actions";
 import { Intro } from "./Intro";
 import { ChatGPTAvatar } from "./avatars";
 
-const PLUGIN_NAME = "@voxel51/fiftyone-gpt";
+const PLUGIN_NAME = "@voxel51/voxelgpt";
 
 const ChatPanel = () => {
   const executor = useOperatorExecutor(`${PLUGIN_NAME}/send_message_to_gpt`);
