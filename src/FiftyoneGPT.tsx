@@ -6,53 +6,49 @@ import styled from "styled-components";
 import { scrollbarStyles } from "@fiftyone/utilities";
 import { OperatorPlacements, registerOperator, useOperatorExecutor } from "@fiftyone/operators";
 import Chat from "./Chat";
-import { Grid, Paper, Typography } from '@mui/material';
+import {
+  Grid,
+  Typography,
+  Link
+} from '@mui/material';
 import InputBar from "./InputBar";
 import { ShowMessage } from "./ShowMessage";
 import { SendMessageToGPT } from "./SendMessageToGPT";
-import {useRecoilValue} from "recoil";
+import { useRecoilValue } from "recoil";
 import * as state from "./state";
 import { Actions } from "./Actions";
+import { Intro } from "./Intro";
+import { ChatGPTAvatar } from "./avatars";
+
 
 const PLUGIN_NAME = "@voxel51/fiftyone-gpt"
 
 const ChatPanel = () => {
   const executor = useOperatorExecutor(`${PLUGIN_NAME}/send_message_to_gpt`);
   const messages = useRecoilValue(state.atoms.messages);
-  const incomingAvatar = 'path-to-incoming-avatar';
-  const outgoingAvatar = 'path-to-outgoing-avatar';
   const handleMessageSend = (message) => {
     executor.execute({ message })
   };
   const receiving = useRecoilValue(state.atoms.receiving);
+  const hasMessages = messages.length > 0;
 
   return (
-    <Grid container direction="column" spacing={2} 
-    justifyContent="flex-start"
-    alignItems="center">
-      {messages.length == 0 && <Grid item>
-        <Paper elevation={3} style={{ padding: '20px', marginBottom: '16px' }}>
-          <Typography variant="h6" gutterBottom>
-            Examples
-          </Typography>
-          <Typography variant="body1" gutterBottom>
-            Here are some example questions you can ask:
-          </Typography>
-          <Typography variant="body2">
-            - How does the GPT-3 model work?
-            <br />
-            - What's the weather like?
-            <br />
-            - How can I integrate GPT-3 into my application?
-          </Typography>
-        </Paper>
+    <Grid container direction="row" spacing={2}
+      sx={{height: '100%'}} justifyContent="center">
+      {!hasMessages && <Intro />}
+      {hasMessages &&<Grid item lg={12}>
+        <Chat />
       </Grid>}
-      <Grid item>
-        <Chat incomingAvatar={incomingAvatar} outgoingAvatar={outgoingAvatar} />
-      </Grid>
-      <Grid item style={{marginTop: 'auto'}}>
-        <Actions />
-        <InputBar disabled={receiving} onMessageSend={handleMessageSend} />
+      <Grid item container sx={{marginTop: hasMessages ? 'auto' : undefined}} justifyContent="center">
+        <Grid item sm={12} md={6} lg={8}>
+          <Actions />
+          <InputBar hasMessages={hasMessages} disabled={receiving} onMessageSend={handleMessageSend} />
+          <Typography variant="caption" sx={{marginTop: '8px', display: 'block', textAlign: 'center'}}>
+            This is a pre-release beta. VoxelGPT may not understand certain queries.
+            {" "}
+            <Link>Learn more</Link>
+          </Typography>
+        </Grid>
       </Grid>
     </Grid>
   );
@@ -60,10 +56,11 @@ const ChatPanel = () => {
 
 registerComponent({
   name: "gpt_search",
-  label: "Search with GPT",
+  label: "VoxelGPT",
   component: ChatPanel,
   type: PluginComponentType.Panel,
-  activator: () => true
+  activator: () => true,
+  Icon: () => <ChatGPTAvatar size={'1rem'} style={{marginRight: '0.5rem'}} />
 });
 
 registerOperator(ShowMessage, PLUGIN_NAME)

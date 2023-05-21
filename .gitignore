@@ -11,3 +11,5 @@ links/__pycache__
 **/*.DS_store
 
 .ipynb_checkpoints
+
+node_modules

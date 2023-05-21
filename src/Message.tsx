@@ -1,62 +1,75 @@
-import React from 'react';
-import Avatar from '@mui/material/Avatar';
-import Typography from '@mui/material/Typography';
-import ReactMarkdown from 'react-markdown';
-import { useTheme } from '@mui/material/styles';
-import {Button} from '@fiftyone/components'
-import { Grid, Paper, Typography } from '@mui/material';
-import useTypewriterEffect from './useTypewriterEffect';
+import React from 'react'
+import Avatar from '@mui/material/Avatar'
+import ReactMarkdown from 'react-markdown'
+import { useTheme } from '@fiftyone/components'
+import { Grid, Box, Typography } from '@mui/material'
+import {OperatorIO, types} from "@fiftyone/operators"
+import LoadingIndicator from './LoadingIndicator'
+import { ChatGPTAvatar } from './avatars'
 
-export const Message = ({ type, avatar, content = '', button }) => {
-  const theme = useTheme();
-  const animatedContent = useTypewriterEffect(type === 'incoming' ? content : '', 5);
-
-
-  if (button) {
+export const Message = ({ type, avatar, content = '', outputs, data }) => {
+  if (outputs)
     return (
-      <div
-        style={{
-          display: 'flex',
-          marginBottom: theme.spacing(2),
-          justifyContent: 'center',
-        }}
-      >
-        <Button>{button.label}</Button>
-      </div>
-    );
-  }
+      <OperatorIO
+        schema={types.Property.fromJSON(outputs)}
+        data={data}
+        type="output"
+      />
+    )
+
+  if (content)
+    return (
+      <Grid spacing={2} container sx={{ pl: 1 }}>
+        <Grid item>
+          <Typography component="p" my={1.5}>
+            {content}
+          </Typography>
+        </Grid>
+      </Grid>
+    )
+
+  return null
+}
+
+export function MessageWrapper({ type, messages, receiving, last }) {
+  const theme = useTheme()
+  const isIncoming = type === 'incoming'
+  const background =
+    isIncoming ? theme.background.header : theme.background.level1
 
   return (
-    <Typography component='div' style={{ marginLeft: theme.spacing(2) }}>
-      <ReactMarkdown>
-        {type === 'incoming' ? (animatedContent.length === content.length ? content : animatedContent) : content}
-      </ReactMarkdown>
-    </Typography>
-  );
-};
-
-
-export function MessageWrapper({index,
-  type,
-  avatar,
-  messages}) {
-  const theme = useTheme();
-  return (
-    <div
-      style={{
-        display: 'flex',
-        marginBottom: theme.spacing(2),
-        justifyContent: 'center',
-      }}
+    <Grid
+      container
+      sx={{ background, padding: '1rem', '& p': {m: 0, mt: 1} }}
+      justifyContent="center"
     >
-      <Paper elevation={4} variant="outlined" style={{padding: '1rem', width: 500, display: 'flex', flexDirection: 'row',}}>
-        <Avatar alt={type} src={avatar} />
-        <div>
+      <Grid container item lg={8} spacing={2}>
+        <Grid item>
+          <Box>
+            {isIncoming ? <ChatGPTAvatar /> : <Avatar alt="you" />}
+          </Box>
+        </Grid>
+        <Grid container item xs>
           {messages.map((message, index) => (
-            <Message key={index} type={message.type} avatar={message.avatar} content={message.content} button={message.button} />
+            <Grid item xs={12}>
+              <Message
+                key={index}
+                type={message.type}
+                {...message}
+              />
+            </Grid>
           ))}
-        </div>
-      </Paper>
-    </div>
+          {receiving && (
+            <Grid container item xs={12} sx={{ pl: 1 }}>
+              <Grid item>
+                <Box my={1.5}>
+                  <LoadingIndicator />
+                </Box>
+              </Grid>
+            </Grid>
+          )}
+        </Grid>
+      </Grid>
+    </Grid>
   )
 }
