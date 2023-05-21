@@ -18,26 +18,38 @@ ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EXAMPLES_DIR = os.path.join(ROOT_DIR, "examples")
 PROMPTS_DIR = os.path.join(ROOT_DIR, "prompts")
 
-QUERY_INTENT_EXAMPLES_PATH = os.path.join(
-    EXAMPLES_DIR, "fiftyone_query_intent_examples.csv"
+QUERY_INTENT_STAGE_EXAMPLES_PATH = os.path.join(
+    EXAMPLES_DIR, "query_intent_stages_examples.csv"
 )
-INTENT_TASK_RULES_PATH = os.path.join(
-    PROMPTS_DIR, "intent_classification_task_rules.txt"
+QUERY_INTENT_QA_EXAMPLES_PATH = os.path.join(
+    EXAMPLES_DIR, "query_intent_qa_examples.csv"
+)
+INTENT_DISPLAY_TASK_RULES_PATH = os.path.join(
+    PROMPTS_DIR, "intent_classification_stages_rules.txt"
+)
+INTENT_QA_TASK_RULES_PATH = os.path.join(
+    PROMPTS_DIR, "intent_classification_qa_rules.txt"
 )
 
-class QueryIntentClassifier(object):
-    """container for query intent classification data."""
-    def __init__(self):
-        self.template = None
+DISPLAY_KEYWORDS = (
+    "display",
+    "show",
+)
 
-
-def _load_query_classifier_prefix():
-    with open(INTENT_TASK_RULES_PATH, "r") as f:
+def _load_prefix(path):
+    with open(path, "r") as f:
         return f.read()
 
 
-def _get_query_intent_examples():
-    df = pd.read_csv(QUERY_INTENT_EXAMPLES_PATH)
+def _load_query_classifier_prefix(type):
+    if type == "display":
+        return _load_prefix(INTENT_DISPLAY_TASK_RULES_PATH)
+    else:
+        return _load_prefix(INTENT_QA_TASK_RULES_PATH)
+
+
+def _get_examples(path):
+    df = pd.read_csv(path)
     df = df.sample(frac=1).reset_index(drop=True)
     examples = []
 
@@ -47,12 +59,20 @@ def _get_query_intent_examples():
     return examples
 
 
-def _get_or_create_query_classifier_prompt_template():
-    if 'template' in globals():
-        return globals()['template']
+def _get_query_intent_examples(type):
+    if type == "display":
+        return _get_examples(QUERY_INTENT_STAGE_EXAMPLES_PATH)
     else:
-        prefix = _load_query_classifier_prefix()
-        intent_examples = _get_query_intent_examples()
+        return _get_examples(QUERY_INTENT_QA_EXAMPLES_PATH)
+
+
+def _get_query_classifier_prompt_template(type):
+    var = 'template_' + type
+    if var in globals():
+        return globals()[var]
+    else:
+        prefix = _load_query_classifier_prefix(type)
+        intent_examples = _get_query_intent_examples(type)
 
         intent_example_formatter_template = """
         Query: {query}
@@ -73,24 +93,45 @@ def _get_or_create_query_classifier_prompt_template():
             example_separator="\n",
         )
 
-        globals()['template'] = template
+        globals()[var] = template
         return template
     
 
-def _assemble_query_intent_classifier_prompt(query):
-    template = _get_or_create_query_classifier_prompt_template()
+def _assemble_query_intent_classifier_prompt(query, type):
+    template = _get_query_classifier_prompt_template(type)
     return template.format(query=query)
 
+def _match_display_keywords(query):
+    for keyword in DISPLAY_KEYWORDS:
+        if keyword in query:
+            return True
+    return False
 
-def classify_query_intent(query):
-    prompt = _assemble_query_intent_classifier_prompt(query)
-    res = get_llm().call_as_llm(prompt).strip()
-
-    if "display" in res:
+def classify_query_intent_stages(query):
+    if _match_display_keywords(query):
         return "display"
-    elif "documentation" in res:
+    prompt = _assemble_query_intent_classifier_prompt(query, "display")
+    res = get_llm().call_as_llm(prompt).strip()
+    if 'display' in res or 'object' in res or 'description' in res:
+        return "display"
+    else:
+        return "confused"
+    
+
+def classify_query_intent_qa(query):
+    prompt = _assemble_query_intent_classifier_prompt(query, "qa")
+    res = get_llm().call_as_llm(prompt).strip()
+    if "documentation" in res:
         return "documentation"
     elif "computer vision" in res:
         return "computer_vision"
     else:
         return "confused"
+
+
+def classify_query_intent(query):
+    intent = classify_query_intent_stages(query)
+    if intent == "display":
+        return intent
+    else:
+        return classify_query_intent_qa(query)
