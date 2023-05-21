@@ -35,8 +35,16 @@ def generate_dataset_view_prompt(chat_history):
     prompt += "Effective prompt: "
     return prompt
 
+def _keyword_is_present(chat_history):
+    query = chat_history[-1].lower()
+    if "now " in query or "now," in query or "now:" in query:
+        return True
+
 
 def generate_effective_query(chat_history):
-    prompt = generate_dataset_view_prompt(chat_history)
-    response = get_llm().call_as_llm(prompt)
-    return response.strip()
+    if _keyword_is_present(chat_history):
+        prompt = generate_dataset_view_prompt(chat_history)
+        response = get_llm().call_as_llm(prompt)
+        return response.strip()
+    else:
+        return chat_history[-1]
