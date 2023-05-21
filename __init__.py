@@ -29,6 +29,7 @@ class add_sys_path(object):
         except:
             pass
 
+
 class AskVoxelGPT(foo.Operator):
     @property
     def config(self):
@@ -123,13 +124,6 @@ class AskVoxelGPTPanel(foo.Operator):
             unlisted=True,
         )
 
-    @property
-    def resolve_inputs(self):
-        inputs = types.Object()
-        inputs.str("query", label="query", required=True)
-        inputs.define_property("history", types.List(types.Object()))
-        return types.Property(inputs)
-
     async def execute(self, ctx):
         query = ctx.params["query"]
         sample_collection = ctx.dataset
@@ -188,18 +182,24 @@ class AskVoxelGPTPanel(foo.Operator):
 
     def prompt_for_choices(self, ctx):
         outputs = types.Object()
-        outputs.view("hello", types.Button(
-            label="Say Hello",
-            space=1,
-            operator=f"{self.plugin_name}/send_message_to_gpt",
-            params=dict(message="Hello!"),
-        ))
-        outputs.view("goodbye", types.Button(
-            label="Say Goodbye",
-            space=1,
-            operator=f"{self.plugin_name}/send_message_to_gpt",
-            params=dict(message="Goodbye!"),
-        ))
+        outputs.view(
+            "hello",
+            types.Button(
+                label="Say Hello",
+                space=1,
+                operator=f"{self.plugin_name}/send_message_to_voxelgpt",
+                params=dict(message="Hello!"),
+            ),
+        )
+        outputs.view(
+            "goodbye",
+            types.Button(
+                label="Say Goodbye",
+                space=1,
+                operator=f"{self.plugin_name}/send_message_to_voxelgpt",
+                params=dict(message="Goodbye!"),
+            ),
+        )
         return ctx.trigger(
             f"{self.plugin_name}/show_message",
             params=dict(
