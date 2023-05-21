@@ -19008,7 +19008,9 @@ Please use another name.`);
   const useRecoilValue = window["recoil"].useRecoilValue;
   const PLUGIN_NAME = "@voxel51/voxelgpt";
   const ChatPanel = () => {
-    const executor = useOperatorExecutor(`${PLUGIN_NAME}/send_message_to_voxelgpt`);
+    const executor = useOperatorExecutor(
+      `${PLUGIN_NAME}/send_message_to_voxelgpt`
+    );
     const messages = useRecoilValue(atoms.messages);
     const handleMessageSend = (message) => {
       executor.execute({ message });
