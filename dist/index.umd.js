@@ -18818,11 +18818,11 @@ Please use another name.`);
   const types = window["__foo__"].types;
   const executeOperator = window["__foo__"].executeOperator;
   const useRecoilState = window["recoil"].useRecoilState;
-  class SendMessageToGPT extends Operator {
+  class SendMessageToVoxelGPT extends Operator {
     get config() {
       return new OperatorConfig({
-        name: "send_message_to_gpt",
-        label: "Send Message to GPT"
+        name: "send_message_to_voxelgpt",
+        label: "Send Message to VoxelGPT"
       });
     }
     useHooks() {
@@ -19022,7 +19022,7 @@ Please use another name.`);
   const useRecoilValue = window["recoil"].useRecoilValue;
   const PLUGIN_NAME = "@voxel51/voxelgpt";
   const ChatPanel = () => {
-    const executor = useOperatorExecutor(`${PLUGIN_NAME}/send_message_to_gpt`);
+    const executor = useOperatorExecutor(`${PLUGIN_NAME}/send_message_to_voxelgpt`);
     const messages = useRecoilValue(atoms.messages);
     const handleMessageSend = (message) => {
       executor.execute({ message });
@@ -19085,5 +19085,5 @@ Please use another name.`);
     Icon: () => /* @__PURE__ */ jsxRuntime.exports.jsx(ChatGPTAvatar, { size: "1rem", style: { marginRight: "0.5rem" } })
   });
   registerOperator(ShowMessage, PLUGIN_NAME);
-  registerOperator(SendMessageToGPT, PLUGIN_NAME);
+  registerOperator(SendMessageToVoxelGPT, PLUGIN_NAME);
 });
