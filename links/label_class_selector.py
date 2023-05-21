@@ -87,13 +87,12 @@ def load_semantic_class_selector_prefix():
     if 'semantic_class_prefix' not in globals():
         with open(SEMANTIC_CLASS_SELECTOR_PREFIX_PATH, "r") as f:
             globals()['semantic_class_prefix'] = f.read()
-        return globals()['semantic_class_prefix']
+    return globals()['semantic_class_prefix']
 
 
 def generate_class_selector_prompt(query, label_field):
     prefix = load_class_selector_prefix()
     class_selection_examples = get_label_class_selection_examples()
-
     class_selection_example_formatter_template = """
     Query: {query}
     Label field: {field}
@@ -120,7 +119,6 @@ def generate_class_selector_prompt(query, label_field):
 def generate_semantic_class_selector_prompt(class_name, label_classes):
     prefix = load_semantic_class_selector_prefix()
     semantic_class_selection_examples = get_semantic_class_selection_examples()
-
     semantic_class_selection_example_formatter_template = """
     Class name: {class_name}
     Available label classes: {available_label_classes}
