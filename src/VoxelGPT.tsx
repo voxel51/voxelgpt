@@ -13,7 +13,7 @@ import Chat from "./Chat";
 import { Grid, Typography, Link } from "@mui/material";
 import InputBar from "./InputBar";
 import { ShowMessage } from "./ShowMessage";
-import { SendMessageToGPT } from "./SendMessageToGPT";
+import { SendMessageToVoxelGPT } from "./SendMessageToVoxelGPT";
 import { useRecoilValue } from "recoil";
 import * as state from "./state";
 import { Actions } from "./Actions";
@@ -23,7 +23,9 @@ import { ChatGPTAvatar } from "./avatars";
 const PLUGIN_NAME = "@voxel51/voxelgpt";
 
 const ChatPanel = () => {
-  const executor = useOperatorExecutor(`${PLUGIN_NAME}/send_message_to_gpt`);
+  const executor = useOperatorExecutor(
+    `${PLUGIN_NAME}/send_message_to_voxelgpt`
+  );
   const messages = useRecoilValue(state.atoms.messages);
   const handleMessageSend = (message) => {
     executor.execute({ message });
@@ -81,4 +83,4 @@ registerComponent({
 });
 
 registerOperator(ShowMessage, PLUGIN_NAME);
-registerOperator(SendMessageToGPT, PLUGIN_NAME);
+registerOperator(SendMessageToVoxelGPT, PLUGIN_NAME);
