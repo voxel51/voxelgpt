@@ -23,7 +23,7 @@ EXAMPLE_EMBEDDINGS_PATH = os.path.join(
     EXAMPLES_DIR,
  "viewstage_embeddings.json")
 VIEW_STAGE_EXAMPLES_PATH = os.path.join(
-    EXAMPLES_DIR, "fiftyone_viewstage_examples.csv"
+    EXAMPLES_DIR, "viewstage_examples.csv"
 )
 
 CHROMADB_COLLECTION_NAME = "fiftyone_view_stage_examples"

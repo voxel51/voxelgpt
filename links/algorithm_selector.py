@@ -19,7 +19,7 @@ EXAMPLES_DIR = os.path.join(ROOT_DIR, "examples")
 PROMPTS_DIR = os.path.join(ROOT_DIR, "prompts")
 
 ALGORITHM_EXAMPLES_PATH = os.path.join(
-    EXAMPLES_DIR, "fiftyone_algorithm_examples.csv"
+    EXAMPLES_DIR, "algorithm_examples.csv"
 )
 ALGORITHM_SELECTOR_PREFIX_PATH = os.path.join(
     PROMPTS_DIR, "algorithm_selector_prefix.txt"

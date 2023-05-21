@@ -19,7 +19,7 @@ EXAMPLES_DIR = os.path.join(ROOT_DIR, "examples")
 PROMPTS_DIR = os.path.join(ROOT_DIR, "prompts")
 
 FIELD_SELECTION_EXAMPLES_PATH = os.path.join(
-    EXAMPLES_DIR, "fiftyone_field_selection_examples.csv"
+    EXAMPLES_DIR, "field_selection_examples.csv"
 )
 FIELD_SELECTOR_PREFIX_PATH = os.path.join(
     PROMPTS_DIR, "field_selector_prefix.txt"
