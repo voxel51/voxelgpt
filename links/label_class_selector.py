@@ -25,10 +25,10 @@ SEMANTIC_CLASS_SELECTOR_PREFIX_PATH = os.path.join(
     PROMPTS_DIR, "semantic_class_selector_prefix.txt"
 )
 LABEL_CLASS_EXAMPLES_PATH = os.path.join(
-    EXAMPLES_DIR, "fiftyone_label_class_examples.csv"
+    EXAMPLES_DIR, "label_class_examples.csv"
 )
 SEMANTIC_CLASS_SELECTOR_EXAMPLES_PATH = os.path.join(
-    EXAMPLES_DIR, "fiftyone_semantic_class_selector_examples.csv"
+    EXAMPLES_DIR, "semantic_class_selector_examples.csv"
 )
 
 SEMANTIC_MATCH_THRESHOLD = 1000
