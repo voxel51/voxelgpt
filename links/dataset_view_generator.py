@@ -257,10 +257,17 @@ def split_into_stages(stages_text):
         stage.upper().replace("_", ""): stage for stage in view_stages
     }
 
-    pattern = "," + "|,".join(view_stages)[:-1]
 
-    st = stages_text[1:-1].replace(", ", ",").replace("\n", "")
+    if stages_text[0] == "[" and stages_text[-1] == "]":
+        st = stages_text[1:-1]
+    else:
+        st = stages_text
+    st = st.replace(", ", ",").replace("\n", "")
     st = st.replace("\r", "").replace("'", '"')
+    if st[:8] == "dataset.":
+        st = st[8:]
+
+    pattern = "," + "|,".join(view_stages)[:-1]
     x = re.finditer(pattern, st)
 
     stages = []
