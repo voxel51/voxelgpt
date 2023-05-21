@@ -165,6 +165,11 @@ def _replace_run_keys(prompt, runs):
             "EVAL_KEY", 
             runs["evaluation"]['key']
             )
+    if "uniqueness" in runs:
+        prompt = prompt.replace(
+            "UNIQUENESS_FIELD", 
+            runs["uniqueness"]['uniqueness_field']
+            )
     return prompt
 
 def _count_empty_class_names(label_field):
