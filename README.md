@@ -27,8 +27,8 @@ If you want to run this locally, you'll need to:
 1. Clone the repository:
 
 ```shell
-git clone https://github.com/voxel51/fiftyone-gpt
-cd fiftyone-gpt
+git clone https://github.com/voxel51/voxelgpt
+cd voxelgpt
 ```
 
 2. Install these packages:
