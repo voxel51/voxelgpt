@@ -11,7 +11,7 @@ from langchain.prompts import PromptTemplate, FewShotPromptTemplate
 import pandas as pd
 
 # pylint: disable=relative-beyond-top-level
-from .utils import get_llm
+from .utils import get_llm, get_cache
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -19,7 +19,7 @@ EXAMPLES_DIR = os.path.join(ROOT_DIR, "examples")
 PROMPTS_DIR = os.path.join(ROOT_DIR, "prompts")
 
 FIELD_SELECTION_EXAMPLES_PATH = os.path.join(
-    EXAMPLES_DIR, "fiftyone_field_selection_examples.csv"
+    EXAMPLES_DIR, "field_selection_examples.csv"
 )
 FIELD_SELECTOR_PREFIX_PATH = os.path.join(
     PROMPTS_DIR, "field_selector_prefix.txt"
@@ -27,23 +27,31 @@ FIELD_SELECTOR_PREFIX_PATH = os.path.join(
 
 
 def get_field_selection_examples():
-    df = pd.read_csv(FIELD_SELECTION_EXAMPLES_PATH)
-    examples = []
+    cache = get_cache()
+    key = "field_selection_examples"
+    if key not in cache:
+        df = pd.read_csv(FIELD_SELECTION_EXAMPLES_PATH)
+        examples = []
 
-    for _, row in df.iterrows():
-        example = {
-            "query": row.query,
-            "available_fields": row.available_fields,
-            "required_fields": row.required_fields,
-        }
-        examples.append(example)
+        for _, row in df.iterrows():
+            example = {
+                "query": row.query,
+                "available_fields": row.available_fields,
+                "required_fields": row.required_fields,
+            }
+            examples.append(example)
+        cache[key] = examples
 
-    return examples
+    return cache[key]
 
 
 def load_field_selector_prefix():
-    with open(FIELD_SELECTOR_PREFIX_PATH, "r") as f:
-        return f.read()
+    cache = get_cache()
+    key = "field_selector_prefix"
+    if key not in cache:
+        with open(FIELD_SELECTOR_PREFIX_PATH, "r") as f:
+            cache[key] = f.read()
+    return cache[key]
 
 
 def get_field_type(sample, field_name):
@@ -147,7 +155,27 @@ def generate_field_selector_prompt(sample_collection, query):
     )
 
 
-def format_response(response):
+def _add_label_field(sample_collection, response):
+    priority_fields = (
+        "ground_truth",
+        "gt_label",
+        "gt",
+        "detections",
+        "classification",
+        "predictions",
+        "prediction",
+        "pred",
+    )
+
+    if not response:
+        field_names = list(sample_collection.get_field_schema().keys())
+        for field_name in priority_fields:
+            if field_name in field_names:
+                return [field_name]
+    return response
+
+
+def format_response(sample_collection, response):
     if response[0] == "[" and response[-1] == "]":
         response = response[1:-1].split(",")
     elif len(response.split(",")) > 1:
@@ -156,7 +184,9 @@ def format_response(response):
         response = [response]
 
     response = [r.strip() for r in response]
-    return [r for r in response if r]
+    field_names = list(sample_collection.get_field_schema().keys())
+    response = [r for r in response if r in field_names]
+    return _add_label_field(sample_collection, response)
 
 
 def select_fields(sample_collection, query):
@@ -164,4 +194,4 @@ def select_fields(sample_collection, query):
         sample_collection, query
     )
     res = get_llm().call_as_llm(field_selector_prompt).strip()
-    return format_response(res)
+    return format_response(sample_collection, res)

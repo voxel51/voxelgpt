@@ -11,16 +11,14 @@ from langchain.prompts import PromptTemplate, FewShotPromptTemplate
 import pandas as pd
 
 # pylint: disable=relative-beyond-top-level
-from .utils import get_llm
+from .utils import get_llm, get_cache
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EXAMPLES_DIR = os.path.join(ROOT_DIR, "examples")
 PROMPTS_DIR = os.path.join(ROOT_DIR, "prompts")
 
-ALGORITHM_EXAMPLES_PATH = os.path.join(
-    EXAMPLES_DIR, "fiftyone_algorithm_examples.csv"
-)
+ALGORITHM_EXAMPLES_PATH = os.path.join(EXAMPLES_DIR, "algorithm_examples.csv")
 ALGORITHM_SELECTOR_PREFIX_PATH = os.path.join(
     PROMPTS_DIR, "algorithm_selector_prefix.txt"
 )
@@ -53,29 +51,35 @@ def load_algorithm_selector_prefix():
 
 
 def generate_algorithm_selector_prompt(query):
-    prefix = load_algorithm_selector_prefix()
-    algorithm_examples = get_algorithm_examples()
+    cache = get_cache()
+    key = "algorithm_selector_template"
+    if key not in cache:
+        prefix = load_algorithm_selector_prefix()
+        algorithm_examples = get_algorithm_examples()
 
-    algorithm_example_formatter_template = """
-    Query: {query}
-    Algorithms used: {algorithms}\n
-    """
+        algorithm_example_formatter_template = """
+        Query: {query}
+        Algorithms used: {algorithms}\n
+        """
 
-    algorithms_prompt = PromptTemplate(
-        input_variables=["query", "algorithms"],
-        template=algorithm_example_formatter_template,
-    )
+        algorithms_prompt = PromptTemplate(
+            input_variables=["query", "algorithms"],
+            template=algorithm_example_formatter_template,
+        )
 
-    algorithm_selector_prompt = FewShotPromptTemplate(
-        examples=algorithm_examples,
-        example_prompt=algorithms_prompt,
-        prefix=prefix,
-        suffix="Query: {query}\nAlgorithms used:",
-        input_variables=["query"],
-        example_separator="\n",
-    )
+        template = FewShotPromptTemplate(
+            examples=algorithm_examples,
+            example_prompt=algorithms_prompt,
+            prefix=prefix,
+            suffix="Query: {query}\nAlgorithms used:",
+            input_variables=["query"],
+            example_separator="\n",
+        )
+        cache[key] = template
+    else:
+        template = cache[key]
 
-    return algorithm_selector_prompt.format(query=query)
+    return template.format(query=query)
 
 
 def select_algorithms(query):

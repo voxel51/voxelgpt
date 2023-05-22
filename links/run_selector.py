@@ -11,7 +11,7 @@ from langchain.prompts import PromptTemplate, FewShotPromptTemplate
 import pandas as pd
 
 # pylint: disable=relative-beyond-top-level
-from .utils import get_llm
+from .utils import get_llm, get_cache
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -50,24 +50,18 @@ TASK_RULES_PATHS = {
 }
 
 EXAMPLES_PATHS = {
-    "uniqueness": os.path.join(
-        EXAMPLES_DIR, "fiftyone_uniqueness_run_examples.csv"
-    ),
-    "hardness": os.path.join(
-        EXAMPLES_DIR, "fiftyone_hardness_run_examples.csv"
-    ),
+    "uniqueness": os.path.join(EXAMPLES_DIR, "uniqueness_run_examples.csv"),
+    "hardness": os.path.join(EXAMPLES_DIR, "hardness_run_examples.csv"),
     "mistakenness": os.path.join(
-        EXAMPLES_DIR, "fiftyone_mistakenness_run_examples.csv"
+        EXAMPLES_DIR, "mistakenness_run_examples.csv"
     ),
     "image_similarity": os.path.join(
-        EXAMPLES_DIR, "fiftyone_image_similarity_run_examples.csv"
+        EXAMPLES_DIR, "image_similarity_run_examples.csv"
     ),
     "text_similarity": os.path.join(
-        EXAMPLES_DIR, "fiftyone_text_similarity_run_examples.csv"
+        EXAMPLES_DIR, "text_similarity_run_examples.csv"
     ),
-    "evaluation": os.path.join(
-        EXAMPLES_DIR, "fiftyone_evaluation_run_examples.csv"
-    ),
+    "evaluation": os.path.join(EXAMPLES_DIR, "evaluation_run_examples.csv"),
     "metadata": None,
 }
 
@@ -124,20 +118,25 @@ class RunSelector(object):
         )
 
     def get_examples(self):
-        with open(self.examples_path, "r") as f:
-            df = pd.read_csv(f)
+        cache = get_cache()
+        key = self.run_type + "_examples"
+        if key not in cache:
+            with open(self.examples_path, "r") as f:
+                df = pd.read_csv(f)
 
-        examples = []
+            examples = []
 
-        for _, row in df.iterrows():
-            example = {
-                "query": row.query,
-                "available_runs": row.available_runs,
-                "selected_run": row.selected_run,
-            }
-            examples.append(example)
+            for _, row in df.iterrows():
+                example = {
+                    "query": row.query,
+                    "available_runs": row.available_runs,
+                    "selected_run": row.selected_run,
+                }
+                examples.append(example)
 
-        return examples
+            cache[key] = examples
+
+        return cache[key]
 
     def select_run(self, query):
         available_runs = self.get_available_runs()
@@ -150,7 +149,7 @@ class RunSelector(object):
 
         prompt = self.generate_prompt(query, available_runs)
         response = get_llm().call_as_llm(prompt).strip()
-        if (response not in available_runs) and len(available_runs) > 0:
+        if response not in available_runs:
             response = available_runs[0]
 
         return response

@@ -1,6 +1,0 @@
-In the computer vision library FiftyOne, a DatasetView is a filtered view into a Dataset produced by a series of view stage operations. 
-
-Your task is to determine whether a user-input prompt is sensible for a DatasetView. If the prompt is sensible, return the string 'Y'. If the prompt is not sensible, return the string 'N'.
-
-Determine whether the following prompts are sensible for a DatasetView:
-

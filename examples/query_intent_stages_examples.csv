@@ -1,0 +1,104 @@
+query,intent,added_by
+20 random images,display,Jacob
+images with label == 1,display,Jacob
+images with label == blue and confidence > 0.8,display,Jacob
+nkduabvieufbvef,invalid,Jacob
+what is the meaning of life?,invalid,Jacob
+make me a ton of money,invalid,Jacob
+15 most wrong predictions,display,Jacob
+show me similar samples to my currently selected images,display,Jacob
+map the cat and dog animal labels to pet and shark to wild,display,Jacob
+"map ""plant"" to ""Plant"" for gt detections",display,Jacob
+all images with exactly 3 Lions and 1 Zebra,display,Jacob
+Create a clips view that contains one clip for each contiguous segment that contains at least one road sign in every frame,display,Jacob
+Exclude frame with id 'kbdskajdvfef',display,Jacob
+Create a frame patches view,display,Jacob
+4+12**2,invalid,Jacob
+I like images and videos,invalid,Jacob
+Show me the label mapping,invalid,Jacob
+images of dogs,display,Jacob
+videos containing birds,display,Jacob
+fp predictions,display,Jacob
+shuffle the data,display,Jacob
+take 20,display,Jacob
+just show the Detection labels,display,Jacob
+samples of digits 1 and 3,display,Jacob
+images that do not only contain elephants,display,Jacob
+only display the bounding boxes for objects incorrectly predicted to be planets,display,Jacob
+a random selection of samples that were predicted as 'building' by modelA or modelB ,display,Jacob
+samples predicted as blue or green,display,Jacob
+dinner time images with a pizza,display,Jacob
+all images with a potentially spurious gt label,display,Jacob
+get the images with segmentation masks,display,Jacob
+positive keypoints,display,Jacob
+all the images that are at least 1.5 times as tall as they are wide,display,Jacob
+images that don't have 3 color channels,display,Jacob
+"sort by image width, with longest images first",display,Jacob
+images with at least 10 people but no baseball bat,display,Jacob
+"sort images by the difference in number of detections between ""gt"" and ""model""",display,Jacob
+find all incorrect detections using evaluation with iou threshold 0.8,display,Jacob
+show me all false positives in the open images evaluation,display,Jacob
+give me all vehicles that were misclassified ,display,Jacob
+all false negatives involving cats,display,Jacob
+low confidence true positives,display,Jacob
+Now extract patches for confident person predictions,display,Jacob
+sort by similarity to the first image with a cat,display,Jacob
+"show me the 50 images that most resemble night-time, and return the similarity scores",display,Jacob
+kites high in the air,description,Jacob
+Lower bound all object confidences in the `predictions` field at 0.5,display,Jacob
+Include only the `mood` attribute (and the default attributes) of each `Detection` in the `ground_truth` field,display,Jacob
+exclude the tag 'my_tag',display,Jacob
+create a view that only shows the 'cvat' and 'labelbox' tags,display,Jacob
+Round `uniqueness` values to either 0.25 or 0.75,display,Jacob
+"Create a view containing samples whose `int` field have 1, 51, or 33",display,Jacob
+Samples whose image is less than 48 KB,display,Jacob
+get the filepaths that are strings,display,Jacob
+a view of all samples with arccos('field_to_apply_to') less than 0.2,display,Jacob
+In september,description,Jacob
+2022,description,Jacob
+With minute not equal to 0,description,Jacob
+view of samples with non-None 'data_field',display,Jacob
+On the 24th of the month,display,Jacob
+Union of the validation and test splits,display,Jacob
+I want to see the bluest images,display,Jacob
+10 images with a lot of green or grass,display,Jacob
+take the images of buildings and find the ones that are most run down,display,Jacob
+sort the samples with a car prediction by how gloomy the scene is,display,Jacob
+"sort by similarity to the last image with a table, with key 'text_sim'",display,Jacob
+a winter wonderland,description,Jacob
+a dark and stormy scene,description,Jacob
+cats,object,Jacob
+Samples whose image is less than 48 KB,display,Jacob
+show me the 10 haziest images,display,Jacob
+photos that look like they were taken in the woods,display,Jacob
+50 blurry images,display,Jacob
+an elizabethan estate,display,Jacob
+retrieve the images that are similar to a rubber duck,display,Jacob
+"get the 100 images that look most like they come from an animated film, and shuffle them",display,Jacob
+samples that look really crowded,display,Jacob
+A grassy knoll,description,Jacob
+What's the weather like in New York?,invalid,Jacob
+How do I prepare a chocolate soufflé?,invalid,Jacob
+Can you tell me about the history of the Eiffel Tower?,invalid,Jacob
+Who won the NBA championship in 2022?,invalid,Jacob
+What are some natural remedies for a headache?,invalid,Jacob
+Explain the process of photosynthesis,invalid,Jacob
+What are the latest Marvel movies released?,invalid,Jacob
+How do I change a car tire?,invalid,Jacob
+Give me a brief overview of quantum mechanics.,invalid,Jacob
+Who was Albert Einstein?,invalid,Jacob
+What's the best way to grow tomatoes at home?,invalid,Jacob
+Who wrote the novel '1984'?,invalid,Jacob
+Can you recommend some thriller books?,invalid,Jacob
+What's the tallest mountain in the world?,invalid,Jacob
+What is the capital of Australia?,invalid,Jacob
+What are the symptoms of COVID-19?,invalid,Jacob
+How to get to the nearest post office from here?,invalid,Jacob
+Tell me a joke,invalid,Jacob
+Who invented the light bulb?,invalid,Jacob
+Explain the concept of black holes.,invalid,Jacob
+llamas,object,Jacob
+birds that aren't pigeons,object,Jacob
+tables and chairs,object,Jacob
+motorcycles,object,Jacob
+dawn or dusk,description,Jacob
