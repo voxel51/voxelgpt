@@ -235,6 +235,8 @@ class OpenVoxelGPTPanel(foo.Operator):
             name="open_voxelgpt_panel",
             label="Open VoxelGPT Panel",
             unlisted=True,
+            # Set below to `True` to auto-launch VoxelGPT panel on app render
+            on_startup=False
         )
 
     def resolve_placement(self, ctx):
@@ -250,7 +252,7 @@ class OpenVoxelGPTPanel(foo.Operator):
     def execute(self, ctx):
         return ctx.trigger(
             "open_panel",
-            params=dict(name="voxelgpt", isActive=True),
+            params=dict(name="voxelgpt", isActive=True, layout="horizontal"),
         )
 
 
