@@ -1,6 +1,6 @@
 fiftyone:
   version: "*"
-name: "@voxel51/fiftyone-gpt"
+name: "@voxel51/voxelgpt"
 description: VoxelGPT
 license: MIT
 version: 1.0.0

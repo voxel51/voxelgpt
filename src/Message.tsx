@@ -8,6 +8,8 @@ import LoadingIndicator from './LoadingIndicator'
 import { ChatGPTAvatar } from './avatars'
 
 export const Message = ({ type, avatar, content = '', outputs, data }) => {
+  console.log('Message', { type, avatar, content, outputs, data })
+
   if (outputs)
     return (
       <OperatorIO

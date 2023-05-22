@@ -5,6 +5,8 @@ VoxelGPT entrypoints.
 | `voxel51.com <https://voxel51.com/>`_
 |
 """
+from collections import defaultdict
+
 import fiftyone as fo
 
 from links.query_moderator import moderate_query
@@ -163,18 +165,16 @@ def ask_voxelgpt_generator(
         if isinstance(message, str):
             message = {"string": message, "markdown": message}
 
-        # Log string message
         str_msg = message.get("string", None)
         if str_msg:
             _log_chat_history("GPT", str_msg, chat_history)
 
-        # but return proper dialect
         if dialect == "raw":
             return str_msg
 
         msg = message.get(dialect, None)
         if msg:
-            return _emit_message(msg)
+            return _emit_message(msg, str_msg)
 
     if not moderate_query(query):
         yield _respond(_moderation_fail_message())
@@ -405,7 +405,19 @@ def _algorithms_message(algorithms):
 
 def _runs_message(runs):
     prefix = "Identified potential runs: "
-    markdown = ", ".join(f"`{v}` (`{k}`)" for k, v in runs.items())
+
+    # Markdown
+    runs_map = defaultdict(list)
+    for key, run_type in runs.items():
+        runs_map[run_type].append(key)
+
+    chunks = []
+    for run_type, keys in runs_map.items():
+        chunks.append(f"\n - `{run_type}` runs: ")
+        chunks.append(", ".join(f"`{k}`" for k in keys))
+
+    markdown = "".join(chunks)
+
     return {
         "string": prefix + str(runs),
         "markdown": prefix + markdown,
@@ -423,21 +435,22 @@ def _fields_message(fields):
 
 def _label_classes_message(label_classes):
     prefix = "Identified potential label classes: "
-    markdown = " ".join(
-        _format_label_and_classes(k, v) for k, v in label_classes.items()
-    )
+
+    # Markdown
+    chunks = []
+    for label_field, classes in label_classes.items():
+        chunks.append(f"\n - `{label_field}` field: ")
+        if classes:
+            chunks.append(", ".join(f"`{c}`" for c in sorted(classes)))
+        else:
+            chunks.append("N/A")
+
+    markdown = "".join(chunks)
+
     return {
         "string": prefix + str(label_classes),
         "markdown": prefix + markdown,
     }
-
-
-def _format_label_and_classes(label_field, class_names):
-    prefix = f"\n - `{label_field}`: "
-    if class_names:
-        return prefix + ", ".join(f"`{c}`" for c in class_names)
-
-    return prefix + "*no classes found*"
 
 
 def _view_stages_message(view_stages):
@@ -460,6 +473,8 @@ def _get_stage_doc_link(stage_name):
 def _load_view_message(stages):
     prefix = "Okay, I'm going to load "
     view_str = ".".join(stages)
+
+    # Markdown
     if len(view_str) < 80 or len(stages) <= 2:
         markdown = f":\n```py\n{view_str}\n```"
     else:
@@ -485,8 +500,8 @@ def _full_collection_message(sample_collection):
     return f"Okay, let's load your entire {ctype}"
 
 
-def _emit_message(message):
-    return {"type": "message", "data": {"message": message}}
+def _emit_message(message, _hist):
+    return {"type": "message", "data": {"message": message, "history": _hist}}
 
 
 def _emit_view(view):

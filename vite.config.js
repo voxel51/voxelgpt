@@ -5,6 +5,8 @@ const path = require('path')
 const viteExternalsPlugin = require('vite-plugin-externals').viteExternalsPlugin
 const { FIFTYONE_DIR } = process.env
 const dir = __dirname
+const IS_DEV = process.env.IS_DEV === 'true'
+
 function fiftyonePlugin() {
   if (!FIFTYONE_DIR) {
     throw new Error(
@@ -47,7 +49,7 @@ module.exports = defineViteConfig({
     })
   ],
   build: {
-    minify: true,
+    minify: IS_DEV ? false : true,
     lib: {
       entry: path.join(dir, package.main),
       name: package.name,

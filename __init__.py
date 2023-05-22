@@ -13,6 +13,7 @@ import fiftyone.operators as foo
 import fiftyone.operators.types as types
 
 
+# @todo replace with `fou.add_sys_path`
 class add_sys_path(object):
     """Context manager that temporarily inserts a path to ``sys.path``."""
 
@@ -109,7 +110,6 @@ class AskVoxelGPT(foo.Operator):
             params=dict(
                 outputs=types.Property(outputs).to_json(),
                 data=dict(message=message),
-                # content=message,
             ),
         )
 
@@ -124,19 +124,11 @@ class AskVoxelGPTPanel(foo.Operator):
             unlisted=True,
         )
 
-    @property
-    def resolve_inputs(self):
-        inputs = types.Object()
-        inputs.str("query", label="query", required=True)
-        inputs.define_property("history", types.List(types.Object()))
-        return types.Property(inputs)
-
     async def execute(self, ctx):
         query = ctx.params["query"]
         sample_collection = ctx.dataset
-        chat_history = ctx.params.get("history", None)
-        if chat_history:
-            chat_history = [item["content"] for item in chat_history]
+        history = ctx.params.get("history", None)
+        chat_history = self._parse_history(history)
 
         try:
             with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
@@ -154,7 +146,7 @@ class AskVoxelGPTPanel(foo.Operator):
                     if type == "view":
                         yield self.view(ctx, data["view"])
                     elif type == "message":
-                        yield self.message(ctx, data["message"])
+                        yield self.message(ctx, data)
         except Exception as e:
             yield self.error(ctx, e)
         finally:
@@ -164,13 +156,17 @@ class AskVoxelGPTPanel(foo.Operator):
         if view != ctx.view:
             return ctx.trigger("set_view", params=dict(view=view._serialize()))
 
-    def message(self, ctx, message):
-        return self.show_message(ctx, message, types.MarkdownView())
+    def message(self, ctx, data):
+        message = data["message"]
+        history = data["history"]
+        return self.show_message(
+            ctx, message, types.MarkdownView(), history=history
+        )
 
     def error(self, ctx, exception):
         message = str(exception)
         trace = traceback.format_exc()
-        view = types.ErrorView(label=message, description=trace)
+        view = types.Error(label=message, description=trace)
         return self.show_message(ctx, message, view)
 
     def done(self, ctx):
@@ -179,17 +175,32 @@ class AskVoxelGPTPanel(foo.Operator):
             params=dict(done=True),
         )
 
-    def show_message(self, ctx, message, view_type):
+    def show_message(self, ctx, message, view_type, **kwargs):
         outputs = types.Object()
         outputs.str("message", view=view_type)
         return ctx.trigger(
             f"{self.plugin_name}/show_message",
             params=dict(
                 outputs=types.Property(outputs).to_json(),
-                data=dict(message=message),
-                # content=message,
+                data=dict(message=message, **kwargs),
             ),
         )
+
+    def _parse_history(self, history):
+        if history is None:
+            return None
+
+        chat_history = []
+        for item in history:
+            if item["type"] == "outgoing":
+                history = item.get("content", None)
+            else:
+                history = item.get("data", {}).get("history", None)
+
+            if history:
+                chat_history.append(history)
+
+        return chat_history
 
 
 class OpenVoxelGPTPanel(foo.Operator):

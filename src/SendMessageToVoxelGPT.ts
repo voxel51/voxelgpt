@@ -10,11 +10,11 @@ import { useRecoilState } from "recoil";
 import { uuid } from "./utils";
 import { GPTMessage, GPTMessageType } from "./types";
 
-export class SendMessageToGPT extends Operator {
+export class SendMessageToVoxelGPT extends Operator {
   get config() {
     return new OperatorConfig({
-      name: "send_message_to_gpt",
-      label: "Send Message to GPT",
+      name: "send_message_to_voxelgpt",
+      label: "Send Message to VoxelGPT",
     });
   }
 
