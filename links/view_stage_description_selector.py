@@ -52,11 +52,13 @@ def get_most_relevant_view_stages(view_stage_examples_prompt):
     return relevant_view_stages
 
 def get_view_stage_descriptions_dict():
-    if 'view_stage_descriptions_dict' not in globals():
+    cache = get_cache()
+    key = 'view_stage_descriptions_dict'
+    if key not in cache:
         with open(VIEW_STAGE_DESCRIPTIONS_PATH, "r") as f:
-            globals()['view_stage_descriptions_dict'] = json.load(f)
+            cache[key] = json.load(f)
 
-    return globals()['view_stage_descriptions_dict']
+    return cache[key]
 
 def generate_view_stage_descriptions_prompt(view_stage_examples_prompt):
     relevant_view_stages = get_most_relevant_view_stages(
