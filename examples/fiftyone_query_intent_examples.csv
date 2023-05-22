@@ -5,17 +5,17 @@ make me a ton of money,invalid,Jacob
 4+12**2,invalid,Jacob
 I like images and videos,invalid,Jacob
 Show me the label mapping,invalid,Jacob
-a random selection of samples that were predicted as 'building' by modelA or modelB ,invalid,Jacob
-samples predicted as blue or green,invalid,Jacob
-"sort images by the difference in number of detections between ""gt"" and ""model""",invalid,Jacob
-find all incorrect detections using evaluation with iou threshold 0.8,invalid,Jacob
-show me all false positives in the open images evaluation,invalid,Jacob
-Include only the `mood` attribute (and the default attributes) of each `Detection` in the `ground_truth` field,invalid,Jacob
-exclude the tag 'my_tag',invalid,Jacob
-create a view that only shows the 'cvat' and 'labelbox' tags,invalid,Jacob
-view of samples with non-None 'data_field',invalid,Jacob
-On the 24th of the month,invalid,Jacob
-Union of the validation and test splits,invalid,Jacob
+a random selection of samples that were predicted as 'building' by modelA or modelB ,display,Jacob
+samples predicted as blue or green,display,Jacob
+"sort images by the difference in number of detections between "gt" and "model"",display,Jacob
+find all incorrect detections using evaluation with iou threshold 0.8,display,Jacob
+show me all false positives in the open images evaluation,display,Jacob
+Include only the `mood` attribute (and the default attributes) of each `Detection` in the `ground_truth` field,display,Jacob
+exclude the tag 'my_tag',display,Jacob
+create a view that only shows the 'cvat' and 'labelbox' tags,display,Jacob
+view of samples with non-None 'data_field',display,Jacob
+On the 24th of the month,display,Jacob
+Union of the validation and test splits,display,Jacob
 How do I install the FiftyOne library on my system?,documentation,Jacob
 Can you explain the main features of the FiftyOne library?,documentation,Jacob
 What are some good resources to learn FiftyOne?,documentation,Jacob
@@ -39,11 +39,8 @@ What's the weather like in New York?,invalid,Jacob
 How do I prepare a chocolate soufflé?,invalid,Jacob
 Can you tell me about the history of the Eiffel Tower?,invalid,Jacob
 Who won the NBA championship in 2022?,invalid,Jacob
-What are some natural remedies for a headache?,invalid,Jacob
-Explain the process of photosynthesis,invalid,Jacob
-What are the latest Marvel movies released?,invalid,Jacob
-How do I change a car tire?,invalid,Jacob
-Give me a brief overview of quantum mechanics.,invalid,Jacob
+Can you recommend some thriller books?,invalid,Jacob
+What's the tallest mountain in the world?,invalid,Jacob
 What is the capital of Australia?,invalid,Jacob
 What are the symptoms of COVID-19?,invalid,Jacob
 How to get to the nearest post office from here?,invalid,Jacob
@@ -52,36 +49,38 @@ Who invented the light bulb?,invalid,Jacob
 Explain the concept of black holes.,invalid,Jacob
 Is there a way to just get bounding boxes around the possibly missing and possibly spurious objects in my dataset?,documentation,Jacob
 I am storing related sample IDs as StringField objects in a separate field on my data and I want to use them to match sample IDs that are stored as ObjectIdField objects. How do I do this?,documentation,Jacob
-"I have three datasets, and some of my samples are in multiple datasets. I’d like to combine all of these datasets into one dataset for export, retaining each copy of each of the samples. How do I do this?",documentation,Jacob
-"I am logging some of my production data in GeoJSON format, and I want to save it in the database in that same format. Is there a way to include the ground_truth label in the labels.json file so that when I reload the GeoJSON dataset, it comes with its annotations?",documentation,Jacob
-Is there an equivalent of take() for frames in a video dataset so that I can randomly select a subset of frames for each sample?,documentation,Jacob
-Is it possible to have the samples in my dataset appear sorted by their filepath?,documentation,Jacob
-How do I use the instance segmentation masks in FiftyOne to generate analogous masks that span the entire image?,documentation,Jacob
-Does anyone know how I can make a Jupyter notebook show the FiftyOne output cell view in full height? Mine is cropped on the bottom,documentation,Jacob
-"Can we separate a dataset into train, test, and validation splits in FiftyOne?",documentation,Jacob
-I have a use case where it would be helpful to color embeddings by tags in the FiftyOne App. Is this possible?,documentation,Jacob
-"Let’s say I have two different datasets with different classes, and both are in COCO format. Is there a way to concatenate them into a third dataset, also in COCO format, which contains all of the classes present in each?",documentation,Jacob
-Does anyone know if there is a way to omit some labels from a view in the FiftyOne App?,documentation,Jacob
-"I’m trying to create a project with FiftyOne’s CVAT utils and initialize it with certain classes. I tried to use a FiftyOne label_schema, but it is not working.",documentation,Jacob
-I’m hoping to get some insight into the support metric shown when printing out an evaluation report. What does this mean?,documentation,Jacob
-Is there a way to lazy-load high-resolution media files like satellite images into the FiftyOne App?,documentation,Jacob
-Is there a way to filter bounding boxes based on their absolute width and height?,documentation,Jacob
-"When using the selection plot tool, is there a way to extract the list of sample ids that I selected?",documentation,Jacob
-"How can I import all the images in each group as a single task with multiple jobs, rather than multiple tasks with one job each?",documentation,Jacob
+what is the dataset zoo?,documentation,
+what does the filter_labels view stage do?,documentation,
+Is there an equivalent of take for frames in a video dataset,documentation,Jacob
+can I sort samples by their filepath?,documentation,Jacob
+Is there a way to hide little detection bounding boxes?,documentation,Jacob
+how can I create annotation jobs for two users and retrieve/load annotations individually for them?,documentation,Jacob
+How do I add instance segmentation masks to my data,documentation,Jacob
+can I see the app in a jupyter notebook?,documentation,Jacob
+"how do I split this into train, test, and validation splits?",documentation,Jacob
+is it possible to color embeddings by tag?,documentation,Jacob
+can i concatenate two datasets which are each in coco format?,documentation,Jacob
+what i do need to do to export my data?,documentation,Jacob
+how do I create a project with FiftyOne's CVAT utils and initialize it with certain classes using label_schema,documentation,Jacob
+what does the support metric mean from evaluation report?,documentation,Jacob
+Is there a way to lazy-load hi-res satellite images into the app?,documentation,Jacob
+can I filter bounding boxes based on their absolute width and height?,documentation,Jacob
+what is a panel?,documentation,Jacob
+what is the brain,documentation,Jacob
 Is it possible to relate multiple detections on different samples in FiftyOne?,documentation,Jacob
-I have two large image datasets which I want to merge into a grouped dataset according to their values in a certain field. What is the most efficient way to do this?,documentation,Jacob
-"I want to send a collection of the worst predictions to Label Studio for annotation, including both ground truth and prediction label fields. How do I do this, when the label schema for Label Studio only accepts one field?",documentation,Jacob
-I have a dataset consisting of point-cloud data and I’d love to visualize this data in the FiftyOne App. How can I do this?,documentation,Jacob
+how do i merge 2 datasets into a grouped dataset according to their values in a certain field,documentation,Jacob
+can I send the worst predictions to Label Studio for annotation?,documentation,Jacob
+how do I work with point clouds?,documentation,Jacob
 "I have run a number of evaluations on the same dataset, and I want to compute evaluation metrics for each label separately. What is the best way to do this?",documentation,Jacob
 Is it possible to export a dataset with splits in it?,documentation,Jacob
-Is there a point at which calling the values() method on a very large dataset or field will be impractical?”,documentation,Jacob
-s it possible to store the metadata for all of the files in one group?,documentation,Jacob
+what's the point of calling the values() method on a very large dataset?,documentation,Jacob
+is it possible to store the metadata for all of the files in one group?,documentation,Jacob
 Is there an easy way to display only the bounding boxes and not the masks for detections that have both?,documentation,Jacob
-Is it possible to open the FiftyOne App alongside an interactive plot in JupyterLab?,documentation,Jacob
-I currently already have some data loaded into CVAT. Is it possible to connect that directly to FiftyOne?,documentation,Jacob
+can I open the app alongside an interactive plot in JupyterLab?,documentation,Jacob
+can I load data from CVAT directly into fiftyone?,documentation,Jacob
 I want to pull only the samples that have an attribute set on a Detections field. The field is a bool and will only belong to detections of a certain label. What is the best way to do this?,documentation,Jacob
 Is it possible to use FiftyOne with images available at external URLs (in google images for example) without downloading the images first?,documentation,Jacob
-"My dataset is not currently labeled, so I’m sending the whole thing. Is there a limit to how many files can be sent in a single batch?",documentation,Jacob
+"My dataset is not currently labeled, so I'm sending the whole thing. Is there a limit to how many files can be sent in a single batch?",documentation,Jacob
 Who was Albert Einstein?,invalid,Jacob
 What's the best way to grow tomatoes at home?,invalid,Jacob
 Who wrote the novel '1984'?,invalid,Jacob
@@ -92,7 +91,7 @@ What are the symptoms of COVID-19?,invalid,Jacob
 How to get to the nearest post office from here?,invalid,Jacob
 Tell me a joke,invalid,Jacob
 Who invented the light bulb?,invalid,Jacob
-"Can you suggest ways to automate data annotation for computer vision tasks?""",computer vision,Jacob
+Can you suggest ways to automate data annotation for computer vision tasks?,computer vision,Jacob
 What are the best methods for data preprocessing in computer vision?,computer vision,Jacob
 How can I handle missing values in my dataset?,computer vision,Jacob
 What is data augmentation in computer vision and how can it improve my model?,computer vision,Jacob
@@ -102,14 +101,14 @@ How can I identify and remove redundant features from my dataset?,computer visio
 What are some techniques to handle outliers in my data?,computer vision,Jacob
 What is cross-validation and how can it improve my model's performance?,computer vision,Jacob
 How can I improve the quality of images in my computer vision dataset?,computer vision,Jacob
-What is the best way to split my data into training and test sets?,computer vision,Jacob
-How can I handle overfitting in my deep learning model?,computer vision,Jacob
-What are some strategies for feature extraction in computer vision?,computer vision,Jacob
-How can I use principal component analysis for dimensionality reduction in my dataset?,computer vision,Jacob
-What are some effective methods for data cleaning in machine learning?,computer vision,Jacob
-"How can I ensure my data is not biased, leading to a biased model?",computer vision,Jacob
+how do I load a dataset,documentation,Jacob
+can I work with videos?,documentation,Jacob
+tell me about Voxel51,documentation,Jacob
+how do I install a plugin?,documentation,Jacob
+what does uniqueness mean?,documentation,Jacob
+what is mistakenness?,documentation,Jacob
 How can I use data normalization to improve my model's performance?,computer vision,Jacob
-"Can you suggest ways to automate data annotation for computer vision tasks?""",computer vision,Jacob
+Can you suggest ways to automate data annotation for computer vision tasks?,computer vision,Jacob
 What techniques can be used to balance a skewed dataset in machine learning?,computer vision,Jacob
 sort the samples with a car prediction by how gloomy the scene is,display,Jacob
 "sort by similarity to the last image with a table, with key 'text_sim'",display,Jacob
@@ -144,3 +143,9 @@ take 20,display,Jacob
 just show the Detection labels,display,Jacob
 samples of digits 1 and 3,display,Jacob
 images that do not only contain elephants,display,Jacob
+cats and dogs,display,Jacob
+show me watches of the brand Oris,display,Jacob
+buildings,display,Jacob
+what brain methods are there?,documentation,Jacob
+what is an evaluation key?,documentation,Jacob
+how do I remove duplicate images from my dataset?,documentation,Jacob

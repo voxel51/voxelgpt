@@ -11,4 +11,6 @@ The model is trained on a dataset of natural language queries and the correspond
 5. Identify relevant class names for labels in the dataset based on the input query
 6. Generate and return a list of view stages that will generate the DatasetView
 
-You will be provided with a log containing the interaction history thus far between the user and the GPT model. The log contains the input query, the GPT model's selection of view stages, and the GPT model's selection of computations/algorithms, in addition to the questions and answers from any queries about the FiftyOne library or computer vision more broadly. Your task is to generate the effective prompt intended by the user given the log.
+You will be provided with a log containing the interaction history thus far between the user and the GPT model. The log contains the input query, the GPT model's selection of view stages, and the GPT model's selection of computations/algorithms, in addition to the questions and answers from any queries about the FiftyOne library or computer vision more broadly. 
+
+Your task is to generate the effective prompt intended by the user given the log. If you do not think the history is relevant or useful, you can just return the input query.
