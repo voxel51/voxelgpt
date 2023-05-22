@@ -21,15 +21,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from voxelgpt import ask_voxelgpt_generator
 
 
-get_gpt_view = ask_gpt
-"""
-def get_gpt_view_text(dataset, query):
-    response = None
-    for response in ask_voxelgpt_generator(query, dataset, dialect="raw"):
-        pass
 
-    return response
-"""
 
 
 def remove_whitespace(stage_str):
@@ -81,6 +73,15 @@ def create_view_from_stages(text, dataset):
     except:
         print("Bad View.")
         view = dataset.view()
+    return view
+
+
+def get_gpt_view(dataset, query):
+    response = None
+    for response in ask_voxelgpt_generator(query, dataset, dialect="raw"):
+        pass
+
+    view = create_view_from_stages(response, dataset)    
     return view
 
 
