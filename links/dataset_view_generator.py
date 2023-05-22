@@ -241,7 +241,6 @@ def generate_dataset_view_text(
         view_stage_descriptions,
         examples_prompt,
     )
-
     response = get_llm().call_as_llm(prompt)
     return response.strip()
 
@@ -364,24 +363,41 @@ def _correct_detection_match_stages(
     """
     if model predicts `match(F(field.detections.label) == "class_name")`, then
     fix it by subbing in `contains()`.
+    if model has `label` in both sides of filter statement, then fix it by
+    removing the first.
     """
 
     verified_stages = []
 
     for stage in stages:
-        if "match" in stage and "detections.label" in stage:
-            if "contains" in stage or "is_subset" in stage:
-                verified_stages.append(stage)
-                continue
-            field_name = stage.split("F")[1].split(".")[0].strip()
-            class_name = stage.split("==")[1].strip()[:-1]
-            new_stage = f"match(F({field_name}.detections.label).contains('{class_name}'))"
-            verified_stages.append(new_stage)
-        else:
+        if 'match' not in stage or 'detections.label' not in stage:
             verified_stages.append(stage)
-
+        elif 'contains' in stage or 'is_subset' in stage:
+            verified_stages.append(stage)
+        elif 'filter' in stage:
+            a, b = stage.split('filter')
+            if 'label' in a and 'label' in b:
+                a = a.replace('.label', '')
+                new_stage = a + 'filter' + b
+                verified_stages.append(new_stage)
+            else:
+                verified_stages.append(stage)
+        else:
+            field_name = stage.split('F')[1].split('.')[0].strip()
+            class_name = stage.split('==')[1].strip()[:-1]
+            new_stage = f"match(F({field_name}.detections.label).contains({class_name}))"
+            verified_stages.append(new_stage)
+    
     return verified_stages
 
+
+def _remove_F_from_label(filter_labels_stage):
+    contents = filter_labels_stage[13:-1].strip()
+    if contents[0] != 'F':
+        return filter_labels_stage
+    else:
+        contents = contents.replace("(", "", 1).replace(")", "", 1)
+        return f"filter_labels({contents})"
 
 def _correct_detection_filter_stages(
     stages,
@@ -395,11 +411,12 @@ def _correct_detection_filter_stages(
     verified_stages = []
 
     for stage in stages:
-        if "filter_labels" in stage and "detections.label" in stage:
-            verified_stages.append(stage.replace("detections.", ""))
+        if 'filter_labels' in stage and 'detections.label' in stage:
+            new_stage = stage.replace('detections.', '')
         else:
-            verified_stages.append(stage)
-
+            new_stage = stage
+        verified_stages.append(_remove_F_from_label(new_stage))
+    
     return verified_stages
 
 

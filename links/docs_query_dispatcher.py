@@ -128,5 +128,5 @@ def run_docs_query(query):
     if 'docs_qa_chain' not in cache:
         initialize_docs_qa_chain()
     docs_qa = cache['docs_qa_chain']
-
-    return docs_qa.run(query)
+    response = docs_qa.run(query)
+    return response.strip()
