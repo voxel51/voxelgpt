@@ -17,7 +17,7 @@ from langchain.text_splitter import TokenTextSplitter
 from langchain.vectorstores import Chroma
 
 # pylint: disable=relative-beyond-top-level
-from .utils import get_llm, get_embedding_function
+from .utils import get_llm, get_embedding_function, get_cache
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -38,7 +38,6 @@ DOC_TYPES = (
     "tutorials",
     "user_guide",
 )
-
 
 def _get_docs_build_dir():
     import fiftyone as fo
@@ -117,14 +116,17 @@ def _load_docs_vectorstore():
     )
 
 def initialize_docs_qa_chain():
+    cache = get_cache()
     docs_db = _load_docs_vectorstore()
     docs_qa_chain = RetrievalQA.from_chain_type(
         llm=get_llm(), chain_type="stuff", retriever=docs_db.as_retriever()
     )
-    globals()['docs_qa_chain'] = docs_qa_chain
+    cache['docs_qa_chain'] = docs_qa_chain
 
 def run_docs_query(query):
-    if 'docs_qa_chain' not in globals():
+    cache = get_cache()
+    if 'docs_qa_chain' not in cache:
         initialize_docs_qa_chain()
-    docs_qa = globals()['docs_qa_chain']
+    docs_qa = cache['docs_qa_chain']
+
     return docs_qa.run(query)

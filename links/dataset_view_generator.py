@@ -11,7 +11,7 @@ import re
 from langchain.prompts import PromptTemplate
 
 # pylint: disable=relative-beyond-top-level
-from .utils import get_llm
+from .utils import get_llm, get_cache
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -187,10 +187,12 @@ def generate_runs_prompt(sample_collection, runs):
 
 
 def load_dataset_view_prompt_prefix_template():
-    if 'prefix' not in globals():
+    cache = get_cache()
+    key = "dataset_view_prompt_prefix"
+    if key not in cache:
         with open(VIEW_GENERATOR_PREFIX_PATH, "r") as f:
-            globals()['prefix'] = f.read()
-    return globals()['prefix']
+            cache[key] = f.read()
+    return cache[key]
 
 
 def generate_dataset_view_prompt_prefix(available_fields, label_classes):
@@ -249,14 +251,14 @@ def remove_whitespace(stage_str):
         r"\s+", lambda m: " " if len(m.group(0)) == 1 else "", stage_str
     )
 
+
 def split_into_stages(stages_text):
     with open(VIEW_STAGES_LIST_PATH, "r") as f:
         view_stages = f.read().splitlines()
-    
+
     upper_to_lower = {
         stage.upper().replace("_", ""): stage for stage in view_stages
     }
-
 
     if stages_text[0] == "[" and stages_text[-1] == "]":
         st = stages_text[1:-1]
@@ -295,9 +297,12 @@ def split_into_stages(stages_text):
         if stage_name not in view_stages:
             if stage_name_compressed in upper_to_lower:
                 num_chars = len(stage_name)
-                stages[i]= upper_to_lower[stage_name_compressed] + stage[num_chars:]
+                stages[i] = (
+                    upper_to_lower[stage_name_compressed] + stage[num_chars:]
+                )
 
     return stages
+
 
 def _get_first_image_text_similarity_key(sample_collection):
     for run in sample_collection.list_brain_runs():
@@ -310,44 +315,43 @@ def _get_first_image_text_similarity_key(sample_collection):
             return run
     return None
 
+
 def _convert_matches_to_text_similarities(
-    stages,
-    sample_collection,
-    required_brain_runs,
-    unmatched_classes
+    stages, sample_collection, required_brain_runs, unmatched_classes
 ):
-    '''
+    """
     if model picks a non-existent class and you have text similarity run,
     convert the match to a text similarity stage
-    '''
-    if 'text_similarity' not in required_brain_runs:
+    """
+    if "text_similarity" not in required_brain_runs:
         text_sim_key = _get_first_image_text_similarity_key(sample_collection)
         if not text_sim_key:
             return stages
     else:
-        text_sim_key = required_brain_runs['text_similarity']['key']
-    
+        text_sim_key = required_brain_runs["text_similarity"]["key"]
+
     def _replace_stage(entity):
-        new_stage = ''.join(
+        new_stage = "".join(
             [
                 f"sort_by_similarity('{entity}'",
-                f", brain_key = '{text_sim_key}', k = 100)"
-            ])
+                f", brain_key = '{text_sim_key}', k = 100)",
+            ]
+        )
         return new_stage
-    
+
     def _loop_over_unmatched_classes(stage):
-        if 'sort_by_similarity' in stage:
+        if "sort_by_similarity" in stage:
             return stage
         for entity in unmatched_classes:
             if entity in stage:
                 return _replace_stage(entity)
         return stage
-        
+
     verified_stages = []
     for stage in stages:
-        if 'match' in stage and 'label' in stage:
+        if "match" in stage and "label" in stage:
             verified_stages.append(_loop_over_unmatched_classes(stage))
-        elif 'filter_labels' in stage:
+        elif "filter_labels" in stage:
             verified_stages.append(_loop_over_unmatched_classes(stage))
         else:
             verified_stages.append(stage)
@@ -357,45 +361,47 @@ def _convert_matches_to_text_similarities(
 def _correct_detection_match_stages(
     stages,
 ):
-    '''
+    """
     if model predicts `match(F(field.detections.label) == "class_name")`, then
     fix it by subbing in `contains()`.
-    '''
+    """
 
     verified_stages = []
 
     for stage in stages:
-        if 'match' in stage and 'detections.label' in stage:
-            if 'contains' in stage or 'is_subset' in stage:
+        if "match" in stage and "detections.label" in stage:
+            if "contains" in stage or "is_subset" in stage:
                 verified_stages.append(stage)
                 continue
-            field_name = stage.split('F')[1].split('.')[0].strip()
-            class_name = stage.split('==')[1].strip()[:-1]
+            field_name = stage.split("F")[1].split(".")[0].strip()
+            class_name = stage.split("==")[1].strip()[:-1]
             new_stage = f"match(F({field_name}.detections.label).contains('{class_name}'))"
             verified_stages.append(new_stage)
         else:
             verified_stages.append(stage)
-    
+
     return verified_stages
+
 
 def _correct_detection_filter_stages(
     stages,
 ):
-    '''
-    if model predicts 
+    """
+    if model predicts
     `filter_labels(field, F(detections.label) == "class_name")`, then
     fix it by removing `detections`.
-    '''
+    """
 
     verified_stages = []
 
     for stage in stages:
-        if 'filter_labels' in stage and 'detections.label' in stage:
-            verified_stages.append(stage.replace('detections.', ''))
+        if "filter_labels" in stage and "detections.label" in stage:
+            verified_stages.append(stage.replace("detections.", ""))
         else:
             verified_stages.append(stage)
-    
+
     return verified_stages
+
 
 def get_gpt_view_stage_strings(
     sample_collection,
@@ -425,10 +431,7 @@ def get_gpt_view_stage_strings(
     else:
         stages = split_into_stages(response)
         stages = _convert_matches_to_text_similarities(
-            stages,
-            sample_collection,
-            required_brain_runs,
-            unmatched_classes
+            stages, sample_collection, required_brain_runs, unmatched_classes
         )
         stages = _correct_detection_match_stages(stages)
         stages = _correct_detection_filter_stages(stages)

@@ -11,7 +11,7 @@ from langchain.prompts import PromptTemplate, FewShotPromptTemplate
 import pandas as pd
 
 # pylint: disable=relative-beyond-top-level
-from .utils import get_llm
+from .utils import get_llm, get_cache
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -50,12 +50,8 @@ TASK_RULES_PATHS = {
 }
 
 EXAMPLES_PATHS = {
-    "uniqueness": os.path.join(
-        EXAMPLES_DIR, "uniqueness_run_examples.csv"
-    ),
-    "hardness": os.path.join(
-        EXAMPLES_DIR, "hardness_run_examples.csv"
-    ),
+    "uniqueness": os.path.join(EXAMPLES_DIR, "uniqueness_run_examples.csv"),
+    "hardness": os.path.join(EXAMPLES_DIR, "hardness_run_examples.csv"),
     "mistakenness": os.path.join(
         EXAMPLES_DIR, "mistakenness_run_examples.csv"
     ),
@@ -65,9 +61,7 @@ EXAMPLES_PATHS = {
     "text_similarity": os.path.join(
         EXAMPLES_DIR, "text_similarity_run_examples.csv"
     ),
-    "evaluation": os.path.join(
-        EXAMPLES_DIR, "evaluation_run_examples.csv"
-    ),
+    "evaluation": os.path.join(EXAMPLES_DIR, "evaluation_run_examples.csv"),
     "metadata": None,
 }
 
@@ -124,8 +118,9 @@ class RunSelector(object):
         )
 
     def get_examples(self):
-        run_examples_var = self.run_type + "_examples"
-        if run_examples_var not in globals():
+        cache = get_cache()
+        key = self.run_type + "_examples"
+        if key not in cache:
             with open(self.examples_path, "r") as f:
                 df = pd.read_csv(f)
 
@@ -138,10 +133,10 @@ class RunSelector(object):
                     "selected_run": row.selected_run,
                 }
                 examples.append(example)
-            
-            globals()[run_examples_var] = examples
-        
-        return globals()[run_examples_var]
+
+            cache[key] = examples
+
+        return cache[key]
 
     def select_run(self, query):
         available_runs = self.get_available_runs()

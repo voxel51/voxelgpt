@@ -11,7 +11,7 @@ from langchain.prompts import PromptTemplate, FewShotPromptTemplate
 import pandas as pd
 
 # pylint: disable=relative-beyond-top-level
-from .utils import get_llm
+from .utils import get_llm, get_cache
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -27,7 +27,9 @@ FIELD_SELECTOR_PREFIX_PATH = os.path.join(
 
 
 def get_field_selection_examples():
-    if 'examples' not in globals():
+    cache = get_cache()
+    key = "field_selection_examples"
+    if key not in cache:
         df = pd.read_csv(FIELD_SELECTION_EXAMPLES_PATH)
         examples = []
 
@@ -38,16 +40,18 @@ def get_field_selection_examples():
                 "required_fields": row.required_fields,
             }
             examples.append(example)
-        globals()['examples'] = examples
+        cache[key] = examples
 
-    return globals()['examples']
+    return cache[key]
 
 
 def load_field_selector_prefix():
-    if 'prefix' not in globals():
+    cache = get_cache()
+    key = "field_selector_prefix"
+    if key not in cache:
         with open(FIELD_SELECTOR_PREFIX_PATH, "r") as f:
-            globals()['prefix'] = f.read()
-    return globals()['prefix']
+            cache[key] = f.read()
+    return cache[key]
 
 
 def get_field_type(sample, field_name):
@@ -160,7 +164,7 @@ def _add_label_field(sample_collection, response):
         "classification",
         "predictions",
         "prediction",
-        "pred"
+        "pred",
     )
 
     if not response:

@@ -5,14 +5,14 @@ repos:
       - id: blacken-docs
         additional_dependencies: [black==21.12b0]
         args: ["-l 79"]
-        exclude: ^examples/
+        exclude: ^dist/index.umd.js
   - repo: https://github.com/ambv/black
     rev: 22.3.0
     hooks:
       - id: black
         language_version: python3
         args: ["-l 79"]
-        exclude: ^examples/
+        exclude: ^dist/index.umd.js
   - repo: local
     hooks:
       - id: pylint
@@ -21,7 +21,7 @@ repos:
         files: \.py$
         entry: pylint
         args: ["--errors-only"]
-        exclude: ^examples/
+        exclude: ^dist/index.umd.js
   - repo: local
     hooks:
       - id: ipynb-strip
@@ -34,5 +34,5 @@ repos:
     rev: v2.6.2
     hooks:
       - id: prettier
-        exclude: ^examples/
+        exclude: ^dist/index.umd.js
         language_version: system
