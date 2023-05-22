@@ -9,6 +9,7 @@ import os
 import sys
 import traceback
 
+import fiftyone as fo
 import fiftyone.operators as foo
 import fiftyone.operators.types as types
 
@@ -126,9 +127,10 @@ class AskVoxelGPTPanel(foo.Operator):
 
     async def execute(self, ctx):
         query = ctx.params["query"]
-        sample_collection = ctx.dataset
-        history = ctx.params.get("history", None)
-        chat_history = self._parse_history(history)
+        history = ctx.params.get("history", [])
+        chat_history, sample_collection, orig_view = self._parse_history(
+            ctx, history
+        )
 
         try:
             with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
@@ -144,9 +146,21 @@ class AskVoxelGPTPanel(foo.Operator):
                     data = response["data"]
 
                     if type == "view":
+                        if orig_view is not None:
+                            message = (
+                                "I'm remembering your previous view. Any "
+                                "follow-up questions in this session will be "
+                                "posed with respect to it"
+                            )
+                            yield self.message(
+                                ctx, message, orig_view=orig_view
+                            )
+
                         yield self.view(ctx, data["view"])
                     elif type == "message":
-                        yield self.message(ctx, data)
+                        yield self.message(
+                            ctx, data["message"], history=data["history"]
+                        )
         except Exception as e:
             yield self.error(ctx, e)
         finally:
@@ -156,12 +170,8 @@ class AskVoxelGPTPanel(foo.Operator):
         if view != ctx.view:
             return ctx.trigger("set_view", params=dict(view=view._serialize()))
 
-    def message(self, ctx, data):
-        message = data["message"]
-        history = data["history"]
-        return self.show_message(
-            ctx, message, types.MarkdownView(), history=history
-        )
+    def message(self, ctx, message, **kwargs):
+        return self.show_message(ctx, message, types.MarkdownView(), **kwargs)
 
     def error(self, ctx, exception):
         message = str(exception)
@@ -186,21 +196,36 @@ class AskVoxelGPTPanel(foo.Operator):
             ),
         )
 
-    def _parse_history(self, history):
+    def _parse_history(self, ctx, history):
         if history is None:
-            return None
+            history = []
 
+        # Parse chat history
         chat_history = []
+        orig_view = None
         for item in history:
             if item["type"] == "outgoing":
                 history = item.get("content", None)
             else:
                 history = item.get("data", {}).get("history", None)
+                _orig_view = item.get("data", {}).get("orig_view", None)
+                if _orig_view is not None:
+                    orig_view = _orig_view
 
             if history:
                 chat_history.append(history)
 
-        return chat_history
+        # If we found an `orig_view`, start from that instead
+        if orig_view is not None:
+            try:
+                sample_collection = fo.DatasetView._build(
+                    ctx.dataset, orig_view
+                )
+                return chat_history, sample_collection, None
+            except:
+                pass
+
+        return chat_history, ctx.view, ctx.view._serialize()
 
 
 class OpenVoxelGPTPanel(foo.Operator):
