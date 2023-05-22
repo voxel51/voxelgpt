@@ -36,8 +36,8 @@ export const Message = ({ type, avatar, content = '', outputs, data }) => {
 
   if (content)
     return (
-      <Grid spacing={2} container sx={{ pl: 1 }}>
-        <Grid item>
+      <Grid spacing={2} container>
+        <Grid item style={{paddingLeft: '1rem'}}>
           <Typography component="p" my={1.5}>
             {content}
           </Typography>
@@ -60,15 +60,15 @@ export function MessageWrapper({ type, messages, receiving, last }) {
       sx={{ background, padding: '1rem', '& p': {m: 0, mt: 1} }}
       justifyContent="center"
     >
-      <Grid container item lg={8} spacing={2}>
-        <Grid item>
-          <Box>
+      <Grid container item lg={8} spacing={2} style={{minWidth: '500px'}}>
+        <Grid item container xs={1}>
+          <Grid item justifyContent="center">
             {isIncoming ? <ChatGPTAvatar /> : <Avatar alt="you" />}
-          </Box>
+          </Grid>
         </Grid>
-        <Grid container item xs>
+        <Grid container item xs={11}>
           {messages.map((message, index) => (
-            <Grid item xs={12}>
+            <Grid item xs={12} style={{paddingLeft: '1rem'}}>
               <Message
                 key={index}
                 type={message.type}

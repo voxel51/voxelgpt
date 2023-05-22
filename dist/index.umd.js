@@ -18534,7 +18534,7 @@ Please use another name.`);
       );
     }
     if (content)
-      return /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { spacing: 2, container: true, sx: { pl: 1 }, children: /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { item: true, children: /* @__PURE__ */ jsxRuntime.exports.jsx(Typography$2, { component: "p", my: 1.5, children: content }) }) });
+      return /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { spacing: 2, container: true, children: /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { item: true, style: { paddingLeft: "1rem" }, children: /* @__PURE__ */ jsxRuntime.exports.jsx(Typography$2, { component: "p", my: 1.5, children: content }) }) });
     return null;
   };
   function MessageWrapper({ type, messages, receiving, last }) {
@@ -18547,10 +18547,10 @@ Please use another name.`);
         container: true,
         sx: { background, padding: "1rem", "& p": { m: 0, mt: 1 } },
         justifyContent: "center",
-        children: /* @__PURE__ */ jsxRuntime.exports.jsxs(Grid$4, { container: true, item: true, lg: 8, spacing: 2, children: [
-          /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { item: true, children: /* @__PURE__ */ jsxRuntime.exports.jsx(Box, { children: isIncoming ? /* @__PURE__ */ jsxRuntime.exports.jsx(ChatGPTAvatar, {}) : /* @__PURE__ */ jsxRuntime.exports.jsx(Avatar$2, { alt: "you" }) }) }),
-          /* @__PURE__ */ jsxRuntime.exports.jsxs(Grid$4, { container: true, item: true, xs: true, children: [
-            messages.map((message, index) => /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { item: true, xs: 12, children: /* @__PURE__ */ jsxRuntime.exports.jsx(
+        children: /* @__PURE__ */ jsxRuntime.exports.jsxs(Grid$4, { container: true, item: true, lg: 8, spacing: 2, style: { minWidth: "500px" }, children: [
+          /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { item: true, container: true, xs: 1, children: /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { item: true, justifyContent: "center", children: isIncoming ? /* @__PURE__ */ jsxRuntime.exports.jsx(ChatGPTAvatar, {}) : /* @__PURE__ */ jsxRuntime.exports.jsx(Avatar$2, { alt: "you" }) }) }),
+          /* @__PURE__ */ jsxRuntime.exports.jsxs(Grid$4, { container: true, item: true, xs: 11, children: [
+            messages.map((message, index) => /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { item: true, xs: 12, style: { paddingLeft: "1rem" }, children: /* @__PURE__ */ jsxRuntime.exports.jsx(
               Message,
               {
                 type: message.type,
@@ -18620,7 +18620,6 @@ Please use another name.`);
       }
     }, []);
     const groupedMessages = groupConsecutiveMessages(messages, receiving);
-    console.log({ groupedMessages });
     return /* @__PURE__ */ jsxRuntime.exports.jsxs("div", { style: { overflow: "auto" }, ref, children: [
       /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$3, { container: true, direction: "row", children: groupedMessages.map((group) => /* @__PURE__ */ jsxRuntime.exports.jsx(MessageWrapper, { ...group })) }),
       /* @__PURE__ */ jsxRuntime.exports.jsx("div", { ref: bottomRef })
@@ -18949,12 +18948,12 @@ Please use another name.`);
   const Typography$1 = window["__mui__"].Typography;
   const useSetRecoilState = window["recoil"].useSetRecoilState;
   const examples = [
-    { id: "example-1", label: "Show me predicted airplanes" },
+    { id: "example-1", label: "Show me the 25 images that are most likely to contain a road scene" },
     {
       id: "example-2",
-      label: "Retrieve the first 10 images with 3 dogs and 1 cat"
+      label: "Display images with a high confidence prediction evaluated as a false positive"
     },
-    { id: "example-3", label: "How can I integrate GPT-3 into my application?" }
+    { id: "example-3", label: "Just the most unique images that have food and people in them" }
   ];
   const capabilities = [
     {
