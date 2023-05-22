@@ -51,6 +51,93 @@ Here's some examples of computer vision queries you can ask VoxelGPT:
 
 ## How to use
 
+### VoxelGPT Python API
+
+After installing (see below), you can use VoxelGPT in Python.
+
+There are two modes of operation: single-query mode, and interactive mode.
+
+#### Single-query mode
+
+In single-query mode, you provide a query and VoxelGPT will return the results. You can use VoxelGPT in single-query mode via the `ask_voxelgpt` function:
+
+```py
+import fiftyone as fo
+import fiftyone.zoo as foz
+
+from voxelgpt import ask_voxelgpt
+
+dataset = foz.load_zoo_dataset("quickstart")
+query = "show me 10 random samples"
+view = ask_voxelgpt_interactive(query, dataset)
+```
+
+This will return a view that contains the results of your query. For computer vision queries or FiftyOne docs queries, which do not require a dataset, you can pass in `None` for the second argument.
+
+```py
+query = "Does FiftyOne integrate with Label Studio?"
+ask_voxelgpt_interactive(query, None)
+```
+
+```
+FILL IN
+```
+
+#### Interactive mode
+
+In interactive mode, you can have a conversation with VoxelGPT. You can pass VoxelGPT any combination of dataset, documentation, and general computer vision queries. When your query includes the `now` keyword, VoxelGPT will use your chat history to generate an effective query, encapsulating what it thinks you are asking for.
+
+You can use VoxelGPT in interactive mode via the `ask_voxelgpt_interactive` function. Because this is
+
+
+```py
+import fiftyone as fo
+import fiftyone.zoo as foz
+
+from voxelgpt import ask_voxelgpt_interactive
+
+dataset = foz.load_zoo_dataset("quickstart")
+session = fo.launch_app(dataset)
+```
+
+```py
+ask_voxelgpt_interactive(dataset, session=session)
+```
+
+```
+>> How can I help you? show me 10 random samples
+
+# Identified potential view stages: ['sort_by', 'limit', 'skip', 'take', 'exclude']
+# Okay, I'm going to load dataset.take(10)
+
+>> Now sort these by uniqueness
+
+# FILL IN
+```
+
+### VoxelGPT Plugin
+
+Optionally, you can install VoxelGPT as a plugin for FiftyOne, which will allow you to use VoxelGPT natively within the FiftyOne App!
+
+If you have the plugin installed, there are three ways to access VoxelGPT.
+
+Launch a session of the FiftyOne App: 
+
+```py
+import fiftyone as fo
+import fiftyone.zoo as foz
+
+dataset = foz.load_zoo_dataset("quickstart")
+session = fo.launch_app(dataset)
+```
+
+Then you can use VoxelGPT in the following ways:
+
+1. Click on the OpenAI icon in the menu bar to open up a VoxelGPT panel. If you want to query your dataset, click on either the vertical split or horizontal split icons to split the canvas of the FiftyOne App into two panels. The `Samples` panel is attached to the `VoxelGPT` panel, so it will automatically update as you query your dataset.
+2. You can also open the VoxelGPT panel by clicking on the `+` icon to the right of the `Samples` tab and selecting `VoxelGPT` from the dropdown menu.
+3. If you want to run a standalone query, and don't want to open up a new panel, you can use VoxelGPT as an "operator" by pressing the `~` key on your keyboard and selecting `Ask VoxelGPT` from the list. This will open up a small modal where you can type in your query. When you press `Enter`, the results of your query will be displayed in the `Samples` panel.
+
+
 ### Keywords
 
 VoxelGPT is trained to recognize certain keywords that help it to understand your intent. These keywords are:
@@ -90,28 +177,13 @@ pip install openai langchain chromadb pandas
 export OPENAI_API_KEY=XXXXXXXX
 ```
 
-## Try it locally
+### VoxelGPT Plugin
 
-```py
-import fiftyone as fo
-import fiftyone.zoo as foz
+If you want to install VoxelGPT as a plugin for FiftyOne, you can do so by running:
 
-from voxelgpt import ask_voxelgpt_interactive
+FILL IN
 
-dataset = foz.load_zoo_dataset("quickstart")
-session = fo.launch_app(dataset)
-```
 
-```py
-ask_voxelgpt_interactive(dataset, session=session)
-# How can I help you? show me 10 random samples
-```
-
-```
-Loading embeddings from disk...
-Identified potential view stages: ['sort_by', 'limit', 'skip', 'take', 'exclude']
-Okay, I'm going to load dataset.take(10)
-```
 
 
 ## Contributing
