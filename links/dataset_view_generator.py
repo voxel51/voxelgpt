@@ -291,9 +291,11 @@ def split_into_stages(stages_text):
 
     for i, stage in enumerate(stages):
         stage_name = stage.split("(")[0]
-        if stage_name not in view_stages and stage_name in upper_to_lower:
-            num_chars = len(stage_name)
-            stages[i]= upper_to_lower[stage_name] + stage[num_chars:]
+        stage_name_compressed = stage_name.replace("_", "")
+        if stage_name not in view_stages:
+            if stage_name_compressed in upper_to_lower:
+                num_chars = len(stage_name)
+                stages[i]= upper_to_lower[stage_name_compressed] + stage[num_chars:]
 
     return stages
 
