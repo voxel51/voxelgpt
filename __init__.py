@@ -13,6 +13,7 @@ import fiftyone.operators as foo
 import fiftyone.operators.types as types
 
 
+# @todo replace with `fou.add_sys_path`
 class add_sys_path(object):
     """Context manager that temporarily inserts a path to ``sys.path``."""
 
@@ -109,7 +110,6 @@ class AskVoxelGPT(foo.Operator):
             params=dict(
                 outputs=types.Property(outputs).to_json(),
                 data=dict(message=message),
-                # content=message,
             ),
         )
 
@@ -128,20 +128,6 @@ class AskVoxelGPTPanel(foo.Operator):
         query = ctx.params["query"]
         sample_collection = ctx.dataset
         chat_history = ctx.params.get("history", None)
-
-        # if query == "Hello!":
-        #     yield self.message(ctx, "Nice to meet you.")
-        #     yield self.done(ctx)
-        #     return
-        # elif query == "Goodbye!":
-        #     yield self.message(ctx, "See you soon!")
-        #     yield self.done(ctx)
-        #     return
-        # elif query == "options":
-        #     yield self.prompt_for_choices(ctx)
-        #     yield self.done(ctx)
-        #     return
-
         if chat_history:
             chat_history = [item["content"] for item in chat_history]
 
@@ -180,35 +166,6 @@ class AskVoxelGPTPanel(foo.Operator):
         view = types.Error(label=message, description=trace)
         return self.show_message(ctx, message, view)
 
-    def prompt_for_choices(self, ctx):
-        outputs = types.Object()
-        outputs.view(
-            "hello",
-            types.Button(
-                label="Say Hello",
-                space=1,
-                operator=f"{self.plugin_name}/send_message_to_voxelgpt",
-                params=dict(message="Hello!"),
-            ),
-        )
-        outputs.view(
-            "goodbye",
-            types.Button(
-                label="Say Goodbye",
-                space=1,
-                operator=f"{self.plugin_name}/send_message_to_voxelgpt",
-                params=dict(message="Goodbye!"),
-            ),
-        )
-        return ctx.trigger(
-            f"{self.plugin_name}/show_message",
-            params=dict(
-                outputs=types.Property(outputs).to_json(),
-                data=dict(message=""),
-                content="",
-            ),
-        )
-
     def done(self, ctx):
         return ctx.trigger(
             f"{self.plugin_name}/show_message",
@@ -223,7 +180,6 @@ class AskVoxelGPTPanel(foo.Operator):
             params=dict(
                 outputs=types.Property(outputs).to_json(),
                 data=dict(message=message),
-                content=message,
             ),
         )
 
@@ -234,7 +190,7 @@ class OpenVoxelGPTPanel(foo.Operator):
         return foo.OperatorConfig(
             name="open_voxelgpt_panel",
             label="Open VoxelGPT Panel",
-            # unlisted=True,
+            unlisted=True,
         )
 
     def resolve_placement(self, ctx):
