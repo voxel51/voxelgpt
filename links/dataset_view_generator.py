@@ -370,34 +370,35 @@ def _correct_detection_match_stages(
     verified_stages = []
 
     for stage in stages:
-        if 'match' not in stage or 'detections.label' not in stage:
+        if "match" not in stage or "detections.label" not in stage:
             verified_stages.append(stage)
-        elif 'contains' in stage or 'is_subset' in stage:
+        elif "contains" in stage or "is_subset" in stage:
             verified_stages.append(stage)
-        elif 'filter' in stage:
-            a, b = stage.split('filter')
-            if 'label' in a and 'label' in b:
-                a = a.replace('.label', '')
-                new_stage = a + 'filter' + b
+        elif "filter" in stage:
+            a, b = stage.split("filter")
+            if "label" in a and "label" in b:
+                a = a.replace(".label", "")
+                new_stage = a + "filter" + b
                 verified_stages.append(new_stage)
             else:
                 verified_stages.append(stage)
         else:
-            field_name = stage.split('F')[1].split('.')[0].strip()
-            class_name = stage.split('==')[1].strip()[:-1]
+            field_name = stage.split("F")[1].split(".")[0].strip()
+            class_name = stage.split("==")[1].strip()[:-1]
             new_stage = f"match(F({field_name}.detections.label).contains({class_name}))"
             verified_stages.append(new_stage)
-    
+
     return verified_stages
 
 
 def _remove_F_from_label(filter_labels_stage):
     contents = filter_labels_stage[13:-1].strip()
-    if contents[0] != 'F':
+    if contents[0] != "F":
         return filter_labels_stage
     else:
         contents = contents.replace("(", "", 1).replace(")", "", 1)
         return f"filter_labels({contents})"
+
 
 def _correct_detection_filter_stages(
     stages,
@@ -411,14 +412,14 @@ def _correct_detection_filter_stages(
     verified_stages = []
 
     for stage in stages:
-        if 'filter_labels' in stage and 'detections.label' in stage:
-            new_stage = stage.replace('detections.', '')
+        if "filter_labels" in stage and "detections.label" in stage:
+            new_stage = stage.replace("detections.", "")
             verified_stages.append(new_stage)
-        elif 'filter_labels' in stage:
+        elif "filter_labels" in stage:
             verified_stages.append(_remove_F_from_label(stage))
         else:
             verified_stages.append(stage)
-    
+
     return verified_stages
 
 

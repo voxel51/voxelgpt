@@ -41,8 +41,7 @@ def generate_dataset_view_prompt(chat_history):
 
 def _keyword_is_present(chat_history):
     query = chat_history[-1].lower()
-    if "now " in query or "now," in query or "now:" in query:
-        return True
+    return "now " in query
 
 
 def generate_effective_query(chat_history):
