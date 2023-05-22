@@ -137,13 +137,8 @@ class AskVoxelGPTInteractive(foo.Operator):
         # ideal it should overwrite anything added to the view after the session
         # started
         sample_collection = ctx.dataset
-
-        # @todo send actual chat history from `ask_voxelgpt_generator()`
-        chat_history = ctx.params.get("history", None)
-        if chat_history:
-            chat_history = [
-                i["content"] for i in chat_history if i["type"] == "outgoing"
-            ]
+        history = ctx.params.get("history", None)
+        chat_history = self._parse_history(history)
 
         try:
             with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
@@ -202,16 +197,32 @@ class AskVoxelGPTInteractive(foo.Operator):
             params=dict(done=True),
         )
 
-    def show_message(self, ctx, message, view_type):
+    def show_message(self, ctx, message, view_type, **kwargs):
         outputs = types.Object()
         outputs.str("message", view=view_type)
         return ctx.trigger(
             f"{self.plugin_name}/show_message",
             params=dict(
                 outputs=types.Property(outputs).to_json(),
-                data=dict(message=message),
+                data=dict(message=message, **kwargs),
             ),
         )
+
+    def _parse_history(self, history):
+        if history is None:
+            return None
+
+        chat_history = []
+        for item in history:
+            if item["type"] == "outgoing":
+                history = item.get("content", None)
+            else:
+                history = item.get("data", {}).get("history", None)
+
+            if history:
+                chat_history.append(history)
+
+        return chat_history
 
 
 class OpenVoxelGPTPanel(foo.Operator):
