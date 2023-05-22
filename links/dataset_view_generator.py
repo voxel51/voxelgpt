@@ -413,9 +413,11 @@ def _correct_detection_filter_stages(
     for stage in stages:
         if 'filter_labels' in stage and 'detections.label' in stage:
             new_stage = stage.replace('detections.', '')
+            verified_stages.append(new_stage)
+        elif 'filter_labels' in stage:
+            verified_stages.append(_remove_F_from_label(stage))
         else:
-            new_stage = stage
-        verified_stages.append(_remove_F_from_label(new_stage))
+            verified_stages.append(stage)
     
     return verified_stages
 
