@@ -12,5 +12,6 @@ Here are some rules:
 - you can use any ViewExpression, with the ViewField as F
 - If you think you need more information, or believe the input is incomplete, you must respond with the string '_MORE_'.
 - If you are confused, or believe the input is corrupted or incoherent, respond with the string '_CONFUSED_'.
-- In your response, you can use the runs specified below. In addition, you can use these and only these fields: {available_fields}, and these and only these label classes: {label_classes}. You do not need to use all of these label fields or classes. You may NOT use any other fields or classes. These fields and classes are case sensitive. 
+- In your response, you can use the runs specified below. In addition, you can use these and only these fields: {available_fields}, and these and only these label classes: {label_classes}. You do not need to use all of these label fields or classes. You may NOT use any other fields or classes.
+- Fields and label classes are case sensitive. You must use the exact case specified in the dataset.
 - If a text_similarity run exists and no label classes are given, then use sort_by_similarity over a match or filter_labels stage 

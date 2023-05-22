@@ -374,6 +374,8 @@ def _correct_detection_match_stages(
             verified_stages.append(stage)
         elif "contains" in stage or "is_subset" in stage:
             verified_stages.append(stage)
+        elif 'is_in' in stage:
+            verified_stages.append(stage.replace('is_in', 'contains'))
         elif "filter" in stage:
             a, b = stage.split("filter")
             if "label" in a and "label" in b:
@@ -423,6 +425,91 @@ def _correct_detection_filter_stages(
     return verified_stages
 
 
+def _get_unique_label_classes_dict(label_classes):
+    unique_classes_dict = {}
+    for class_maps in label_classes.values():
+        for class_map in class_maps:
+            if type(class_map) == str:
+                continue
+            for ner_class, label_class in class_map.items():
+                if ner_class not in unique_classes_dict:
+                    unique_classes_dict[ner_class] = label_class
+
+    return unique_classes_dict
+
+
+def _validate_stages_ner(stages, label_classes):
+    """
+    Ensure that class names were subbed in correctly.
+    """
+    verified_stages = []
+
+    for stage in stages:
+        if 'sort_by_similarity' in stage or 'map_labels' in stage:
+            verified_stages.append(stage)
+        else:
+            new_stage = stage
+            unique_label_classes_dict = _get_unique_label_classes_dict(
+                label_classes
+                )
+            for ner_class, label_class in unique_label_classes_dict.items():
+                if ner_class in stage and type(label_class) == str:
+                    new_stage = new_stage.replace(ner_class, label_class)
+            verified_stages.append(new_stage)
+
+    return verified_stages
+
+
+def get_unique_class_list(label_classes):
+    unique_classes = []
+    for class_list in label_classes.values():
+        for class_name in class_list:
+            if class_name not in unique_classes:
+                unique_classes.append(class_name)
+    return unique_classes
+
+
+def _validate_label_class_case(stages, label_classes):
+    """
+    Ensure that class names have correct case.
+    """
+    verified_stages = []
+
+    unique_classes = get_unique_class_list(label_classes)
+
+    for stage in stages:
+        if 'sort_by_similarity' in stage or 'map_labels' in stage:
+            verified_stages.append(stage)
+        else:
+            new_stage = stage
+            for class_name in unique_classes:
+                new_stage = re.sub(
+                    class_name,
+                    class_name,
+                    new_stage,
+                    flags=re.IGNORECASE
+                )
+            verified_stages.append(new_stage)
+
+    return verified_stages
+
+
+def _postprocess_stages(
+        stages,
+        sample_collection,
+        required_brain_runs,
+        label_classes,
+        unmatched_classes,
+        ):
+    stages = _convert_matches_to_text_similarities(
+            stages, sample_collection, required_brain_runs, unmatched_classes
+        )
+    stages = _correct_detection_match_stages(stages)
+    stages = _correct_detection_filter_stages(stages)
+    stages = _validate_stages_ner(stages, label_classes)
+    stages = _validate_label_class_case(stages, label_classes)
+    return stages
+
 def get_gpt_view_stage_strings(
     sample_collection,
     required_brain_runs,
@@ -450,9 +537,11 @@ def get_gpt_view_stage_strings(
         return "_CONFUSED_"
     else:
         stages = split_into_stages(response)
-        stages = _convert_matches_to_text_similarities(
-            stages, sample_collection, required_brain_runs, unmatched_classes
-        )
-        stages = _correct_detection_match_stages(stages)
-        stages = _correct_detection_filter_stages(stages)
+        stages = _postprocess_stages(
+            stages,
+            sample_collection,
+            required_brain_runs,
+            label_classes,
+            unmatched_classes,
+            )
         return stages
