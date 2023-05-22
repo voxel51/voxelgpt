@@ -8,6 +8,7 @@ FiftyOne docs query dispatcher.
 from glob import glob
 import json
 import os
+import re
 import uuid
 
 from langchain.chains import RetrievalQA
@@ -37,6 +38,18 @@ DOC_TYPES = (
     "tutorials",
     "user_guide",
 )
+
+
+PATTS_TO_LINKS = {
+    "FiftyOne Docs": "https://docs.voxel51.com/",
+    "FiftyOne User Guide": "https://docs.voxel51.com/user_guide/index.html",
+    "FiftyOne Teams": "https://docs.voxel51.com/teams/index.html",
+    "FiftyOne Model Zoo": "https://docs.voxel51.com/user_guide/model_zoo/index.html",
+    "FiftyOne Dataset Zoo": "https://docs.voxel51.com/user_guide/dataset_zoo/index.html",
+    "FiftyOne Plugins": "https://docs.voxel51.com/plugins/index.html",
+    "FiftyOne App": "https://docs.voxel51.com/user_guide/app.html",
+    "FiftyOne Brain": "https://docs.voxel51.com/user_guide/brain.html"
+}
 
 
 def _get_docs_build_dir():
@@ -125,10 +138,30 @@ def initialize_docs_qa_chain():
     cache["docs_qa_chain"] = docs_qa_chain
 
 
+def _wrap_text(patt):
+    link = PATTS_TO_LINKS[patt]
+    return f"[{patt}]({link})"
+
+
+def _format_response(response):
+    str_response = response
+
+    md_response = response
+    for patt in PATTS_TO_LINKS:
+        md_response = re.sub(
+            patt, _wrap_text(patt), md_response, flags=re.IGNORECASE
+            )
+
+    return {
+        "string": str_response,
+        "markdown": md_response,
+    }
+
+
 def run_docs_query(query):
     cache = get_cache()
     if "docs_qa_chain" not in cache:
         initialize_docs_qa_chain()
     docs_qa = cache["docs_qa_chain"]
-    response = docs_qa.run(query)
-    return response.strip()
+    response = docs_qa.run(query).strip()
+    return _format_response(response)
