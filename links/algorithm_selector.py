@@ -11,7 +11,7 @@ from langchain.prompts import PromptTemplate, FewShotPromptTemplate
 import pandas as pd
 
 # pylint: disable=relative-beyond-top-level
-from .utils import get_llm
+from .utils import get_llm, get_cache
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -53,7 +53,9 @@ def load_algorithm_selector_prefix():
 
 
 def generate_algorithm_selector_prompt(query):
-    if 'template' not in globals():
+    cache = get_cache()
+    key = 'algorithm_selector_template'
+    if key not in cache:
         prefix = load_algorithm_selector_prefix()
         algorithm_examples = get_algorithm_examples()
 
@@ -75,9 +77,9 @@ def generate_algorithm_selector_prompt(query):
             input_variables=["query"],
             example_separator="\n",
         )
-        globals()['template'] = template
+        cache[key] = template
     else:
-        template = globals()['template']
+        template = cache[key]
 
     return template.format(query=query)
 
