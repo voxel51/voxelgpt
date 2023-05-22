@@ -127,9 +127,13 @@ class AskVoxelGPTPanel(foo.Operator):
     async def execute(self, ctx):
         query = ctx.params["query"]
         sample_collection = ctx.dataset
+
+        # @todo send actual chat history from `ask_voxelgpt_generator()`
         chat_history = ctx.params.get("history", None)
         if chat_history:
-            chat_history = [item["content"] for item in chat_history]
+            chat_history = [
+                i["content"] for i in chat_history if i["type"] == "outgoing"
+            ]
 
         try:
             with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
