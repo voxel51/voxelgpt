@@ -18510,15 +18510,29 @@ Please use another name.`);
   const types$1 = window["__foo__"].types;
   const Message = ({ type, avatar, content = "", outputs, data }) => {
     console.log("Message", { type, avatar, content, outputs, data });
-    if (outputs)
+    if (outputs) {
+      const schema = types$1.Property.fromJSON(outputs);
       return /* @__PURE__ */ jsxRuntime.exports.jsx(
         OperatorIO,
         {
-          schema: types$1.Property.fromJSON(outputs),
+          schema: {
+            ...schema,
+            view: {
+              ...schema.view,
+              componentsProps: {
+                gridContainer: {
+                  item: true,
+                  spacing: 0,
+                  sx: { pl: 0 }
+                }
+              }
+            }
+          },
           data,
           type: "output"
         }
       );
+    }
     if (content)
       return /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { spacing: 2, container: true, sx: { pl: 1 }, children: /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { item: true, children: /* @__PURE__ */ jsxRuntime.exports.jsx(Typography$2, { component: "p", my: 1.5, children: content }) }) });
     return null;
