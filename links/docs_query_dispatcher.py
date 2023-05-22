@@ -22,8 +22,7 @@ from .utils import get_llm, get_embedding_function, get_cache
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOCS_EMBEDDINGS_DIR = os.path.join(ROOT_DIR, ".fiftyone_docs_embeddings")
-
-CHROMADB_DOCS_DIR = ".fiftyone_docs_db"
+CHROMADB_DOCS_DIR = os.path.join(ROOT_DIR, ".fiftyone_docs_db")
 
 DOC_TYPES = (
     "cheat_sheets",
