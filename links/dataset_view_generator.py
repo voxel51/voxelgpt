@@ -359,6 +359,7 @@ def _convert_matches_to_text_similarities(
 
 def _correct_detection_match_stages(
     stages,
+    sample_collection,
 ):
     """
     if model predicts `match(F(field.detections.label) == "class_name")`, then
@@ -367,10 +368,27 @@ def _correct_detection_match_stages(
     removing the first.
     """
 
+    def _correct_length_stage(stage):
+        if "F" not in stage:
+            return stage
+        contents_F = stage.split("F(")[1].split(")")[0]
+        if "detections" in contents_F:
+            return stage
+        else:
+            field_name = contents_F.split(".")[0]
+            det_subfield_name = field_name[:-1] + ".detections\""
+            return stage.replace(contents_F, det_subfield_name)
+
     verified_stages = []
 
     for stage in stages:
-        if "match" not in stage or "detections.label" not in stage:
+        if "match" not in stage:
+            verified_stages.append(stage)
+        elif "length" in stage:
+            verified_stages.append(
+                _correct_length_stage(stage)
+            )
+        elif "detections.label" not in stage:
             verified_stages.append(stage)
         elif "contains" in stage or "is_subset" in stage:
             verified_stages.append(stage)
@@ -504,7 +522,7 @@ def _postprocess_stages(
     stages = _convert_matches_to_text_similarities(
             stages, sample_collection, required_brain_runs, unmatched_classes
         )
-    stages = _correct_detection_match_stages(stages)
+    stages = _correct_detection_match_stages(stages, sample_collection)
     stages = _correct_detection_filter_stages(stages)
     stages = _validate_stages_ner(stages, label_classes)
     stages = _validate_label_class_case(stages, label_classes)
