@@ -72,6 +72,6 @@ def get_moderator():
     global moderator
 
     if moderator is None:
-        moderator = FiftyOneModeration()
+        moderator = FiftyOneModeration(openai_api_key=get_openai_key())
 
     return moderator
