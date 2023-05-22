@@ -12,11 +12,13 @@ from chromadb.utils import embedding_functions
 from langchain.chains import OpenAIModerationChain
 from langchain.chat_models import ChatOpenAI
 
+
 client = None
 llm = None
 embedding_function = None
 moderator = None
-_CACHE_KEY = "voxelgpt"
+cache_key = "_voxelgpt"
+
 
 def get_openai_key():
     api_key = os.environ.get("OPENAI_API_KEY", None)
@@ -79,7 +81,7 @@ def get_moderator():
 
 def get_cache():
     g = globals()
-    if _CACHE_KEY not in g:
-        g[_CACHE_KEY] = {}
+    if cache_key not in g:
+        g[cache_key] = {}
 
-    return g[_CACHE_KEY]
+    return g[cache_key]
