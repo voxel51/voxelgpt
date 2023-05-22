@@ -61,9 +61,6 @@ def _get_examples(path):
 
 
 def _get_query_intent_examples(type):
-    if type != "display":
-        return
-
     cache = get_cache()
     key = "query_intent_classifier_prompt_template"
     if key in cache:
