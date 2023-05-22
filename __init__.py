@@ -233,6 +233,7 @@ class OpenVoxelGPTPanel(foo.Operator):
         return foo.OperatorConfig(
             name="open_voxelgpt_panel",
             label="Open VoxelGPT Panel",
+            on_startup=True,
             unlisted=True,
         )
 
@@ -247,10 +248,11 @@ class OpenVoxelGPTPanel(foo.Operator):
         )
 
     def execute(self, ctx):
-        return ctx.trigger(
-            "open_panel",
-            params=dict(name="voxelgpt", isActive=True),
-        )
+        if ctx.dataset_name == "quickstart":
+            return ctx.trigger(
+                "open_panel",
+                params=dict(name="voxelgpt", isActive=True, layout="horizontal")
+            )
 
 
 def register(p):
