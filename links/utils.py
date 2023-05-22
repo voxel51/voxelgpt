@@ -17,7 +17,7 @@ client = None
 llm = None
 embedding_function = None
 moderator = None
-cache_key = "_voxelgpt"
+_CACHE_KEY = "_voxelgpt"
 
 
 def get_openai_key():
@@ -81,7 +81,7 @@ def get_moderator():
 
 def get_cache():
     g = globals()
-    if cache_key not in g:
-        g[cache_key] = {}
+    if _CACHE_KEY not in g:
+        g[_CACHE_KEY] = {}
 
-    return g[cache_key]
+    return g[_CACHE_KEY]

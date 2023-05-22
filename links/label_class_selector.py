@@ -96,7 +96,7 @@ def load_semantic_class_selector_prefix():
     if key not in cache:
         with open(SEMANTIC_CLASS_SELECTOR_PREFIX_PATH, "r") as f:
             cache[key] = f.read()
-        return cache[key]
+    return cache[key]
 
 
 def generate_class_selector_prompt(query, label_field):
