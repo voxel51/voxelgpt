@@ -161,18 +161,16 @@ def ask_voxelgpt_generator(
         if isinstance(message, str):
             message = {"string": message, "markdown": message}
 
-        # Log string message
         str_msg = message.get("string", None)
         if str_msg:
             _log_chat_history("GPT", str_msg, chat_history)
 
-        # but return proper dialect
         if dialect == "raw":
             return str_msg
 
         msg = message.get(dialect, None)
         if msg:
-            return _emit_message(msg)
+            return _emit_message(msg, str_msg)
 
     if not moderate_query(query):
         yield _respond(_moderation_fail_message())
@@ -481,8 +479,8 @@ def _full_collection_message(sample_collection):
     return f"Okay, let's load your entire {ctype}"
 
 
-def _emit_message(message):
-    return {"type": "message", "data": {"message": message}}
+def _emit_message(message, _hist):
+    return {"type": "message", "data": {"message": message, "history": _hist}}
 
 
 def _emit_view(view):
