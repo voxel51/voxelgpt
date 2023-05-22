@@ -9,39 +9,48 @@ VoxelGPT combines the power of
 language, enabling you to filter, sort, and semantically slice your data with
 natural language.
 
+## Live demo
+
+🚀🚀🚀 You can try VoxelGPT live at [try.fiftyone.ai](https://try.fiftyone.ai)!
+
 ## Capabilities
 
 VoxelGPT is capable of handling any of the following types of queries:
 
--   [Dataset queries](#query-your-dataset)
--   [FiftyOne docs queries](#query-the-fiftyone-docs)
+-   [Dataset queries](#querying-your-dataset)
+-   [FiftyOne docs queries](#querying-the-fiftyone-docs)
 -   [Computer vision queries](#computer-vision-queries)
 
-When you ask VoxelGPT a question, it will interpret your intent, and determine
+When you ask VoxelGPT a question, it will interpret your intent and determine
 which type of query you are asking. If VoxelGPT is unsure, it will ask you to
 clarify.
 
-### Query your dataset
+### Querying your dataset
 
-VoxelGPT can interpret your query, translate it into FiftyOne query language
-Python code, and display the resulting view. VoxelGPT understands the schema of
-your dataset, so it can help you write queries that are valid for your dataset.
-
-Here's some examples of dataset queries you can ask VoxelGPT - try them out
-live at [try.fiftyone.ai](https://try.fiftyone.ai):
+You can ask VoxelGPT to search your datasets for you. Here's some examples of
+things you can ask:
 
 -   Retrieve me 10 random samples
 -   Display the most unique images with a false positive prediction
 -   Just the images with at least 2 people
 -   Show me the 25 images that are most similar to the first image with a cat
 
-### Query the FiftyOne docs
+Under the hood, VoxelGPT interprets your query and translates it into the
+corresponding
+[dataset view](https://docs.voxel51.com/user_guide/using_views.html). VoxelGPT
+understands the schema of your dataset, as well as things like
+[evaluation runs](https://docs.voxel51.com/user_guide/evaluation.html) and
+[similarity indexes](https://docs.voxel51.com/user_guide/brain.html#similarity).
+It can also automatically inspect the contents of your dataset in order to
+retrieve specific entities.
 
-VoxelGPT is not just a pair programmer; it is also an educational tool. The
-model has access to the entire FiftyOne documentation, and can use this to
-answer questions.
+### Querying the FiftyOne docs
 
-Here's some examples of documentation queries you can ask VoxelGPT
+VoxelGPT is not only a pair programmer; it is also an educational tool.
+VoxelGPT has access to the entire [FiftyOne docs](https://docs.voxel51.com),
+which it can use to answer FiftyOne-related questions.
+
+Here's some examples of documentation queries you can ask VoxelGPT:
 
 -   How do I load a dataset from the FiftyOne Zoo?
 -   What does the match() stage do?
@@ -49,9 +58,9 @@ Here's some examples of documentation queries you can ask VoxelGPT
 
 ### Computer vision queries
 
-Finally, VoxelGPT can answer general questions in computer vision, machine
+Finally, VoxelGPT can answer general questions about computer vision, machine
 learning, and data science. It can help you to understand basic concepts and
-overcome data quality issues.
+learn how to overcome data quality issues.
 
 Here's some examples of computer vision queries you can ask VoxelGPT:
 
@@ -179,10 +188,6 @@ your intent. These keywords are:
     the 10 most unique images with people.
 -   `reset`: This keyword resets the conversation history.
 -   `exit`: This keyword exits the program.
-
-## Live demo
-
-You can try VoxelGPT out live at [try.fiftyone.ai](https://try.fiftyone.ai).
 
 ## Installation
 
