@@ -1,7 +1,6 @@
 # VoxelGPT
 
-Wish you could search your images or videos without writing a line of code? Now
-you can!
+Wish you could search your images or videos without writing a line of code? Now you can! 🎉
 
 VoxelGPT combines the power of
 [GPT-3.5](https://platform.openai.com/docs/models/gpt-3-5) with
@@ -9,16 +8,63 @@ VoxelGPT combines the power of
 language, enabling you to filter, sort, and semantically slice your data with
 natural language.
 
+## Capabilities
+
+VoxelGPT is capable of handling any of the following types of queries:
+
+- [Dataset queries](#query-your-dataset)
+- [FiftyOne docs queries](#query-the-fiftyone-docs)
+- [Computer vision queries](#computer-vision-queries)
+
+When you ask VoxelGPT a question, it will interpret your intent, and determine which type of query you are asking. If VoxelGPT is unsure, it will ask you to clarify.
+
+### Query your dataset
+
+VoxelGPT can interpret your query, translate it into FiftyOne query language Python code, and display the resulting view. VoxelGPT understands the schema of your dataset, so it can help you write queries that are valid for your dataset.
+
+Here's some examples of dataset queries you can ask VoxelGPT - try them out live at [try.fiftyone.ai](https://try.fiftyone.ai):
+
+-  Retrieve me 10 random samples
+-  Display the most unique images with a false positive prediction
+-  Just the images with at least 2 people
+-  Show me the 25 images that are most similar to the first image with a cat
+
+### Query the FiftyOne docs
+
+VoxelGPT is not just a pair programmer; it is also an educational tool. The model has access to the entire FiftyOne documentation, and can use this to answer questions.
+
+Here's some examples of documentation queries you can ask VoxelGPT
+
+- How do I load a dataset from the FiftyOne Zoo?
+- What does the match() stage do?
+- Can I export my dataset in COCO format?
+
+### Computer vision queries
+
+Finally, VoxelGPT can answer general questions in computer vision, machine learning, and data science. It can help you to understand basic concepts and overcome data quality issues.
+
+Here's some examples of computer vision queries you can ask VoxelGPT:
+
+- What is the difference between precision and recall?
+- How can I detect faces in my images?
+- What are some ways I can reduce redundancy in my dataset?
+
+## How to use
+
+### Keywords
+
+VoxelGPT is trained to recognize certain keywords that help it to understand your intent. These keywords are:
+
+- `show`/`display`: These keywords tell VoxelGPT that you want it to query your dataset and display the results.
+- `now`: VoxelGPT keeps track (locally) of the conversation between the user and the model. This keyword tells VoxelGPT to use the chat history along with your most recent input to generate an effective query. For example, if you ask VoxelGPT "show me images with people", and then ask "now show me the 10 most unique ones", VoxelGPT will understand that you want to show the 10 most unique images with people.
+- `reset`: This keyword resets the conversation history.
+- `exit`: This keyword exits the program.
+
 ## Live demo
 
 You can try VoxelGPT out live at [try.fiftyone.ai](https://try.fiftyone.ai).
 
-Here's some examples of things you can ask VoxelGPT to do:
 
--   Show me the most unique images with a false positive prediction
--   Retrieve the first 10 images with 3 dogs and 1 cat
--   Just display objects with small bounding boxes
--   Random sampling of images where AlexNet and Inception v3 disagree
 
 ## Installation
 
@@ -67,9 +113,10 @@ Identified potential view stages: ['sort_by', 'limit', 'skip', 'take', 'exclude'
 Okay, I'm going to load dataset.take(10)
 ```
 
+
 ## Contributing
 
-If you plan to contribute a PR, please install the pre-commit hooks before
+We welcome contributions to this project! If you plan to contribute a PR, please install the pre-commit hooks before
 commiting:
 
 ```shell
@@ -121,10 +168,15 @@ supported. We're working on it!
 
 ## About FiftyOne
 
-If you've made it this far, we'd greatly appreciate if you'd take a moment to
-check out [FiftyOne](https://github.com/voxel51/fiftyone) and give us a star!
+If you've made it this far, we'd greatly appreciate if you'd take a moment to check out [FiftyOne](https://github.com/voxel51/fiftyone) and give us a star!
 
-FiftyOne is an open source library for building high-quality datasets and
-computer vision models. It's the engine that powers this project.
+FiftyOne is an open source library for building high-quality datasets and computer vision models. It's the engine that powers this project.
 
 Thanks for visiting! 😊
+
+## Join the Community
+If you want to be a part of our fast-growing community of engineers, researchers, and practitioners in machine learning and computer vision, join our the [FiftyOne Community Slack](https://join.slack.com/t/fiftyone-users/shared_invite/zt-s6936w7b-2R5eVPJoUw008wP7miJmPQ)!
+
+
+## License
+The VoxelGPT project is released under the Apache 2.0 license.
