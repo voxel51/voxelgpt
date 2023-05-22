@@ -11,7 +11,7 @@ from langchain.prompts import PromptTemplate, FewShotPromptTemplate
 import pandas as pd
 
 # pylint: disable=relative-beyond-top-level
-from .utils import get_llm
+from .utils import get_llm, get_cache
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -43,41 +43,60 @@ LABELS_WITH_CLASSES = (
 
 
 def get_label_class_selection_examples():
-    df = pd.read_csv(LABEL_CLASS_EXAMPLES_PATH)
-    examples = []
+    cache = get_cache()
+    key = "label_class_examples"
+    if key not in cache:
+        df = pd.read_csv(LABEL_CLASS_EXAMPLES_PATH)
+        examples = []
 
-    for _, row in df.iterrows():
-        example = {
-            "query": row.query,
-            "field": row.field,
-            "label_classes": row.label_classes,
-        }
-        examples.append(example)
-    return examples
+        for _, row in df.iterrows():
+            example = {
+                "query": row.query,
+                "field": row.field,
+                "label_classes": row.label_classes,
+            }
+            examples.append(example)
+        cache[key] = examples
+
+    return cache[key]
 
 
 def get_semantic_class_selection_examples():
-    df = pd.read_csv(SEMANTIC_CLASS_SELECTOR_EXAMPLES_PATH)
-    examples = []
+    cache = get_cache()
+    key = "semantic_class_examples"
 
-    for _, row in df.iterrows():
-        example = {
-            "class_name": row.class_name,
-            "available_label_classes": row.available_label_classes,
-            "semantic_matches": row.semantic_matches,
-        }
-        examples.append(example)
-    return examples
+    if key not in cache:
+        df = pd.read_csv(SEMANTIC_CLASS_SELECTOR_EXAMPLES_PATH)
+        examples = []
+
+        for _, row in df.iterrows():
+            example = {
+                "class_name": row.class_name,
+                "available_label_classes": row.available_label_classes,
+                "semantic_matches": row.semantic_matches,
+            }
+            examples.append(example)
+        cache[key] = examples
+
+    return cache[key]
 
 
 def load_class_selector_prefix():
-    with open(LABEL_CLASS_SELECTOR_PREFIX_PATH, "r") as f:
-        return f.read()
+    cache = get_cache()
+    key = "label_class_prefix"
+    if key not in cache:
+        with open(LABEL_CLASS_SELECTOR_PREFIX_PATH, "r") as f:
+            cache[key] = f.read()
+    return cache[key]
 
 
 def load_semantic_class_selector_prefix():
-    with open(SEMANTIC_CLASS_SELECTOR_PREFIX_PATH, "r") as f:
-        return f.read()
+    cache = get_cache()
+    key = "semantic_class_prefix"
+    if key not in cache:
+        with open(SEMANTIC_CLASS_SELECTOR_PREFIX_PATH, "r") as f:
+            cache[key] = f.read()
+        return cache[key]
 
 
 def generate_class_selector_prompt(query, label_field):

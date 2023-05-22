@@ -11,7 +11,7 @@ from langchain.prompts import PromptTemplate, FewShotPromptTemplate
 import pandas as pd
 
 # pylint: disable=relative-beyond-top-level
-from .utils import get_llm
+from .utils import get_llm, get_cache
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -27,23 +27,31 @@ FIELD_SELECTOR_PREFIX_PATH = os.path.join(
 
 
 def get_field_selection_examples():
-    df = pd.read_csv(FIELD_SELECTION_EXAMPLES_PATH)
-    examples = []
+    cache = get_cache()
+    key = "field_selection_examples"
+    if key not in cache:
+        df = pd.read_csv(FIELD_SELECTION_EXAMPLES_PATH)
+        examples = []
 
-    for _, row in df.iterrows():
-        example = {
-            "query": row.query,
-            "available_fields": row.available_fields,
-            "required_fields": row.required_fields,
-        }
-        examples.append(example)
+        for _, row in df.iterrows():
+            example = {
+                "query": row.query,
+                "available_fields": row.available_fields,
+                "required_fields": row.required_fields,
+            }
+            examples.append(example)
+        cache[key] = examples
 
-    return examples
+    return cache[key]
 
 
 def load_field_selector_prefix():
-    with open(FIELD_SELECTOR_PREFIX_PATH, "r") as f:
-        return f.read()
+    cache = get_cache()
+    key = "field_selector_prefix"
+    if key not in cache:
+        with open(FIELD_SELECTOR_PREFIX_PATH, "r") as f:
+            cache[key] = f.read()
+    return cache[key]
 
 
 def get_field_type(sample, field_name):

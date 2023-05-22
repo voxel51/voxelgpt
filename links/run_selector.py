@@ -11,7 +11,7 @@ from langchain.prompts import PromptTemplate, FewShotPromptTemplate
 import pandas as pd
 
 # pylint: disable=relative-beyond-top-level
-from .utils import get_llm
+from .utils import get_llm, get_cache
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -124,20 +124,25 @@ class RunSelector(object):
         )
 
     def get_examples(self):
-        with open(self.examples_path, "r") as f:
-            df = pd.read_csv(f)
+        cache = get_cache()
+        key = self.run_type + "_examples"
+        if key not in cache:
+            with open(self.examples_path, "r") as f:
+                df = pd.read_csv(f)
 
-        examples = []
+            examples = []
 
-        for _, row in df.iterrows():
-            example = {
-                "query": row.query,
-                "available_runs": row.available_runs,
-                "selected_run": row.selected_run,
-            }
-            examples.append(example)
-
-        return examples
+            for _, row in df.iterrows():
+                example = {
+                    "query": row.query,
+                    "available_runs": row.available_runs,
+                    "selected_run": row.selected_run,
+                }
+                examples.append(example)
+            
+            cache[key] = examples
+        
+        return cache[key]
 
     def select_run(self, query):
         available_runs = self.get_available_runs()

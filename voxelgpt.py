@@ -9,7 +9,7 @@ from collections import defaultdict
 
 import fiftyone as fo
 
-from links.query_validator import moderate_query
+from links.query_moderator import moderate_query
 from links.query_intent_classifier import classify_query_intent
 from links.docs_query_dispatcher import run_docs_query
 from links.computer_vision_query_dispatcher import run_computer_vision_query

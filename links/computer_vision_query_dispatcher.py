@@ -10,7 +10,7 @@ import os
 from langchain.prompts import PromptTemplate
 
 # pylint: disable=relative-beyond-top-level
-from .utils import get_llm
+from .utils import get_llm, get_cache
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -21,13 +21,17 @@ CV_QUERY_TASK_RULES_PATH = os.path.join(
 )
 
 
-def load_query_prefix():
-    with open(CV_QUERY_TASK_RULES_PATH, "r") as f:
-        return f.read()
+def _load_query_prefix():
+    cache = get_cache()
+    key = "computer_vision_query_prefix"
+    if key not in cache:
+        with open(CV_QUERY_TASK_RULES_PATH, "r") as f:
+            cache[key] = f.read()
+    return cache[key]
 
 
 def run_computer_vision_query(query):
-    prefix = load_query_prefix()
+    prefix = _load_query_prefix()
     prompt = prefix + PromptTemplate(
         input_variables=["query"],
         template="Question: {query}\nAnswer:",
