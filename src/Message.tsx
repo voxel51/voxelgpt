@@ -10,14 +10,29 @@ import { ChatGPTAvatar } from './avatars'
 export const Message = ({ type, avatar, content = '', outputs, data }) => {
   console.log('Message', { type, avatar, content, outputs, data })
 
-  if (outputs)
+  if (outputs) {
+    const schema = types.Property.fromJSON(outputs)
+
     return (
       <OperatorIO
-        schema={types.Property.fromJSON(outputs)}
+        schema={{
+          ...schema,
+          view: {
+            ...schema.view,
+            componentsProps: {
+              gridContainer: {
+                item: true,
+                spacing: 0,
+                sx: { pl: 0 }
+              }
+            }
+          }
+        }}
         data={data}
         type="output"
       />
     )
+  }
 
   if (content)
     return (
