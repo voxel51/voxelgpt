@@ -1,26 +1,26 @@
-import { atom, selector } from 'recoil'
-import {getBrowserStorageEffectForKey} from "@fiftyone/state";
+import { atom, selector } from "recoil";
+import { getBrowserStorageEffectForKey } from "@fiftyone/state";
 
-const PLUGIN_NAME = '@voxel51/fiftyone-gpt'
+const PLUGIN_NAME = "@voxel51/voxelgpt";
 
 export const atoms = {
   messages: atom({
-    key: 'messages',
+    key: "messages",
     default: [],
     effects: [
       getBrowserStorageEffectForKey(`${PLUGIN_NAME}/messages`, {
         prependDatasetNameInKey: true,
-        useJsonSerialization: true
-      })
-    ]
+        useJsonSerialization: true,
+      }),
+    ],
   }),
   receiving: atom({
-    key: 'receiving',
-    default: false
+    key: "receiving",
+    default: false,
   }),
   input: atom({
-    key: 'voxel-gpt-input',
-    default: ''
-  })
-}
-export const selectors = {}
+    key: "voxel-gpt-input",
+    default: "",
+  }),
+};
+export const selectors = {};

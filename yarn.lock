@@ -308,7 +308,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@emotion/cache@npm:^11.11.0":
+"@emotion/cache@npm:^11.10.8, @emotion/cache@npm:^11.11.0":
   version: 11.11.0
   resolution: "@emotion/cache@npm:11.11.0"
   dependencies:
@@ -631,19 +631,24 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mui/styled-engine@npm:@mui/styled-engine-sc@latest":
-  version: 5.12.0
-  resolution: "@mui/styled-engine-sc@npm:5.12.0"
+"@mui/styled-engine@npm:^5.12.3":
+  version: 5.12.3
+  resolution: "@mui/styled-engine@npm:5.12.3"
   dependencies:
     "@babel/runtime": ^7.21.0
+    "@emotion/cache": ^11.10.8
+    csstype: ^3.1.2
     prop-types: ^15.8.1
   peerDependencies:
-    "@types/styled-components": ^5.1.14
-    styled-components: ^5.3.1
+    "@emotion/react": ^11.4.1
+    "@emotion/styled": ^11.3.0
+    react: ^17.0.0 || ^18.0.0
   peerDependenciesMeta:
-    "@types/styled-components":
+    "@emotion/react":
       optional: true
-  checksum: ee2ec4e19d3100e48b0130c4ff3a11872358a6a6f0016ed7e0b2978e6b1cc511be8f625a2f4d801ab2f588ea92dc1356b0e40d55b70987507062bc21cddc6fd6
+    "@emotion/styled":
+      optional: true
+  checksum: bd96f276013fa1578b54426d70896203928927fdaf158ad7645e6cb43c42c8a535307451666cea7e04d69ad44d33ab3ab8a0d24eff32c0c364f8b5e82281fe69
   languageName: node
   linkType: hard
 
@@ -901,9 +906,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@voxel51/fiftyone-gpt@workspace:.":
+"@voxel51/voxelgpt@workspace:.":
   version: 0.0.0-use.local
-  resolution: "@voxel51/fiftyone-gpt@workspace:."
+  resolution: "@voxel51/voxelgpt@workspace:."
   dependencies:
     "@emotion/react": ^11.11.0
     "@emotion/styled": ^11.11.0

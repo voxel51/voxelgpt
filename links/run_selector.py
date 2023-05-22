@@ -150,7 +150,7 @@ class RunSelector(object):
 
         prompt = self.generate_prompt(query, available_runs)
         response = get_llm().call_as_llm(prompt).strip()
-        if (response not in available_runs) and len(available_runs) > 0:
+        if response not in available_runs:
             response = available_runs[0]
 
         return response
