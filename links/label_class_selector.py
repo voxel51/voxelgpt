@@ -25,10 +25,10 @@ SEMANTIC_CLASS_SELECTOR_PREFIX_PATH = os.path.join(
     PROMPTS_DIR, "semantic_class_selector_prefix.txt"
 )
 LABEL_CLASS_EXAMPLES_PATH = os.path.join(
-    EXAMPLES_DIR, "fiftyone_label_class_examples.csv"
+    EXAMPLES_DIR, "label_class_examples.csv"
 )
 SEMANTIC_CLASS_SELECTOR_EXAMPLES_PATH = os.path.join(
-    EXAMPLES_DIR, "fiftyone_semantic_class_selector_examples.csv"
+    EXAMPLES_DIR, "semantic_class_selector_examples.csv"
 )
 
 SEMANTIC_MATCH_THRESHOLD = 1000
@@ -96,13 +96,12 @@ def load_semantic_class_selector_prefix():
     if key not in cache:
         with open(SEMANTIC_CLASS_SELECTOR_PREFIX_PATH, "r") as f:
             cache[key] = f.read()
-        return cache[key]
+    return cache[key]
 
 
 def generate_class_selector_prompt(query, label_field):
     prefix = load_class_selector_prefix()
     class_selection_examples = get_label_class_selection_examples()
-
     class_selection_example_formatter_template = """
     Query: {query}
     Label field: {field}
@@ -129,7 +128,6 @@ def generate_class_selector_prompt(query, label_field):
 def generate_semantic_class_selector_prompt(class_name, label_classes):
     prefix = load_semantic_class_selector_prefix()
     semantic_class_selection_examples = get_semantic_class_selection_examples()
-
     semantic_class_selection_example_formatter_template = """
     Class name: {class_name}
     Available label classes: {available_label_classes}

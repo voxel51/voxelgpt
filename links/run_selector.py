@@ -50,24 +50,18 @@ TASK_RULES_PATHS = {
 }
 
 EXAMPLES_PATHS = {
-    "uniqueness": os.path.join(
-        EXAMPLES_DIR, "fiftyone_uniqueness_run_examples.csv"
-    ),
-    "hardness": os.path.join(
-        EXAMPLES_DIR, "fiftyone_hardness_run_examples.csv"
-    ),
+    "uniqueness": os.path.join(EXAMPLES_DIR, "uniqueness_run_examples.csv"),
+    "hardness": os.path.join(EXAMPLES_DIR, "hardness_run_examples.csv"),
     "mistakenness": os.path.join(
-        EXAMPLES_DIR, "fiftyone_mistakenness_run_examples.csv"
+        EXAMPLES_DIR, "mistakenness_run_examples.csv"
     ),
     "image_similarity": os.path.join(
-        EXAMPLES_DIR, "fiftyone_image_similarity_run_examples.csv"
+        EXAMPLES_DIR, "image_similarity_run_examples.csv"
     ),
     "text_similarity": os.path.join(
-        EXAMPLES_DIR, "fiftyone_text_similarity_run_examples.csv"
+        EXAMPLES_DIR, "text_similarity_run_examples.csv"
     ),
-    "evaluation": os.path.join(
-        EXAMPLES_DIR, "fiftyone_evaluation_run_examples.csv"
-    ),
+    "evaluation": os.path.join(EXAMPLES_DIR, "evaluation_run_examples.csv"),
     "metadata": None,
 }
 
@@ -139,9 +133,9 @@ class RunSelector(object):
                     "selected_run": row.selected_run,
                 }
                 examples.append(example)
-            
+
             cache[key] = examples
-        
+
         return cache[key]
 
     def select_run(self, query):

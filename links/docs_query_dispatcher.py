@@ -22,8 +22,7 @@ from .utils import get_llm, get_embedding_function, get_cache
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOCS_EMBEDDINGS_DIR = os.path.join(ROOT_DIR, ".fiftyone_docs_embeddings")
-
-CHROMADB_DOCS_DIR = ".fiftyone_docs_db"
+CHROMADB_DOCS_DIR = os.path.join(ROOT_DIR, ".fiftyone_docs_db")
 
 DOC_TYPES = (
     "cheat_sheets",
@@ -38,6 +37,7 @@ DOC_TYPES = (
     "tutorials",
     "user_guide",
 )
+
 
 def _get_docs_build_dir():
     import fiftyone as fo
@@ -78,7 +78,7 @@ def _generate_docs_embeddings():
 
         with open(doc_type_embeddings_file, "w") as f:
             json.dump(embeddings_dict, f)
-            
+
 
 def _create_docs_vectorstore():
     docs_db = Chroma(
@@ -115,18 +115,20 @@ def _load_docs_vectorstore():
         persist_directory=CHROMADB_DOCS_DIR,
     )
 
+
 def initialize_docs_qa_chain():
     cache = get_cache()
     docs_db = _load_docs_vectorstore()
     docs_qa_chain = RetrievalQA.from_chain_type(
         llm=get_llm(), chain_type="stuff", retriever=docs_db.as_retriever()
     )
-    cache['docs_qa_chain'] = docs_qa_chain
+    cache["docs_qa_chain"] = docs_qa_chain
+
 
 def run_docs_query(query):
     cache = get_cache()
-    if 'docs_qa_chain' not in cache:
+    if "docs_qa_chain" not in cache:
         initialize_docs_qa_chain()
-    docs_qa = cache['docs_qa_chain']
-
-    return docs_qa.run(query)
+    docs_qa = cache["docs_qa_chain"]
+    response = docs_qa.run(query)
+    return response.strip()

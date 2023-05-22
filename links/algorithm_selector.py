@@ -18,9 +18,7 @@ ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EXAMPLES_DIR = os.path.join(ROOT_DIR, "examples")
 PROMPTS_DIR = os.path.join(ROOT_DIR, "prompts")
 
-ALGORITHM_EXAMPLES_PATH = os.path.join(
-    EXAMPLES_DIR, "fiftyone_algorithm_examples.csv"
-)
+ALGORITHM_EXAMPLES_PATH = os.path.join(EXAMPLES_DIR, "algorithm_examples.csv")
 ALGORITHM_SELECTOR_PREFIX_PATH = os.path.join(
     PROMPTS_DIR, "algorithm_selector_prefix.txt"
 )
@@ -54,7 +52,7 @@ def load_algorithm_selector_prefix():
 
 def generate_algorithm_selector_prompt(query):
     cache = get_cache()
-    key = 'algorithm_selector_template'
+    key = "algorithm_selector_template"
     if key not in cache:
         prefix = load_algorithm_selector_prefix()
         algorithm_examples = get_algorithm_examples()

@@ -404,22 +404,27 @@ def _algorithms_message(algorithms):
 
 
 def _runs_message(runs):
+    runs_map = {}
+    for run_type in list(runs.keys()):
+        run_info = runs[run_type]
+        if run_type == "uniqueness":
+            key = "uniqueness_field"
+        else:
+            key = "key"
+
+        runs_map[run_type] = run_info[key]
+
     prefix = "Identified potential runs: "
 
     # Markdown
-    runs_map = defaultdict(list)
-    for key, run_type in runs.items():
-        runs_map[run_type].append(key)
-
     chunks = []
-    for run_type, keys in runs_map.items():
-        chunks.append(f"\n - `{run_type}` runs: ")
-        chunks.append(", ".join(f"`{k}`" for k in keys))
+    for run_type, key in runs_map.items():
+        chunks.append(f"\n - `{run_type}` run: `{key}`")
 
     markdown = "".join(chunks)
 
     return {
-        "string": prefix + str(runs),
+        "string": prefix + str(runs_map),
         "markdown": prefix + markdown,
     }
 

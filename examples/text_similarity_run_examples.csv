@@ -1,0 +1,7 @@
+query,available_runs,selected_run
+the rainiest images in the dataset,"[(key: clip_similarity, backend: sklearn, model: model1, patches_field: None), (key: clip_patch_similarity, backend: sklearn, model: model2, patches_field: ground_truth)]",clip_similarity
+detection patches of tires,"[(key: clip_similarity, backend: qdrant, model: clip-vit-base-patch32, patches_field: detections), (key: object_similarity, backend: sklearn, model: clip-vit-base-patch32, patches_field: None)]",object_similarity
+the shiniest car predictions,"[(key: sim1, backend: qdrant, model: some_model, patches_field: ground_truth), (key: sim2, backend: sklearn, model: clip-vit-base-patch32, patches_field: None), (key: sim3, backend: pinecone, model: my_model, patches_field: predictions)]",sim3
+scenes that most resemble a birthday party,"[(key: similarityA, backend: qdrant, model: some_model, patches_field: None), (key: similarityB, backend: qdrant, model: my_model, patches_field: detections)]",similarityA
+"most similar to a man on a horse, with Qdrant index","[(key: qdrant_sim, backend: qdrant, model: clip-vit-base-patch32, patches_field: None), (key: pinecone_sim, backend: pinecone, model: clip-vit-base-patch32, patches_field: None)]",qdrant_sim
+a traffic jam,"[(key: sim1, backend: sklearn, model: clip-vit-base-patch32, patches_field: None), (key: sim2, backend: sklearn, model: clip-vit-base-patch32, patches_field: detections)]",sim1
