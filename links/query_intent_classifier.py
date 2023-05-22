@@ -11,7 +11,7 @@ from langchain.prompts import PromptTemplate, FewShotPromptTemplate
 import pandas as pd
 
 # pylint: disable=relative-beyond-top-level
-from .utils import get_llm
+from .utils import get_llm, get_cache
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -48,8 +48,10 @@ def _get_query_intent_examples():
 
 
 def _get_or_create_query_classifier_prompt_template():
-    if 'template' in globals():
-        return globals()['template']
+    cache = get_cache()
+    key = "query_intent_classifier_prompt_template"
+    if key in cache:
+        return cache[key]
     else:
         prefix = _load_query_classifier_prefix()
         intent_examples = _get_query_intent_examples()
@@ -73,7 +75,7 @@ def _get_or_create_query_classifier_prompt_template():
             example_separator="\n",
         )
 
-        globals()['template'] = template
+        cache[key] = template
         return template
     
 

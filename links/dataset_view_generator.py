@@ -11,7 +11,7 @@ import re
 from langchain.prompts import PromptTemplate
 
 # pylint: disable=relative-beyond-top-level
-from .utils import get_llm
+from .utils import get_llm, get_cache
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -187,10 +187,12 @@ def generate_runs_prompt(sample_collection, runs):
 
 
 def load_dataset_view_prompt_prefix_template():
-    if 'prefix' not in globals():
+    cache = get_cache()
+    key = "dataset_view_prompt_prefix"
+    if key not in cache:
         with open(VIEW_GENERATOR_PREFIX_PATH, "r") as f:
-            globals()['prefix'] = f.read()
-    return globals()['prefix']
+            cache[key] = f.read()
+    return cache[key]
 
 
 def generate_dataset_view_prompt_prefix(available_fields, label_classes):

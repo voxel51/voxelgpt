@@ -46,27 +46,10 @@ def get_algorithm_examples():
         examples.append(example)
     return examples
 
-    # if "examples" not in globals():
-    #     df = pd.read_csv(ALGORITHM_EXAMPLES_PATH)
-    #     examples = []
-
-    #     for _, row in df.iterrows():
-    #         algorithms_used = [alg for alg in ALGORITHMS if row[alg] == "Y"]
-    #         example = {"query": row.prompt, "algorithms": algorithms_used}
-    #         examples.append(example)
-    #     globals()["examples"] = examples
-
-    # return globals()["examples"]
-
 
 def load_algorithm_selector_prefix():
     with open(ALGORITHM_SELECTOR_PREFIX_PATH, "r") as f:
         return f.read()
-
-    # if 'prefix' not in globals():
-    #     with open(ALGORITHM_SELECTOR_PREFIX_PATH, "r") as f:
-    #         globals()['prefix'] = f.read()
-    # return globals()['prefix']
 
 
 def generate_algorithm_selector_prompt(query):

@@ -8,7 +8,7 @@ Effective query generator.
 import os
 
 # pylint: disable=relative-beyond-top-level
-from .utils import get_llm
+from .utils import get_llm, get_cache
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -19,10 +19,12 @@ EFFECTIVE_PROMPT_GENERATOR_PREFIX_PATH = os.path.join(
 )
 
 def load_effective_prompt_prefix_template():
-    if 'prefix' not in globals():
+    cache = get_cache()
+    key = "effective_prompt_prefix"
+    if key not in cache:
         with open(EFFECTIVE_PROMPT_GENERATOR_PREFIX_PATH, "r") as f:
-            globals()['prefix'] = f.read()
-    return globals()['prefix'] 
+            cache[key] = f.read()
+    return cache[key] 
 
 
 def format_chat_history(chat_history):

@@ -13,7 +13,7 @@ from langchain.prompts import FewShotPromptTemplate, PromptTemplate
 import pandas as pd
 
 # pylint: disable=relative-beyond-top-level
-from .utils import get_chromadb_client, get_embedding_function
+from .utils import get_chromadb_client, get_embedding_function, get_cache
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -210,13 +210,18 @@ def _load_examples_vectorstore():
     return collection
 
 def initialize_examples_vectorstore():
+    cache = get_cache()
+    key = "viewstage_examples_db"
     examples_db = _load_examples_vectorstore()
-    globals()['examples_db'] = examples_db
+    cache[key] = examples_db
 
 def get_similar_examples(sample_collection, query, runs, label_fields):
-    if 'examples_db' not in globals():
+    cache = get_cache()
+    key = "viewstage_examples_db"
+
+    if key not in cache:
         initialize_examples_vectorstore()
-    examples_db = globals()['examples_db']
+    examples_db = cache[key]
 
     red_runs, red_label_fields = _parse_runs_and_labels(runs, label_fields)
 

@@ -11,7 +11,7 @@ from langchain.prompts import PromptTemplate, FewShotPromptTemplate
 import pandas as pd
 
 # pylint: disable=relative-beyond-top-level
-from .utils import get_llm
+from .utils import get_llm, get_cache
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -124,8 +124,9 @@ class RunSelector(object):
         )
 
     def get_examples(self):
-        run_examples_var = self.run_type + "_examples"
-        if run_examples_var not in globals():
+        cache = get_cache()
+        key = self.run_type + "_examples"
+        if key not in cache:
             with open(self.examples_path, "r") as f:
                 df = pd.read_csv(f)
 
@@ -139,9 +140,9 @@ class RunSelector(object):
                 }
                 examples.append(example)
             
-            globals()[run_examples_var] = examples
+            cache[key] = examples
         
-        return globals()[run_examples_var]
+        return cache[key]
 
     def select_run(self, query):
         available_runs = self.get_available_runs()

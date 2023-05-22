@@ -16,7 +16,7 @@ client = None
 llm = None
 embedding_function = None
 moderator = None
-
+_CACHE_KEY = "voxelgpt"
 
 def get_openai_key():
     api_key = os.environ.get("OPENAI_API_KEY", None)
@@ -75,3 +75,11 @@ def get_moderator():
         moderator = FiftyOneModeration()
 
     return moderator
+
+
+def get_cache():
+    g = globals()
+    if _CACHE_KEY not in g:
+        g[_CACHE_KEY] = {}
+
+    return g[_CACHE_KEY]

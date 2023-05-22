@@ -10,6 +10,8 @@ import os
 
 from langchain.prompts import FewShotPromptTemplate, PromptTemplate
 
+# pylint: disable=relative-beyond-top-level
+from .utils import get_cache
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -20,11 +22,13 @@ VIEW_STAGE_DESCRIPTIONS_PATH = os.path.join(
 
 
 def get_view_stages_list():
-    if 'view_stages_list' not in globals():
+    cache = get_cache()
+    key = "view_stages_list"
+    if key not in cache:
         with open(VIEW_STAGES_LIST_PATH, "r") as f:
-            globals()['view_stages_list'] = f.read().splitlines()
+            cache[key] = f.read().splitlines()
 
-    return globals()['view_stages_list']
+    return cache[key]
 
 
 def count_view_stage_occurrences(view_stage_examples_prompt):
