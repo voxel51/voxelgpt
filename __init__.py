@@ -13,6 +13,7 @@ import fiftyone.operators as foo
 import fiftyone.operators.types as types
 
 
+# @todo replace with `fou.add_sys_path`
 class add_sys_path(object):
     """Context manager that temporarily inserts a path to ``sys.path``."""
 
@@ -109,7 +110,6 @@ class AskVoxelGPT(foo.Operator):
             params=dict(
                 outputs=types.Property(outputs).to_json(),
                 data=dict(message=message),
-                # content=message,
             ),
         )
 
@@ -124,19 +124,16 @@ class AskVoxelGPTPanel(foo.Operator):
             unlisted=True,
         )
 
-    @property
-    def resolve_inputs(self):
-        inputs = types.Object()
-        inputs.str("query", label="query", required=True)
-        inputs.define_property("history", types.List(types.Object()))
-        return types.Property(inputs)
-
     async def execute(self, ctx):
         query = ctx.params["query"]
         sample_collection = ctx.dataset
+
+        # @todo send actual chat history from `ask_voxelgpt_generator()`
         chat_history = ctx.params.get("history", None)
         if chat_history:
-            chat_history = [item["content"] for item in chat_history]
+            chat_history = [
+                i["content"] for i in chat_history if i["type"] == "outgoing"
+            ]
 
         try:
             with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
@@ -170,7 +167,7 @@ class AskVoxelGPTPanel(foo.Operator):
     def error(self, ctx, exception):
         message = str(exception)
         trace = traceback.format_exc()
-        view = types.ErrorView(label=message, description=trace)
+        view = types.Error(label=message, description=trace)
         return self.show_message(ctx, message, view)
 
     def done(self, ctx):
@@ -187,7 +184,6 @@ class AskVoxelGPTPanel(foo.Operator):
             params=dict(
                 outputs=types.Property(outputs).to_json(),
                 data=dict(message=message),
-                # content=message,
             ),
         )
 
