@@ -525,6 +525,7 @@ def _validate_label_fields(stages, sample_collection, label_classes):
     """
     
     label_fields = list(label_classes.keys())
+    sample_fields = sample_collection.get_field_schema(flat=True).keys()
 
     def _get_confidence_subfield(field):
         field_type = _get_field_type(sample_collection, field)
@@ -532,6 +533,17 @@ def _validate_label_fields(stages, sample_collection, label_classes):
             return f"{field}.confidence"
         else:
             return f"{field}.detections.confidence"
+        
+
+    def _check_non_none_field(field):
+        # return True if field (fully-qualified) exists and contains non-None value
+        if field not in sample_fields:
+            return False
+        
+        v = sample_collection.limit(1).values(field)[0]
+        if isinstance(v, list):
+            v = v[0]
+        return v is not None
 
 
     def _get_ground_truth_field():
@@ -541,8 +553,9 @@ def _validate_label_fields(stages, sample_collection, label_classes):
         for field in label_fields:
             conf_field = _get_confidence_subfield(field)
             
-            if not sample_collection.first()[conf_field]:
+            if not _check_non_none_field(conf_field):
                 return field
+            
         return label_fields[0]
     
 
@@ -553,7 +566,7 @@ def _validate_label_fields(stages, sample_collection, label_classes):
         for field in label_fields:
             conf_field = _get_confidence_subfield(field)
             
-            if sample_collection.first()[conf_field]:
+            if _check_non_none_field(conf_field):
                 return field
         return label_fields[0]
 
