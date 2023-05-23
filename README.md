@@ -117,7 +117,7 @@ and make the plugin available for use in the FiftyOne App by symlinking it into
 your plugins directory:
 
 ```shell
-# Symlinks your clone of the `voxelgpt` into your FiftyOne plugins directory
+# Symlinks your clone of voxelgpt into your FiftyOne plugins directory
 ln -s "$(pwd)" "$(fiftyone config plugins_dir)/voxelgpt"
 ```
 
@@ -159,7 +159,7 @@ list. This will open up a small modal where you can type in your query.
 If you've [installed locally](local-use/development), you can also directly
 interact with VoxelGPT via Python.
 
-### Interactive session
+### Interactive sessions
 
 You can use `ask_voxelgpt_interactive()` to launch an interactive session where
 you can converse with VoxelGPT via `input()` prompts:
@@ -185,7 +185,7 @@ might look like:
 
 ```
 You:
-    What is the difference between precision and recall?
+    what is the difference between precision and recall?
 
 VoxelGPT:
     Precision and recall are two important metrics used to evaluate the
@@ -213,7 +213,7 @@ VoxelGPT:
     compute precision and recall for binary classification tasks.
 
 You:
-    Does FiftyOne integrate with Label Studio?
+    does FiftyOne integrate with Label Studio?
 
 VoxelGPT:
     Yes, FiftyOne integrates with Label Studio, which is an open-source data
@@ -226,7 +226,9 @@ VoxelGPT:
     data, define label schemas, and download annotations using Label Studio,
     all programmatically in Python.
 
-You: show me predicted airplanes
+You:
+    show me predicted airplanes
+
 VoxelGPT:
     Identified potential algorithms: evaluation
     No evaluation runs found.
@@ -235,7 +237,9 @@ VoxelGPT:
     Identified potential view stages: ['match', 'filter_labels', 'match_labels', 'exclude_labels', 'filter_field']
     Okay, I'm going to load dataset.filter_labels("predictions",F("label") == "airplane")
 
-You: now only show me the first 10 samples
+You:
+    now only show me the first 10 samples
+
 VoxelGPT:
     Identified potential algorithms: evaluation
     No evaluation runs found.
