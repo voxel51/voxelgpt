@@ -94,6 +94,17 @@ TEXT_SIMILARITY_PROMPT = PromptTemplate(
     template=TEXT_SIMILARITY_PROMPT_TEMPLATE,
 )
 
+DETECTION_KEYWORDS = (
+    "_fp",
+    "_fn",
+    "_tp",
+    "FP",
+    "FN",
+    "TP",
+)
+
+CLASSIFICATION_KEYWORDS = ("False", "True")
+
 
 def generate_evaluation_prompt(sample_collection, eval_key):
     schema = sample_collection.get_field_schema()
@@ -359,7 +370,6 @@ def _convert_matches_to_text_similarities(
 
 def _correct_detection_match_stages(
     stages,
-    sample_collection,
 ):
     """
     if model predicts `match(F(field.detections.label) == "class_name")`, then
@@ -376,7 +386,7 @@ def _correct_detection_match_stages(
             return stage
         else:
             field_name = contents_F.split(".")[0]
-            det_subfield_name = field_name[:-1] + ".detections\""
+            det_subfield_name = field_name[:-1] + '.detections"'
             return stage.replace(contents_F, det_subfield_name)
 
     verified_stages = []
@@ -385,15 +395,13 @@ def _correct_detection_match_stages(
         if "match" not in stage:
             verified_stages.append(stage)
         elif "length" in stage:
-            verified_stages.append(
-                _correct_length_stage(stage)
-            )
+            verified_stages.append(_correct_length_stage(stage))
         elif "detections.label" not in stage:
             verified_stages.append(stage)
         elif "contains" in stage or "is_subset" in stage:
             verified_stages.append(stage)
-        elif 'is_in' in stage:
-            verified_stages.append(stage.replace('is_in', 'contains'))
+        elif "is_in" in stage:
+            verified_stages.append(stage.replace("is_in", "contains"))
         elif "filter" in stage:
             a, b = stage.split("filter")
             if "label" in a and "label" in b:
@@ -463,13 +471,13 @@ def _validate_stages_ner(stages, label_classes):
     verified_stages = []
 
     for stage in stages:
-        if 'sort_by_similarity' in stage or 'map_labels' in stage:
+        if "sort_by_similarity" in stage or "map_labels" in stage:
             verified_stages.append(stage)
         else:
             new_stage = stage
             unique_label_classes_dict = _get_unique_label_classes_dict(
                 label_classes
-                )
+            )
             for ner_class, label_class in unique_label_classes_dict.items():
                 if ner_class in stage and type(label_class) == str:
                     new_stage = new_stage.replace(ner_class, label_class)
@@ -496,18 +504,169 @@ def _validate_label_class_case(stages, label_classes):
     unique_classes = get_unique_class_list(label_classes)
 
     for stage in stages:
-        if 'sort_by_similarity' in stage or 'map_labels' in stage:
+        if "sort_by_similarity" in stage or "map_labels" in stage:
             verified_stages.append(stage)
         else:
             new_stage = stage
             for class_name in unique_classes:
                 new_stage = re.sub(
-                    class_name,
-                    class_name,
-                    new_stage,
-                    flags=re.IGNORECASE
+                    class_name, class_name, new_stage, flags=re.IGNORECASE
                 )
             verified_stages.append(new_stage)
+
+    return verified_stages
+
+
+def _infer_stage_evaluation_type(stage):
+    if any(keyword in stage for keyword in DETECTION_KEYWORDS):
+        return "detection"
+    elif any(keyword in stage for keyword in CLASSIFICATION_KEYWORDS):
+        return "classification"
+    else:
+        return None
+
+
+def _get_first_detection_eval_key(sample_collection):
+    eval_keys = sample_collection.list_evaluations()
+    for ek in eval_keys:
+        eval_cls = sample_collection.get_evaluation_info(ek).config.cls
+        if "openimages" in eval_cls:
+            return ek
+        elif "coco" in eval_cls:
+            return ek
+        elif "activitynet" in eval_cls:
+            return ek
+    return None
+
+
+def _get_first_classification_eval_key(sample_collection):
+    eval_keys = sample_collection.list_evaluations()
+    for ek in eval_keys:
+        eval_cls = sample_collection.get_evaluation_info(ek).config.cls
+        if "classification" in eval_cls:
+            return ek
+    return None
+
+
+def _get_first_valid_eval_key(sample_collection, eval_type):
+    if eval_type == "detection":
+        return _get_first_detection_eval_key(sample_collection)
+    elif eval_type == "classification":
+        return _get_first_classification_eval_key(sample_collection)
+    else:
+        return None
+
+
+def _correct_eval_run(stage, sample_collection, runs):
+    if "evaluation" in runs:
+        eval_key = runs["evaluation"]["key"]
+    else:
+        eval_type = _infer_stage_evaluation_type(stage)
+        if not eval_type:
+            return "_MORE_"
+
+        eval_key = _get_first_valid_eval_key(sample_collection, eval_type)
+
+    if eval_key:
+        return stage.replace("EVAL_KEY", eval_key)
+    else:
+        return "_MORE_"
+
+
+def _correct_uniqueness_run(stage, sample_collection, runs):
+    uniqueness_field = None
+    if "uniqueness" in runs:
+        uniqueness_field = runs["uniqueness"]["uniqueness_field"]
+    else:
+        brain_runs = sample_collection.list_brain_runs()
+        brain_runs = [
+            sample_collection.get_brain_info(br) for br in brain_runs
+        ]
+
+        for br in brain_runs:
+            if br.config.method == "uniqueness":
+                uniqueness_field = br.config.uniqueness_field
+                break
+
+    if uniqueness_field:
+        return stage.replace("UNIQUENESS_FIELD", uniqueness_field)
+    else:
+        return "_MORE_"
+
+
+def _correct_text_sim_run(stage, sample_collection, runs):
+    text_sim_key = None
+    if "text_similarity" in runs:
+        text_sim_key = runs["text_similarity"]["key"]
+    else:
+        brain_runs = sample_collection.list_brain_runs()
+        brain_runs = [
+            sample_collection.get_brain_info(br) for br in brain_runs
+        ]
+
+        for br in brain_runs:
+            if "Similarity" in br.config.cls and br.config.supports_prompts:
+                text_sim_key = br.config.key
+                break
+
+    if text_sim_key:
+        return stage.replace("TEXT_SIM_KEY", text_sim_key)
+    else:
+        return "_MORE_"
+
+
+def _correct_image_sim_run(stage, sample_collection, runs):
+    image_sim_key = None
+    if "image_similarity" in runs:
+        image_sim_key = runs["image_similarity"]["key"]
+    else:
+        brain_runs = sample_collection.list_brain_runs()
+        brain_runs = [
+            sample_collection.get_brain_info(br) for br in brain_runs
+        ]
+
+        for br in brain_runs:
+            if "Similarity" in br.config.cls:
+                image_sim_key = br.config.key
+                break
+
+    if image_sim_key:
+        return stage.replace("IMAGE_SIM_KEY", image_sim_key)
+    else:
+        return "_MORE_"
+
+
+def _validate_runs(stages, sample_collection, required_brain_runs):
+    verified_stages = []
+
+    for stage in stages:
+        if "EVAL_KEY" in stage:
+            new_stage = _correct_eval_run(
+                stage,
+                sample_collection,
+                required_brain_runs,
+            )
+        elif "UNIQUENESS_FIELD" in stage:
+            new_stage = _correct_uniqueness_run(
+                stage,
+                sample_collection,
+                required_brain_runs,
+            )
+        elif "TEXT_SIM_KEY" in stage:
+            new_stage = _correct_text_sim_run(
+                stage,
+                sample_collection,
+                required_brain_runs,
+            )
+        elif "IMAGE_SIM_KEY" in stage:
+            new_stage = _correct_image_sim_run(
+                stage,
+                sample_collection,
+                required_brain_runs,
+            )
+        else:
+            new_stage = stage
+        verified_stages.append(new_stage)
 
     return verified_stages
 
@@ -523,7 +682,7 @@ def _validate_label_fields(stages, sample_collection, label_classes):
     """
     Ensure that label fields are correct.
     """
-    
+
     label_fields = list(label_classes.keys())
 
     def _get_confidence_subfield(field):
@@ -533,35 +692,32 @@ def _validate_label_fields(stages, sample_collection, label_classes):
         else:
             return f"{field}.detections.confidence"
 
-
     def _get_ground_truth_field():
         if len(label_fields) == 1:
             return label_fields[0]
-        
+
         for field in label_fields:
             conf_field = _get_confidence_subfield(field)
-            
+
             if not sample_collection.first()[conf_field]:
                 return field
         return label_fields[0]
-    
 
     def _get_predictions_field():
         if len(label_fields) == 1:
             return label_fields[0]
-        
+
         for field in label_fields:
             conf_field = _get_confidence_subfield(field)
-            
+
             if sample_collection.first()[conf_field]:
                 return field
         return label_fields[0]
 
     verified_stages = []
 
-
     for stage in stages:
-        if 'map_labels' in stage:
+        if "map_labels" in stage:
             verified_stages.append(stage)
         else:
             new_stage = stage
@@ -577,22 +733,25 @@ def _validate_label_fields(stages, sample_collection, label_classes):
 
 
 def _postprocess_stages(
-        stages,
-        sample_collection,
-        required_brain_runs,
-        label_classes,
-        unmatched_classes,
-        ):
-    
+    stages,
+    sample_collection,
+    required_brain_runs,
+    label_classes,
+    unmatched_classes,
+):
+
     stages = _convert_matches_to_text_similarities(
-            stages, sample_collection, required_brain_runs, unmatched_classes
-        )
+        stages, sample_collection, required_brain_runs, unmatched_classes
+    )
+
+    stages = _correct_detection_match_stages(stages)
     stages = _validate_label_fields(stages, sample_collection, label_classes)
-    stages = _correct_detection_match_stages(stages, sample_collection)
     stages = _correct_detection_filter_stages(stages)
     stages = _validate_stages_ner(stages, label_classes)
     stages = _validate_label_class_case(stages, label_classes)
+    stages = _validate_runs(stages, sample_collection, required_brain_runs)
     return stages
+
 
 def get_gpt_view_stage_strings(
     sample_collection,
@@ -627,5 +786,5 @@ def get_gpt_view_stage_strings(
             required_brain_runs,
             label_classes,
             unmatched_classes,
-            )
+        )
         return stages

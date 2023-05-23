@@ -66,6 +66,24 @@ EXAMPLES_PATHS = {
 }
 
 
+DETECTION_KEYWORDS = (
+    "fp",
+    "fn",
+    "tp",
+    "false positive",
+    "false negative",
+    "true positive",
+    "detect",
+)
+
+
+CLASSIFICATION_KEYWORDS = (
+    "classification",
+    "classify",
+    "classified",
+)
+
+
 class RunSelector(object):
     """Interface for selecting the correct run for a given query and dataset."""
 
@@ -215,11 +233,58 @@ class EvaluationRunSelector(RunSelector):
 
         return dict
 
-    def get_available_runs(self):
+    def get_allowed_eval_types(self, query):
+        if any(keyword in query.lower() for keyword in DETECTION_KEYWORDS):
+            return ["detection"]
+        elif any(
+            keyword in query.lower() for keyword in CLASSIFICATION_KEYWORDS
+        ):
+            return ["classification"]
+        else:
+            return ["detection", "classification"]
+
+    def is_valid_type(self, run_info, allowed_eval_types):
+        type = run_info.config.cls
+
+        if "classification" in allowed_eval_types:
+            if "classification" in type:
+                return True
+
+        if "detection" in allowed_eval_types:
+            if "openimages" in type:
+                return True
+            elif "coco" in type:
+                return True
+            elif "activitynet" in type:
+                return True
+
+        return False
+
+    def get_available_runs(self, query):
+        allowed_eval_types = self.get_allowed_eval_types(query)
         runs = self.dataset.list_evaluations()
         runs = [self.dataset.get_evaluation_info(run) for run in runs]
+        runs = [
+            run for run in runs if self.is_valid_type(run, allowed_eval_types)
+        ]
         runs = [self.get_run_info(run) for run in runs]
         return runs
+
+    def select_run(self, query):
+        available_runs = self.get_available_runs(query)
+        if not available_runs:
+            print(self.compute_run_message())
+            return None
+
+        if len(available_runs) == 1:
+            return available_runs[0]
+
+        prompt = self.generate_prompt(query, available_runs)
+        response = get_llm().call_as_llm(prompt).strip()
+        if response not in available_runs:
+            response = available_runs[0]
+
+        return response
 
 
 class UniquenessRunSelector(RunSelector):

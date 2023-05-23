@@ -221,6 +221,19 @@ def initialize_examples_vectorstore():
     cache[key] = examples_db
 
 
+def _get_evaluation_type(sample_collection, eval_key):
+    eval_cls = sample_collection.get_evaluation_info(eval_key).config.cls
+    if "openimages" in eval_cls:
+        return "detection"
+    elif "coco" in eval_cls:
+        return "detection"
+    elif "activitynet" in eval_cls:
+        return "detection"
+    elif "classification" in eval_cls:
+        return "classification"
+    return None
+
+
 def get_similar_examples(sample_collection, query, runs, label_fields):
     cache = get_cache()
     key = "viewstage_examples_db"
@@ -236,7 +249,7 @@ def get_similar_examples(sample_collection, query, runs, label_fields):
     text_sim = "text_similarity" in red_runs
     image_sim = "image_similarity" in red_runs
     meta = "metadata" in red_runs
-    eval = "eval" in red_runs
+    eval = "evaluation" in red_runs
 
     _filter = {
         "$or": [
@@ -245,16 +258,26 @@ def get_similar_examples(sample_collection, query, runs, label_fields):
         ]
     }
 
-    if red_label_fields:
-        label_types = list(
-            set(
-                [
-                    get_label_type(sample_collection, field)
-                    for field in red_label_fields
-                ]
+    if red_label_fields or eval:
+        if red_label_fields:
+            label_field_types = list(
+                set(
+                    [
+                        get_label_type(sample_collection, field)
+                        for field in red_label_fields
+                    ]
+                )
             )
-        )
-        label_types.append("all")
+        else:
+            label_field_types = []
+
+        if eval:
+            eval_key = red_runs["evaluation"]["key"]
+            eval_types = [_get_evaluation_type(sample_collection, eval_key)]
+        else:
+            eval_types = []
+
+        label_types = list(set(label_field_types + eval_types + ["all"]))
 
         _label_filter_or = [{"label_type": {"$eq": lt}} for lt in label_types]
 
