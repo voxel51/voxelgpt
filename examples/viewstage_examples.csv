@@ -352,3 +352,7 @@ I want to see all the predictions of books,"[filter_labels(""model"", F(""label"
 any images with a water bottle,"[match(F(""detections.detections.label"").contains(""water bottle""))]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,detection,,,,,,,,,,,,,,,,,
 give me all the samples without a motorcycle prediction,"[match(!F(""pred.detections.label"").contains(""Motorcycle""))]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,detection,,,,,,,,,,,,,,,,,
 cars or pedestrians,"[filter_labels(""gt"", F(""label"").is_in([""car"", pedestrian""])]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,all,,,,,,,,,,,,,,,,,
+show me everything,[],Jacob,all,FALSE,FALSE,FALSE,FALSE,FALSE,all,,,,,,,,,,,,,,,,,
+show me the current view,[],Jacob,all,FALSE,FALSE,FALSE,FALSE,FALSE,all,,,,,,,,,,,,,,,,,
+I want to see the entire view,[],Jacob,all,FALSE,FALSE,FALSE,FALSE,FALSE,all,,,,,,,,,,,,,,,,,
+display the whole dataset,[],Jacob,all,FALSE,FALSE,FALSE,FALSE,FALSE,all,,,,,,,,,,,,,,,,,
