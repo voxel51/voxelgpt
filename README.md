@@ -185,13 +185,19 @@ You:
     What is the difference between precision and recall?
 
 VoxelGPT:
-    TODO
+    Precision and recall are two important metrics used to evaluate the performance of a machine learning model in classification tasks. Precision measures the proportion of true positive predictions among all positive predictions made by the model. Recall, on the other hand, measures the proportion of true positive predictions among all actual positive instances in the dataset.
+
+    In other words, precision is the ability of the model to correctly identify positive instances, while recall is the ability of the model to identify all positive instances. A high precision means that the model is making very few false positive predictions, while a high recall means that the model is able to identify most of the positive instances in the dataset.
+
+    It is important to balance precision and recall when evaluating a model's performance. A model with high precision but low recall may be missing important positive instances, while a model with high recall but low precision may be making too many false positive predictions.
+
+    In the context of the FiftyOne library, precision and recall can be computed using the `fiftyone.utils.metrics` module, which provides functions for computing various classification metrics. For example, the `fiftyone.utils.metrics.binary_classification` function can be used to compute precision and recall for binary classification tasks.
 
 You:
     Does FiftyOne integrate with Label Studio?
 
 VoxelGPT:
-    TODO
+    Yes, FiftyOne integrates with Label Studio, which is an open-source data labeling tool with a user-friendly UI. The integration allows you to easily upload your data directly from FiftyOne to Label Studio for labeling. You can get started with Label Studio through a simple pip install to get a local server up and running. FiftyOne provides simple setup instructions that you can use to specify the necessary account credentials and server endpoint to use. FiftyOne also provides an API to create projects, upload data, define label schemas, and download annotations using Label Studio, all programmatically in Python.
 
 You: show me predicted airplanes
 VoxelGPT:
@@ -199,8 +205,7 @@ VoxelGPT:
     No evaluation runs found.
     Identified potential fields: predictions
     Identified potential label classes: {'predictions': ['airplane']}
-    Using embedded DuckDB without persistence: data will be transient
-    Identified potential view stages: ['match', 'filter_labels', 'filter_field', 'match_labels', 'limit']
+    Identified potential view stages: ['match', 'filter_labels', 'match_labels', 'exclude_labels', 'filter_field']
     Okay, I'm going to load dataset.filter_labels("predictions",F("label") == "airplane")
 
 You: now only show me the first 10 samples
@@ -210,7 +215,7 @@ VoxelGPT:
     Identified potential fields: predictions
     Identified potential label classes: {'predictions': ['airplane']}
     Identified potential view stages: ['match', 'limit', 'limit_labels', 'skip', 'sort_by']
-    Okay, I'm going to load dataset.filter_labels("predictions",F("label") == "airplane").limit(10)
+    Okay, I'm going to load dataset.match(F("predictions.detections.label").contains("airplane")).limit(10)
 
 You: exit
 ```
@@ -230,11 +235,11 @@ You can also use `ask_voxelgpt()` to prompt VoxelGPT with individual queries:
 ```py
 from voxelgpt import ask_voxelgpt
 
-ask_voxelgpt("Does FiftyOne integrate with Label Studio?")
+ask_voxelgpt("Does FiftyOne integrate with CVAT?")
 ```
 
 ```
-TODO
+Yes, FiftyOne integrates with CVAT, which is an open-source image and video annotation tool. You can upload your data directly from FiftyOne to CVAT to add or edit labels. FiftyOne provides simple setup instructions that you can use to specify the necessary account credentials and server endpoint to use. CVAT provides three levels of abstraction for annotation workflows: projects, tasks, and jobs.
 ```
 
 When VoxelGPT creates a view in response to your query, it is returned:
@@ -249,7 +254,7 @@ view = ask_voxelgpt("show me 10 random samples", dataset)
 ```
 
 ```
-Identified potential view stages: ['sort_by', 'limit', 'skip', 'take', 'exclude']
+Identified potential view stages: ['match', 'limit', 'skip', 'take', 'sort_by']
 Okay, I'm going to load dataset.take(10)
 ```
 
