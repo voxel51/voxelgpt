@@ -229,6 +229,11 @@ class AskVoxelGPTPanel(foo.Operator):
 
         return chat_history, ctx.view, orig_view
 
+def open_panel(ctx):
+    ctx.trigger(
+        "open_panel",
+        params=dict(name="voxelgpt", isActive=True, layout="horizontal"),
+    )
 
 class OpenVoxelGPTPanel(foo.Operator):
     @property
@@ -236,7 +241,6 @@ class OpenVoxelGPTPanel(foo.Operator):
         return foo.OperatorConfig(
             name="open_voxelgpt_panel",
             label="Open VoxelGPT Panel",
-            unlisted=True,
         )
 
     def resolve_placement(self, ctx):
@@ -250,13 +254,30 @@ class OpenVoxelGPTPanel(foo.Operator):
         )
 
     def execute(self, ctx):
-        return ctx.trigger(
-            "open_panel",
-            params=dict(name="voxelgpt", isActive=True, layout="horizontal"),
+        open_panel(ctx)
+
+        
+class OpenVoxelGPTPanelOnStartup(OpenVoxelGPTPanel):
+    @property
+    def config(self):
+        return foo.OperatorConfig(
+            name="open_voxelgpt_panel_on_startup",
+            label="Open VoxelGPT Panel",
+            on_startup=True,
+            unlisted=True,
         )
+
+    def resolve_placement(self, ctx):
+        return None
+
+    def execute(self, ctx):
+        if ctx.dataset_name == "quickstart":
+            open_panel(ctx)
+
 
 
 def register(p):
     p.register(AskVoxelGPT)
     p.register(AskVoxelGPTPanel)
     p.register(OpenVoxelGPTPanel)
+    p.register(OpenVoxelGPTPanelOnStartup)

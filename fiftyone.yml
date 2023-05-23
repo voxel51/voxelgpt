@@ -9,3 +9,4 @@ operators:
   - ask_voxelgpt
   - ask_voxelgpt_panel
   - open_voxelgpt_panel
+  - open_voxelgpt_panel_on_startup
