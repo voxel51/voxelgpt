@@ -53,11 +53,7 @@ class AskVoxelGPT(foo.Operator):
 
     async def execute(self, ctx):
         query = ctx.params["query"]
-        if ctx.view is not None:
-            sample_collection = ctx.view
-        else:
-            sample_collection = ctx.dataset
-
+        sample_collection = ctx.view if ctx.view is not None else ctx.dataset
         messages = []
 
         try:
@@ -65,7 +61,9 @@ class AskVoxelGPT(foo.Operator):
                 from voxelgpt import ask_voxelgpt_generator
 
                 for response in ask_voxelgpt_generator(
-                    query, sample_collection, dialect="string"
+                    query,
+                    sample_collection=sample_collection,
+                    dialect="string",
                 ):
                     type = response["type"]
                     data = response["data"]
@@ -103,14 +101,13 @@ class AskVoxelGPT(foo.Operator):
     def error(self, ctx, exception):
         message = str(exception)
         trace = traceback.format_exc()
-        view = types.ErrorView(label=message, description=trace)
+        view = types.Error(label=message, description=trace)
         outputs = types.Object()
-        outputs.str("message", view=view)
+        outputs.view("message", view)
         return ctx.trigger(
             "show_output",
             params=dict(
-                outputs=types.Property(outputs).to_json(),
-                data=dict(message=message),
+                outputs=types.Property(outputs).to_json()
             ),
         )
 
@@ -138,7 +135,7 @@ class AskVoxelGPTPanel(foo.Operator):
 
                 for response in ask_voxelgpt_generator(
                     query,
-                    sample_collection,
+                    sample_collection=sample_collection,
                     chat_history=chat_history,
                     dialect="markdown",
                 ):
@@ -234,6 +231,7 @@ class OpenVoxelGPTPanel(foo.Operator):
         return foo.OperatorConfig(
             name="open_voxelgpt_panel",
             label="Open VoxelGPT Panel",
+            on_startup=True,
             unlisted=True,
         )
 
@@ -248,10 +246,11 @@ class OpenVoxelGPTPanel(foo.Operator):
         )
 
     def execute(self, ctx):
-        return ctx.trigger(
-            "open_panel",
-            params=dict(name="voxelgpt", isActive=True),
-        )
+        if ctx.dataset_name == "quickstart":
+            return ctx.trigger(
+                "open_panel",
+                params=dict(name="voxelgpt", isActive=True, layout="horizontal")
+            )
 
 
 def register(p):

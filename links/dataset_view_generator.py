@@ -378,10 +378,25 @@ def _correct_detection_match_stages(
     removing the first.
     """
 
+    def _correct_length_stage(stage):
+        if "F" not in stage:
+            return stage
+        contents_F = stage.split("F(")[1].split(")")[0]
+        if "detections" in contents_F:
+            return stage
+        else:
+            field_name = contents_F.split(".")[0]
+            det_subfield_name = field_name[:-1] + '.detections"'
+            return stage.replace(contents_F, det_subfield_name)
+
     verified_stages = []
 
     for stage in stages:
-        if "match" not in stage or "detections.label" not in stage:
+        if "match" not in stage:
+            verified_stages.append(stage)
+        elif "length" in stage:
+            verified_stages.append(_correct_length_stage(stage))
+        elif "detections.label" not in stage:
             verified_stages.append(stage)
         elif "contains" in stage or "is_subset" in stage:
             verified_stages.append(stage)
@@ -656,6 +671,67 @@ def _validate_runs(stages, sample_collection, required_brain_runs):
     return verified_stages
 
 
+def _get_field_type(sample_collection, field_name):
+    sample = sample_collection.first()
+    field = sample.get_field(field_name)
+    field_type = type(field).__name__
+    return field_type
+
+
+def _validate_label_fields(stages, sample_collection, label_classes):
+    """
+    Ensure that label fields are correct.
+    """
+
+    label_fields = list(label_classes.keys())
+
+    def _get_confidence_subfield(field):
+        field_type = _get_field_type(sample_collection, field)
+        if field_type == "Classification":
+            return f"{field}.confidence"
+        else:
+            return f"{field}.detections.confidence"
+
+    def _get_ground_truth_field():
+        if len(label_fields) == 1:
+            return label_fields[0]
+
+        for field in label_fields:
+            conf_field = _get_confidence_subfield(field)
+
+            if not sample_collection.first()[conf_field]:
+                return field
+        return label_fields[0]
+
+    def _get_predictions_field():
+        if len(label_fields) == 1:
+            return label_fields[0]
+
+        for field in label_fields:
+            conf_field = _get_confidence_subfield(field)
+
+            if sample_collection.first()[conf_field]:
+                return field
+        return label_fields[0]
+
+    verified_stages = []
+
+    for stage in stages:
+        if "map_labels" in stage:
+            verified_stages.append(stage)
+        else:
+            new_stage = stage
+            if "ground_truth" in stage and "ground_truth" not in label_fields:
+                gt_field = _get_ground_truth_field()
+                new_stage = new_stage.replace("ground_truth", gt_field)
+            if "predictions" in stage and "predictions" not in label_fields:
+                pred_field = _get_predictions_field()
+                new_stage = new_stage.replace("predictions", pred_field)
+            verified_stages.append(new_stage)
+
+    return verified_stages
+
+
 def _postprocess_stages(
     stages,
     sample_collection,
@@ -667,7 +743,9 @@ def _postprocess_stages(
     stages = _convert_matches_to_text_similarities(
         stages, sample_collection, required_brain_runs, unmatched_classes
     )
+
     stages = _correct_detection_match_stages(stages)
+    stages = _validate_label_fields(stages, sample_collection, label_classes)
     stages = _correct_detection_filter_stages(stages)
     stages = _validate_stages_ner(stages, label_classes)
     stages = _validate_label_class_case(stages, label_classes)

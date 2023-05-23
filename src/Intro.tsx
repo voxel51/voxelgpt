@@ -20,12 +20,12 @@ import { useSetRecoilState } from 'recoil'
 import { atoms } from './state'
 
 const examples = [
-  { id: 'example-1', label: 'Show me predicted airplanes' },
+  { id: 'example-1', label: 'Show me the 25 images that are most likely to contain a road scene' },
   {
     id: 'example-2',
-    label: 'Retrieve the first 10 images with 3 dogs and 1 cat'
+    label: 'Display images with a high confidence prediction evaluated as a false positive'
   },
-  { id: 'example-3', label: 'How can I integrate GPT-3 into my application?' }
+  { id: 'example-3', label: 'Just the most unique images that have food and people in them' }
 ]
 const capabilities = [
   {
