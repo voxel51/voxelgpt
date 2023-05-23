@@ -256,7 +256,7 @@ class OpenVoxelGPTPanel(foo.Operator):
     def execute(self, ctx):
         open_panel(ctx)
 
-        
+
 class OpenVoxelGPTPanelOnStartup(OpenVoxelGPTPanel):
     @property
     def config(self):
@@ -271,10 +271,12 @@ class OpenVoxelGPTPanelOnStartup(OpenVoxelGPTPanel):
         return None
 
     def execute(self, ctx):
-        if ctx.dataset_name == "quickstart":
+        app_plugin_settings = fo.app_config.plugins.get(self.plugin_name, {})
+        dataset_plugin_settings = ctx.dataset.app_config.plugins.get(self.plugin_name, {})
+        plugin_settings = {**app_plugin_settings, **dataset_plugin_settings}
+        open_on_startup = plugin_settings.get("open_on_startup", False)
+        if open_on_startup:
             open_panel(ctx)
-
-
 
 def register(p):
     p.register(AskVoxelGPT)
