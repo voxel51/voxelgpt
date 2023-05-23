@@ -94,7 +94,7 @@ simply run:
 
 ```shell
 fiftyone plugins download https://github.com/voxel51/voxelgpt
-fiftyone plugins requirements voxelgpt --install
+fiftyone plugins requirements @voxel51/voxelgpt --install
 ```
 
 ### Local use/development
@@ -181,17 +181,36 @@ documentation, and general computer vision queries. For example, a conversation
 might look like:
 
 ```
-You: What are some popular model architectures for computer vision?
-VoxelGPT: TODO
+You:
+    What is the difference between precision and recall?
 
-You: How do I create views in FiftyOne?
-VoxelGPT: TODO
+VoxelGPT:
+    TODO
 
-You: Show me predicted airplanes
-VoxelGPT: TODO
+You:
+    Does FiftyOne integrate with Label Studio?
 
-You: Now only show me the first 10 samples
-VoxelGPT: TODO
+VoxelGPT:
+    TODO
+
+You: show me predicted airplanes
+VoxelGPT:
+    Identified potential algorithms: evaluation
+    No evaluation runs found.
+    Identified potential fields: predictions
+    Identified potential label classes: {'predictions': ['airplane']}
+    Using embedded DuckDB without persistence: data will be transient
+    Identified potential view stages: ['match', 'filter_labels', 'filter_field', 'match_labels', 'limit']
+    Okay, I'm going to load dataset.filter_labels("predictions",F("label") == "airplane")
+
+You: now only show me the first 10 samples
+VoxelGPT:
+    Identified potential algorithms: evaluation
+    No evaluation runs found.
+    Identified potential fields: predictions
+    Identified potential label classes: {'predictions': ['airplane']}
+    Identified potential view stages: ['match', 'limit', 'limit_labels', 'skip', 'sort_by']
+    Okay, I'm going to load dataset.filter_labels("predictions",F("label") == "airplane").limit(10)
 
 You: exit
 ```
@@ -210,9 +229,7 @@ You can also use `ask_voxelgpt()` to prompt VoxelGPT with individual queries:
 
 ```py
 from voxelgpt import ask_voxelgpt
-```
 
-```py
 ask_voxelgpt("Does FiftyOne integrate with Label Studio?")
 ```
 
@@ -229,11 +246,11 @@ import fiftyone.zoo as foz
 dataset = foz.load_zoo_dataset("quickstart")
 
 view = ask_voxelgpt("show me 10 random samples", dataset)
-print(view)
 ```
 
 ```
-TODO
+Identified potential view stages: ['sort_by', 'limit', 'skip', 'take', 'exclude']
+Okay, I'm going to load dataset.take(10)
 ```
 
 ## Keywords
