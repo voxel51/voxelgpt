@@ -32,6 +32,19 @@ class add_sys_path(object):
             pass
 
 
+# @todo replace with `dataset.get_plugin_setting`
+def get_plugin_setting(dataset, plugin_name, key, default=None):
+    value = dataset.app_config.plugins.get(plugin_name, {}).get(key, None)
+
+    if value is None:
+        value = fo.app_config.plugins.get(plugin_name, {}).get(key, None)
+
+    if value is None:
+        value = default
+
+    return value
+
+
 class AskVoxelGPT(foo.Operator):
     @property
     def config(self):
@@ -250,13 +263,37 @@ class OpenVoxelGPTPanel(foo.Operator):
         )
 
     def execute(self, ctx):
-        return ctx.trigger(
+        ctx.trigger(
             "open_panel",
             params=dict(name="voxelgpt", isActive=True, layout="horizontal"),
         )
+
+
+class OpenVoxelGPTPanelOnStartup(foo.Operator):
+    @property
+    def config(self):
+        return foo.OperatorConfig(
+            name="open_voxelgpt_panel_on_startup",
+            label="Open VoxelGPT Panel",
+            on_startup=True,
+            unlisted=True,
+        )
+
+    def execute(self, ctx):
+        open_on_startup = get_plugin_setting(
+            ctx.dataset, self.plugin_name, "open_on_startup", default=False
+        )
+        if open_on_startup:
+            ctx.trigger(
+                "open_panel",
+                params=dict(
+                    name="voxelgpt", isActive=True, layout="horizontal"
+                ),
+            )
 
 
 def register(p):
     p.register(AskVoxelGPT)
     p.register(AskVoxelGPTPanel)
     p.register(OpenVoxelGPTPanel)
+    p.register(OpenVoxelGPTPanelOnStartup)
