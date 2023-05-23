@@ -99,7 +99,7 @@ fiftyone plugins requirements @voxel51/voxelgpt --install
 
 ### Local use/development
 
-If you want to directly use the `voxelgpt` module and/or develop the project
+If you want to directly use the `voxelgpt` module or develop the project
 locally, then you'll want to clone repository:
 
 ```shell
@@ -117,15 +117,13 @@ and make the plugin available for use in the FiftyOne App by symlinking it into
 your plugins directory:
 
 ```shell
-# Symlinks your clone of the `voxelgpt` into your FiftyOne plugins directory`
+# Symlinks your clone of the `voxelgpt` into your FiftyOne plugins directory
 ln -s "$(pwd)" "$(fiftyone config plugins_dir)/voxelgpt"
 ```
 
 ## Using VoxelGPT in the App
 
-You can use VoxelGPT in the FiftyOne App by loading any dataset and clicking on
-the OpenAI icon above the grid or by pressing the `+` icon and choosing
-VoxelGPT:
+You can use VoxelGPT in the FiftyOne App by loading any dataset:
 
 ```py
 import fiftyone as fo
@@ -134,6 +132,11 @@ import fiftyone.zoo as foz
 dataset = foz.load_zoo_dataset("quickstart")
 session = fo.launch_app(dataset)
 ```
+
+and then either:
+
+-   Clicking on the OpenAI icon above the grid
+-   Pressing the `+` icon next to the Samples tab and choosing VoxelGPT
 
 > TODO: GIF HERE!
 
@@ -185,19 +188,43 @@ You:
     What is the difference between precision and recall?
 
 VoxelGPT:
-    Precision and recall are two important metrics used to evaluate the performance of a machine learning model in classification tasks. Precision measures the proportion of true positive predictions among all positive predictions made by the model. Recall, on the other hand, measures the proportion of true positive predictions among all actual positive instances in the dataset.
+    Precision and recall are two important metrics used to evaluate the
+    performance of a machine learning model in classification tasks. Precision
+    measures the proportion of true positive predictions among all positive
+    predictions made by the model. Recall, on the other hand, measures the
+    proportion of true positive predictions among all actual positive instances
+    in the dataset.
 
-    In other words, precision is the ability of the model to correctly identify positive instances, while recall is the ability of the model to identify all positive instances. A high precision means that the model is making very few false positive predictions, while a high recall means that the model is able to identify most of the positive instances in the dataset.
+    In other words, precision is the ability of the model to correctly identify
+    positive instances, while recall is the ability of the model to identify
+    all positive instances. A high precision means that the model is making
+    very few false positive predictions, while a high recall means that the
+    model is able to identify most of the positive instances in the dataset.
 
-    It is important to balance precision and recall when evaluating a model's performance. A model with high precision but low recall may be missing important positive instances, while a model with high recall but low precision may be making too many false positive predictions.
+    It is important to balance precision and recall when evaluating a model's
+    performance. A model with high precision but low recall may be missing
+    important positive instances, while a model with high recall but low
+    precision may be making too many false positive predictions.
 
-    In the context of the FiftyOne library, precision and recall can be computed using the `fiftyone.utils.metrics` module, which provides functions for computing various classification metrics. For example, the `fiftyone.utils.metrics.binary_classification` function can be used to compute precision and recall for binary classification tasks.
+    In the context of the FiftyOne library, precision and recall can be
+    computed using the `fiftyone.utils.metrics` module, which provides
+    functions for computing various classification metrics. For example, the
+    `fiftyone.utils.metrics.binary_classification` function can be used to
+    compute precision and recall for binary classification tasks.
 
 You:
     Does FiftyOne integrate with Label Studio?
 
 VoxelGPT:
-    Yes, FiftyOne integrates with Label Studio, which is an open-source data labeling tool with a user-friendly UI. The integration allows you to easily upload your data directly from FiftyOne to Label Studio for labeling. You can get started with Label Studio through a simple pip install to get a local server up and running. FiftyOne provides simple setup instructions that you can use to specify the necessary account credentials and server endpoint to use. FiftyOne also provides an API to create projects, upload data, define label schemas, and download annotations using Label Studio, all programmatically in Python.
+    Yes, FiftyOne integrates with Label Studio, which is an open-source data
+    labeling tool with a user-friendly UI. The integration allows you to easily
+    upload your data directly from FiftyOne to Label Studio for labeling. You
+    can get started with Label Studio through a simple pip install to get a
+    local server up and running. FiftyOne provides simple setup instructions
+    that you can use to specify the necessary account credentials and server
+    endpoint to use. FiftyOne also provides an API to create projects, upload
+    data, define label schemas, and download annotations using Label Studio,
+    all programmatically in Python.
 
 You: show me predicted airplanes
 VoxelGPT:
@@ -239,7 +266,12 @@ ask_voxelgpt("Does FiftyOne integrate with CVAT?")
 ```
 
 ```
-Yes, FiftyOne integrates with CVAT, which is an open-source image and video annotation tool. You can upload your data directly from FiftyOne to CVAT to add or edit labels. FiftyOne provides simple setup instructions that you can use to specify the necessary account credentials and server endpoint to use. CVAT provides three levels of abstraction for annotation workflows: projects, tasks, and jobs.
+Yes, FiftyOne integrates with CVAT, which is an open-source image and video
+annotation tool. You can upload your data directly from FiftyOne to CVAT to
+add or edit labels. FiftyOne provides simple setup instructions that you can
+use to specify the necessary account credentials and server endpoint to use.
+CVAT provides three levels of abstraction for annotation workflows: projects,
+tasks, and jobs.
 ```
 
 When VoxelGPT creates a view in response to your query, it is returned:
