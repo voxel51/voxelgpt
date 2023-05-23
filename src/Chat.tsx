@@ -43,8 +43,6 @@ const Chat = () => {
 
   const groupedMessages = groupConsecutiveMessages(messages, receiving);
 
-  console.log({groupedMessages})
-
   return (
     <div style={{ overflow: "auto" }} ref={ref}>
       <Grid container direction="row">
