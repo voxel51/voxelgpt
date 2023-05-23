@@ -3,8 +3,8 @@
 Wish you could search your images or videos without writing a line of code? Now
 you can! 🎉
 
-VoxelGPT combines the power of
-[GPT-3.5](https://platform.openai.com/docs/models/gpt-3-5) with
+The VoxelGPT [plugin](https://docs.voxel51.com/plugins/index.html) combines the
+power of [GPT-3.5](https://platform.openai.com/docs/models/gpt-3-5) with
 [FiftyOne](https://github.com/voxel51/fiftyone)'s computer vision query
 language, enabling you to filter, sort, and semantically slice your data with
 natural language.
@@ -90,7 +90,7 @@ export OPENAI_API_KEY=XXXXXXXX
 
 If you only want to use VoxelGPT in the
 [FiftyOne App](https://docs.voxel51.com/user_guide/app.html), then you can
-simply run:
+simply [install it as a plugin](https://docs.voxel51.com/plugins/index.html):
 
 ```shell
 fiftyone plugins download https://github.com/voxel51/voxelgpt
@@ -299,13 +299,14 @@ Okay, I'm going to load dataset.take(10)
 VoxelGPT is trained to recognize certain keywords that help it understand your
 intent:
 
-| Keyword          | Meaning                                                                                                                                                                                                                                                       |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `show`/`display` | Tells VoxelGPT that you want it to query your dataset and display the results               
-| `docs`/`FiftyOne`           | Tells VoxelGPT that you want it to query the FiftyOne docs.                                                                                                                                                                      |                                                        
-| `now`            | Use your chat history as context to interpret your next query. For example, if you ask "show me images with people", and then ask "now show me the 10 most unique ones", VoxelGPT will understand that you want to show the 10 most unique images with people |                                                                |
-| `reset`          | Resets the conversation history                                                                                                                                                                                                                               |
-| `exit`           | Exits interactive Python sessions                                                                                                                                                                                                                             |
+| Keyword           | Meaning                                                                                                                                                                                                                                                       |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- |
+| `show`/`display`  | Tells VoxelGPT that you want it to query your dataset and display the results                                                                                                                                                                                 |
+| `docs`/`FiftyOne` | Tells VoxelGPT that you want it to query the FiftyOne docs.                                                                                                                                                                                                   |
+| `now`             | Use your chat history as context to interpret your next query. For example, if you ask "show me images with people", and then ask "now show me the 10 most unique ones", VoxelGPT will understand that you want to show the 10 most unique images with people |     |
+| `reset`           | Resets the conversation history                                                                                                                                                                                                                               |
+| `exit`            | Exits interactive Python sessions                                                                                                                                                                                                                             |
+
 ## Contributing
 
 Contributions are welcome! If you plan to contribute a PR, please install the
@@ -334,10 +335,10 @@ VoxelGPT uses:
 -   [LangChain](https://github.com/hwchase17/langchain) provides the connective
     tissue for the application
 -   OpenAI's [GPT-3.5 model](https://platform.openai.com/docs/models/gpt-3-5)
-    to generate answers, including Python code that is compatible with
-    [FiftyOne](https://github.com/voxel51/fiftyone)
--   The [FiftyOne App](https://docs.voxel51.com/user_guide/app.html) to display
-    the results
+    to generate answers, including Python code
+-   FiftyOne's [plugin framework](https://docs.voxel51.com/plugins/index.html)
+    to provide the interactive panel in the
+    [FiftyOne App](https://docs.voxel51.com/user_guide/app.html)
 
 ## Limitations
 
