@@ -101,14 +101,13 @@ class AskVoxelGPT(foo.Operator):
     def error(self, ctx, exception):
         message = str(exception)
         trace = traceback.format_exc()
-        view = types.ErrorView(label=message, description=trace)
+        view = types.Error(label=message, description=trace)
         outputs = types.Object()
-        outputs.str("message", view=view)
+        outputs.view("message", view)
         return ctx.trigger(
             "show_output",
             params=dict(
-                outputs=types.Property(outputs).to_json(),
-                data=dict(message=message),
+                outputs=types.Property(outputs).to_json()
             ),
         )
 
@@ -232,6 +231,7 @@ class OpenVoxelGPTPanel(foo.Operator):
         return foo.OperatorConfig(
             name="open_voxelgpt_panel",
             label="Open VoxelGPT Panel",
+            on_startup=True,
             unlisted=True,
         )
 
@@ -246,10 +246,11 @@ class OpenVoxelGPTPanel(foo.Operator):
         )
 
     def execute(self, ctx):
-        return ctx.trigger(
-            "open_panel",
-            params=dict(name="voxelgpt", isActive=True),
-        )
+        if ctx.dataset_name == "quickstart":
+            return ctx.trigger(
+                "open_panel",
+                params=dict(name="voxelgpt", isActive=True, layout="horizontal")
+            )
 
 
 def register(p):
