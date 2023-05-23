@@ -37,6 +37,14 @@ DISPLAY_KEYWORDS = (
 )
 
 
+DOCUMENTATION_KEYWORDS = (
+    "docs",
+    "documentation",
+    "fiftyone",
+    "fifty one",
+)
+
+
 def _load_prefix(path):
     with open(path, "r") as f:
         return f.read()
@@ -115,9 +123,25 @@ def _match_display_keywords(query):
     return False
 
 
-def classify_query_intent_stages(query):
+def _match_docs_keywords(query):
+    for keyword in DOCUMENTATION_KEYWORDS:
+        if keyword in query:
+            return True
+    return False
+
+
+def _match_keywords(query):
     if _match_display_keywords(query):
         return "display"
+    elif _match_docs_keywords(query):
+        return "documentation"
+    else:
+        return
+
+
+def classify_query_intent_stages(query):
+    # if _match_display_keywords(query):
+    #     return "display"
     prompt = _assemble_query_intent_classifier_prompt(query, "display")
     res = get_llm().call_as_llm(prompt).strip()
     if "display" in res or "object" in res or "description" in res:
@@ -138,6 +162,9 @@ def classify_query_intent_qa(query):
 
 
 def classify_query_intent(query):
+    intent = _match_keywords(query)
+    if intent:
+        return intent
     intent = classify_query_intent_stages(query)
     if intent == "display":
         return intent
