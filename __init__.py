@@ -32,6 +32,19 @@ class add_sys_path(object):
             pass
 
 
+# @todo replace with `dataset.get_plugin_setting`
+def get_plugin_setting(dataset, plugin_name, key, default=None):
+    value = dataset.app_config.plugins.get(plugin_name, {}).get(key, None)
+
+    if value is None:
+        value = fo.app_config.plugins.get(plugin_name, {}).get(key, None)
+
+    if value is None:
+        value = default
+
+    return value
+
+
 class AskVoxelGPT(foo.Operator):
     @property
     def config(self):
@@ -229,11 +242,6 @@ class AskVoxelGPTPanel(foo.Operator):
 
         return chat_history, ctx.view, orig_view
 
-def open_panel(ctx):
-    ctx.trigger(
-        "open_panel",
-        params=dict(name="voxelgpt", isActive=True, layout="horizontal"),
-    )
 
 class OpenVoxelGPTPanel(foo.Operator):
     @property
@@ -254,10 +262,13 @@ class OpenVoxelGPTPanel(foo.Operator):
         )
 
     def execute(self, ctx):
-        open_panel(ctx)
+        ctx.trigger(
+            "open_panel",
+            params=dict(name="voxelgpt", isActive=True, layout="horizontal"),
+        )
 
 
-class OpenVoxelGPTPanelOnStartup(OpenVoxelGPTPanel):
+class OpenVoxelGPTPanelOnStartup(foo.Operator):
     @property
     def config(self):
         return foo.OperatorConfig(
@@ -267,16 +278,18 @@ class OpenVoxelGPTPanelOnStartup(OpenVoxelGPTPanel):
             unlisted=True,
         )
 
-    def resolve_placement(self, ctx):
-        return None
-
     def execute(self, ctx):
-        app_plugin_settings = fo.app_config.plugins.get(self.plugin_name, {})
-        dataset_plugin_settings = ctx.dataset.app_config.plugins.get(self.plugin_name, {})
-        plugin_settings = {**app_plugin_settings, **dataset_plugin_settings}
-        open_on_startup = plugin_settings.get("open_on_startup", False)
+        open_on_startup = get_plugin_setting(
+            ctx.dataset, self.plugin_name, "open_on_startup", default=False
+        )
         if open_on_startup:
-            open_panel(ctx)
+            ctx.trigger(
+                "open_panel",
+                params=dict(
+                    name="voxelgpt", isActive=True, layout="horizontal"
+                ),
+            )
+
 
 def register(p):
     p.register(AskVoxelGPT)
