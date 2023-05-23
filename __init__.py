@@ -58,6 +58,7 @@ class AskVoxelGPT(foo.Operator):
 
         try:
             with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
+                # pylint: disable=no-name-in-module
                 from voxelgpt import ask_voxelgpt_generator
 
                 for response in ask_voxelgpt_generator(
@@ -106,9 +107,7 @@ class AskVoxelGPT(foo.Operator):
         outputs.view("message", view)
         return ctx.trigger(
             "show_output",
-            params=dict(
-                outputs=types.Property(outputs).to_json()
-            ),
+            params=dict(outputs=types.Property(outputs).to_json()),
         )
 
 
@@ -131,6 +130,7 @@ class AskVoxelGPTPanel(foo.Operator):
 
         try:
             with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
+                # pylint: disable=no-name-in-module
                 from voxelgpt import ask_voxelgpt_generator
 
                 for response in ask_voxelgpt_generator(
@@ -212,17 +212,22 @@ class AskVoxelGPTPanel(foo.Operator):
             if history:
                 chat_history.append(history)
 
-        # If we found an `orig_view`, start from that instead
-        if orig_view is not None:
+        # If we have an `orig_view` into the same dataset, start from it
+        if orig_view is not None and orig_view["dataset"] == ctx.dataset.name:
             try:
                 sample_collection = fo.DatasetView._build(
-                    ctx.dataset, orig_view
+                    ctx.dataset, orig_view["stages"]
                 )
                 return chat_history, sample_collection, None
             except:
                 pass
 
-        return chat_history, ctx.view, ctx.view._serialize()
+        orig_view = dict(
+            dataset=ctx.dataset.name,
+            stages=ctx.view._serialize(),
+        )
+
+        return chat_history, ctx.view, orig_view
 
 
 class OpenVoxelGPTPanel(foo.Operator):
@@ -249,7 +254,9 @@ class OpenVoxelGPTPanel(foo.Operator):
         if ctx.dataset_name == "quickstart":
             return ctx.trigger(
                 "open_panel",
-                params=dict(name="voxelgpt", isActive=True, layout="horizontal")
+                params=dict(
+                    name="voxelgpt", isActive=True, layout="horizontal"
+                ),
             )
 
 
