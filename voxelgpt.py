@@ -36,7 +36,7 @@ def ask_voxelgpt_interactive(
     session=None,
     chat_history=None,
 ):
-    """Starts an interactive session with VoxelGPT.
+    """Launches an interactive session with VoxelGPT.
 
     You will be prompted by ``input()`` to provide queries, any responses from
     VoxelGPT will be printed to stdout, and any views created are automatically
@@ -44,6 +44,10 @@ def ask_voxelgpt_interactive(
 
     If you provide a chat history, your query and VoxelGPT's responses will be
     added to it.
+
+    .. note::
+
+        To end your session, press `ENTER` without a prompt or type `exit`.
 
     Args:
         sample_collection (None): a
@@ -106,7 +110,7 @@ def ask_voxelgpt(query, sample_collection=None, chat_history=None):
 
     for response in ask_voxelgpt_generator(
         query,
-        sample_collection,
+        sample_collection=sample_collection,
         chat_history=chat_history,
         dialect="string",
     ):
@@ -200,12 +204,14 @@ def ask_voxelgpt_generator(
 
     if sample_collection is None:
         raise ValueError(
-            "You must provide a sample collection in order for me to generate "
-            "views"
+            "You must provide a sample collection in order for me to respond "
+            "to this query"
         )
 
     if sample_collection.media_type not in ("image", "video"):
-        raise ValueError("Only image or video collections are supported")
+        raise ValueError(
+            "Only image or video collections are currently supported"
+        )
 
     # Algorithms
     algorithms = select_algorithms(query)
