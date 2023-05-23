@@ -9,7 +9,10 @@ from collections import defaultdict
 
 import fiftyone as fo
 
-from links.query_validator import moderate_query, validate_query
+from links.query_moderator import moderate_query
+from links.query_intent_classifier import classify_query_intent
+from links.docs_query_dispatcher import run_docs_query
+from links.computer_vision_query_dispatcher import run_computer_vision_query
 from links.view_stage_example_selector import (
     generate_view_stage_examples_prompt,
 )
@@ -29,9 +32,11 @@ _SUPPORTED_DIALECTS = ("string", "markdown", "raw")
 
 
 def ask_voxelgpt_interactive(
-    sample_collection, session=None, chat_history=None
+    sample_collection=None,
+    session=None,
+    chat_history=None,
 ):
-    """Starts an interactive session with VoxelGPT.
+    """Launches an interactive session with VoxelGPT.
 
     You will be prompted by ``input()`` to provide queries, any responses from
     VoxelGPT will be printed to stdout, and any views created are automatically
@@ -40,8 +45,12 @@ def ask_voxelgpt_interactive(
     If you provide a chat history, your query and VoxelGPT's responses will be
     added to it.
 
+    .. note::
+
+        To end your session, press `ENTER` without a prompt or type `exit`.
+
     Args:
-        sample_collection: a
+        sample_collection (None): a
             :class:`fiftyone.core.collections.SampleCollection` to query
         session (None): an optional :class:`fiftyone.core.session.Session` to
             load views in. By default, a new App session is launched
@@ -59,24 +68,26 @@ def ask_voxelgpt_interactive(
             chat_history.clear()
             continue
 
-        response = ask_voxelgpt(
-            query, sample_collection, chat_history=chat_history
+        coll = ask_voxelgpt(
+            query,
+            sample_collection=sample_collection,
+            chat_history=chat_history,
         )
 
-        if response is None:
+        if coll is None:
             continue
 
         if session is None:
             session = fo.launch_app(sample_collection, auto=False)
 
-        if session._collection != response:
-            if isinstance(response, fo.Dataset):
-                session.dataset = response
-            elif isinstance(response, fo.DatasetView):
-                session.view = response
+        if session._collection != coll:
+            if isinstance(coll, fo.Dataset):
+                session.dataset = coll
+            elif isinstance(coll, fo.DatasetView):
+                session.view = coll
 
 
-def ask_voxelgpt(query, sample_collection, chat_history=None):
+def ask_voxelgpt(query, sample_collection=None, chat_history=None):
     """Prompts VoxelGPT with the given query with respect to the given sample
     collection.
 
@@ -87,7 +98,7 @@ def ask_voxelgpt(query, sample_collection, chat_history=None):
 
     Args:
         query: a prompt string
-        sample_collection: a
+        sample_collection (None): a
             :class:`fiftyone.core.collections.SampleCollection` to query
         chat_history (None): an optional chat history list
 
@@ -99,7 +110,7 @@ def ask_voxelgpt(query, sample_collection, chat_history=None):
 
     for response in ask_voxelgpt_generator(
         query,
-        sample_collection,
+        sample_collection=sample_collection,
         chat_history=chat_history,
         dialect="string",
     ):
@@ -116,12 +127,12 @@ def ask_voxelgpt(query, sample_collection, chat_history=None):
 
 def ask_voxelgpt_generator(
     query,
-    sample_collection,
+    sample_collection=None,
     chat_history=None,
     dialect="string",
 ):
     """Generator that emits responses from VoxelGPT with respect to the given
-    query against the given sample collection.
+    query.
 
     The generator may emit the following types of content:
 
@@ -140,15 +151,12 @@ def ask_voxelgpt_generator(
 
     Args:
         query: a prompt string
-        sample_collection: a
+        sample_collection (None): a
             :class:`fiftyone.core.collections.SampleCollection` to query
         chat_history (None): an optional chat history list
         dialect ("string"): the response format to return. Supported values are
             ``("string", "markdown", "raw")``
     """
-    if sample_collection.media_type not in ("image", "video"):
-        raise ValueError("Only image or video collections are supported")
-
     if dialect not in _SUPPORTED_DIALECTS:
         raise ValueError(
             f"Unsupported dialect '{dialect}'. Supported: {_SUPPORTED_DIALECTS}"
@@ -182,9 +190,28 @@ def ask_voxelgpt_generator(
     if chat_history:
         query = generate_effective_query(chat_history)
 
-    if not validate_query(query):
+    # Intent classification
+    intent = classify_query_intent(query)
+    if intent == "documentation":
+        yield _respond(run_docs_query(query))
+        return
+    elif intent == "computer_vision":
+        yield _respond(run_computer_vision_query(query))
+        return
+    elif intent != "display":
         yield _respond(_clarify_message())
         return
+
+    if sample_collection is None:
+        raise ValueError(
+            "You must provide a sample collection in order for me to respond "
+            "to this query"
+        )
+
+    if sample_collection.media_type not in ("image", "video"):
+        raise ValueError(
+            "Only image or video collections are currently supported"
+        )
 
     # Algorithms
     algorithms = select_algorithms(query)
@@ -383,22 +410,27 @@ def _algorithms_message(algorithms):
 
 
 def _runs_message(runs):
+    runs_map = {}
+    for run_type in list(runs.keys()):
+        run_info = runs[run_type]
+        if run_type == "uniqueness":
+            key = "uniqueness_field"
+        else:
+            key = "key"
+
+        runs_map[run_type] = run_info[key]
+
     prefix = "Identified potential runs: "
 
     # Markdown
-    runs_map = defaultdict(list)
-    for key, run_type in runs.items():
-        runs_map[run_type].append(key)
-
     chunks = []
-    for run_type, keys in runs_map.items():
-        chunks.append(f"\n - `{run_type}` runs: ")
-        chunks.append(", ".join(f"`{k}`" for k in keys))
+    for run_type, key in runs_map.items():
+        chunks.append(f"\n - `{run_type}` run: `{key}`")
 
     markdown = "".join(chunks)
 
     return {
-        "string": prefix + str(runs),
+        "string": prefix + str(runs_map),
         "markdown": prefix + markdown,
     }
 

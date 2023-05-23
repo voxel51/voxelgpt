@@ -1,4 +1,0 @@
-query,available_runs,selected_run
-uniqueness with torch model,"[(key: u1, model: TorchImageModel), (key: u2, model: resnet)]",u2
-most distinct images with key 'partial_uniqueness',"[(key: partial_uniqueness, model: TorchImageModel), (key: full_uniqueness, model: TorchImageModel)",partial_uniqueness
-sort by uniqueness,"[(key: uniqueness, model: modelA), (key: uniqueness_new, model: modelB)",uniqueness

@@ -10,6 +10,8 @@ import os
 
 from langchain.prompts import FewShotPromptTemplate, PromptTemplate
 
+# pylint: disable=relative-beyond-top-level
+from .utils import get_cache
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -20,8 +22,13 @@ VIEW_STAGE_DESCRIPTIONS_PATH = os.path.join(
 
 
 def get_view_stages_list():
-    with open(VIEW_STAGES_LIST_PATH, "r") as f:
-        return f.read().splitlines()
+    cache = get_cache()
+    key = "view_stages_list"
+    if key not in cache:
+        with open(VIEW_STAGES_LIST_PATH, "r") as f:
+            cache[key] = f.read().splitlines()
+
+    return cache[key]
 
 
 def count_view_stage_occurrences(view_stage_examples_prompt):
@@ -44,13 +51,21 @@ def get_most_relevant_view_stages(view_stage_examples_prompt):
     )[:5]
     return relevant_view_stages
 
+def get_view_stage_descriptions_dict():
+    cache = get_cache()
+    key = 'view_stage_descriptions_dict'
+    if key not in cache:
+        with open(VIEW_STAGE_DESCRIPTIONS_PATH, "r") as f:
+            cache[key] = json.load(f)
+
+    return cache[key]
 
 def generate_view_stage_descriptions_prompt(view_stage_examples_prompt):
     relevant_view_stages = get_most_relevant_view_stages(
         view_stage_examples_prompt
     )
-    with open(VIEW_STAGE_DESCRIPTIONS_PATH, "r") as f:
-        view_stage_descriptions_dict = json.load(f)
+
+    view_stage_descriptions_dict = get_view_stage_descriptions_dict()
 
     examples = [
         {

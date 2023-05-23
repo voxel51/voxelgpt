@@ -13,16 +13,16 @@ from langchain.prompts import FewShotPromptTemplate, PromptTemplate
 import pandas as pd
 
 # pylint: disable=relative-beyond-top-level
-from .utils import get_chromadb_client, get_embedding_function
+from .utils import get_chromadb_client, get_embedding_function, get_cache
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EXAMPLES_DIR = os.path.join(ROOT_DIR, "examples")
 
-EXAMPLE_EMBEDDINGS_PATH = os.path.join(EXAMPLES_DIR, "embeddings.json")
-VIEW_STAGE_EXAMPLES_PATH = os.path.join(
-    EXAMPLES_DIR, "fiftyone_viewstage_examples.csv"
+EXAMPLE_EMBEDDINGS_PATH = os.path.join(
+    EXAMPLES_DIR, "viewstage_embeddings.json"
 )
+VIEW_STAGE_EXAMPLES_PATH = os.path.join(EXAMPLES_DIR, "viewstage_examples.csv")
 
 CHROMADB_COLLECTION_NAME = "fiftyone_view_stage_examples"
 
@@ -74,12 +74,15 @@ def get_or_create_embeddings(queries):
 
     return query_embeddings
 
+
 def _format_bool_column(col):
     return [str(int(entry)) for entry in col.tolist()]
+
 
 def _contains_match_or_filter_labels(stages_list):
     cond = ("match" in stages_list) or ("filter_labels" in stages_list)
     return str(int(cond))
+
 
 def create_chroma_collection(client):
     collection = client.create_collection(
@@ -98,14 +101,16 @@ def create_chroma_collection(client):
     metas = _format_bool_column(examples["metadata"])
 
     stages_lists = examples["stages"].tolist()
-    match_filter = [_contains_match_or_filter_labels(sl) for sl in stages_lists]
+    match_filter = [
+        _contains_match_or_filter_labels(sl) for sl in stages_lists
+    ]
 
     ids = [f"{i}" for i in range(len(queries))]
     metadatas = [
         {
-            "input": query, 
-            "output": sl, 
-            "media_type": mt, 
+            "input": query,
+            "output": sl,
+            "media_type": mt,
             "geo": geo,
             "label_type": lt,
             "text_sim": ts,
@@ -113,11 +118,11 @@ def create_chroma_collection(client):
             "eval": eval,
             "meta": meta,
             "match_filter": mf,
-            }
+        }
         for query, sl, mt, geo, lt, ts, ims, eval, meta, mf in zip(
-            queries, 
-            stages_lists, 
-            media_types, 
+            queries,
+            stages_lists,
+            media_types,
             geos,
             label_types,
             text_sims,
@@ -125,7 +130,7 @@ def create_chroma_collection(client):
             evals,
             metas,
             match_filter,
-            )
+        )
     ]
 
     embeddings = get_or_create_embeddings(queries)
@@ -139,6 +144,7 @@ def has_geo_field(sample_collection):
     types = [type(t) for t in types]
     return any(["Geo" in t.__name__ for t in types])
 
+
 def get_label_type(sample_collection, field_name):
     sample = sample_collection.first()
     field = sample.get_field(field_name)
@@ -149,27 +155,25 @@ def get_label_type(sample_collection, field_name):
 
 def _replace_run_keys(prompt, runs):
     if "text_similarity" in runs:
-        prompt = prompt.replace(
-            "TEXT_SIM_KEY", 
-            runs["text_similarity"]['key']
-            )
+        prompt = prompt.replace("TEXT_SIM_KEY", runs["text_similarity"]["key"])
     if "image_similarity" in runs:
         prompt = prompt.replace(
-            "IMAGE_SIM_KEY", 
-            runs["image_similarity"]['key']
-            )
+            "IMAGE_SIM_KEY", runs["image_similarity"]["key"]
+        )
     if "evaluation" in runs:
+        prompt = prompt.replace("EVAL_KEY", runs["evaluation"]["key"])
+    if "uniqueness" in runs:
         prompt = prompt.replace(
-            "EVAL_KEY", 
-            runs["evaluation"]['key']
-            )
+            "UNIQUENESS_FIELD", runs["uniqueness"]["uniqueness_field"]
+        )
     return prompt
 
+
 def _count_empty_class_names(label_field):
-    return [
-        list(class_name.values())[0] 
-        for class_name in label_field
-        ].count([])
+    return [list(class_name.values())[0] for class_name in label_field].count(
+        []
+    )
+
 
 def _reduce_label_fields(label_fields):
     label_field_keys = list(label_fields.keys())
@@ -182,10 +186,12 @@ def _reduce_label_fields(label_fields):
         ]
         min_empty_count = min(empty_counts)
         valid_keys = [
-            key for key, count in zip(label_field_keys, empty_counts)
+            key
+            for key, count in zip(label_field_keys, empty_counts)
             if count == min_empty_count
         ]
         return {key: label_fields[key] for key in valid_keys}, min_empty_count
+
 
 def _parse_runs_and_labels(runs, label_fields):
     reduced_label_fields, count = _reduce_label_fields(label_fields.copy())
@@ -195,9 +201,9 @@ def _parse_runs_and_labels(runs, label_fields):
 
     return reduced_runs, reduced_label_fields
 
-def get_similar_examples(sample_collection, query, runs, label_fields):
-    client = get_chromadb_client()
 
+def _load_examples_vectorstore():
+    client = get_chromadb_client()
     try:
         collection = client.get_collection(
             CHROMADB_COLLECTION_NAME,
@@ -205,6 +211,36 @@ def get_similar_examples(sample_collection, query, runs, label_fields):
         )
     except:
         collection = create_chroma_collection(client)
+    return collection
+
+
+def initialize_examples_vectorstore():
+    cache = get_cache()
+    key = "viewstage_examples_db"
+    examples_db = _load_examples_vectorstore()
+    cache[key] = examples_db
+
+
+def _get_evaluation_type(sample_collection, eval_key):
+    eval_cls = sample_collection.get_evaluation_info(eval_key).config.cls
+    if "openimages" in eval_cls:
+        return "detection"
+    elif "coco" in eval_cls:
+        return "detection"
+    elif "activitynet" in eval_cls:
+        return "detection"
+    elif "classification" in eval_cls:
+        return "classification"
+    return None
+
+
+def get_similar_examples(sample_collection, query, runs, label_fields):
+    cache = get_cache()
+    key = "viewstage_examples_db"
+
+    if key not in cache:
+        initialize_examples_vectorstore()
+    examples_db = cache[key]
 
     red_runs, red_label_fields = _parse_runs_and_labels(runs, label_fields)
 
@@ -213,7 +249,7 @@ def get_similar_examples(sample_collection, query, runs, label_fields):
     text_sim = "text_similarity" in red_runs
     image_sim = "image_similarity" in red_runs
     meta = "metadata" in red_runs
-    eval = "eval" in red_runs
+    eval = "evaluation" in red_runs
 
     _filter = {
         "$or": [
@@ -222,30 +258,37 @@ def get_similar_examples(sample_collection, query, runs, label_fields):
         ]
     }
 
-    if red_label_fields:
-        label_types = list(set(
-            [
-                get_label_type(sample_collection, field) 
-                for field in red_label_fields
-                ]
-            ))
-        label_types.append("all")
+    if red_label_fields or eval:
+        if red_label_fields:
+            label_field_types = list(
+                set(
+                    [
+                        get_label_type(sample_collection, field)
+                        for field in red_label_fields
+                    ]
+                )
+            )
+        else:
+            label_field_types = []
 
-        _label_filter_or = [
-            {"label_type": {"$eq": lt}}
-            for lt in label_types
-        ]
+        if eval:
+            eval_key = red_runs["evaluation"]["key"]
+            eval_types = [_get_evaluation_type(sample_collection, eval_key)]
+        else:
+            eval_types = []
 
-        _label_filter = {
-            "$or": _label_filter_or
-        }
-        
+        label_types = list(set(label_field_types + eval_types + ["all"]))
+
+        _label_filter_or = [{"label_type": {"$eq": lt}} for lt in label_types]
+
+        _label_filter = {"$or": _label_filter_or}
+
         _filter = {"$and": [_filter, _label_filter]}
 
     def add_and_to_filter(_filter, new_str):
         _filter = {"$and": [_filter, {new_str: {"$eq": "0"}}]}
         return _filter
-    
+
     match_filter = red_label_fields and not text_sim
 
     conds = [geo, text_sim, image_sim, meta, eval, match_filter]
@@ -254,7 +297,7 @@ def get_similar_examples(sample_collection, query, runs, label_fields):
     for cond, new_str in zip(conds, strs):
         _filter = add_and_to_filter(_filter, new_str) if not cond else _filter
 
-    res = collection.query(
+    res = examples_db.query(
         query_texts=[query], n_results=20, where=_filter, include=["metadatas"]
     )["metadatas"][0]
 
@@ -266,17 +309,11 @@ def get_similar_examples(sample_collection, query, runs, label_fields):
 
 
 def generate_view_stage_examples_prompt_template(
-        sample_collection, 
-        query, 
-        runs,
-        label_fields
-        ):
+    sample_collection, query, runs, label_fields
+):
     examples = get_similar_examples(
-        sample_collection, 
-        query, 
-        runs, 
-        label_fields
-        )
+        sample_collection, query, runs, label_fields
+    )
     example_prompt = VIEW_STAGE_EXAMPLE_PROMPT
     return FewShotPromptTemplate(
         examples=examples,
@@ -288,20 +325,14 @@ def generate_view_stage_examples_prompt_template(
 
 
 def generate_view_stage_examples_prompt(
-        sample_collection, 
-        query,
-        runs,
-        label_fields
-        ):
+    sample_collection, query, runs, label_fields
+):
     similar_examples_prompt_template = (
         generate_view_stage_examples_prompt_template(
-        sample_collection, 
-        query,
-        runs,
-        label_fields
+            sample_collection, query, runs, label_fields
         )
     )
-    
+
     prompt = similar_examples_prompt_template.format(text=query)
     prompt = _replace_run_keys(prompt, runs)
     return prompt
