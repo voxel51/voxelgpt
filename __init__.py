@@ -53,11 +53,7 @@ class AskVoxelGPT(foo.Operator):
 
     async def execute(self, ctx):
         query = ctx.params["query"]
-        if ctx.view is not None:
-            sample_collection = ctx.view
-        else:
-            sample_collection = ctx.dataset
-
+        sample_collection = ctx.view if ctx.view is not None else ctx.dataset
         messages = []
 
         try:
@@ -65,7 +61,9 @@ class AskVoxelGPT(foo.Operator):
                 from voxelgpt import ask_voxelgpt_generator
 
                 for response in ask_voxelgpt_generator(
-                    query, sample_collection, dialect="string"
+                    query,
+                    sample_collection=sample_collection,
+                    dialect="string",
                 ):
                     type = response["type"]
                     data = response["data"]
@@ -138,7 +136,7 @@ class AskVoxelGPTPanel(foo.Operator):
 
                 for response in ask_voxelgpt_generator(
                     query,
-                    sample_collection,
+                    sample_collection=sample_collection,
                     chat_history=chat_history,
                     dialect="markdown",
                 ):
