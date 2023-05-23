@@ -249,6 +249,7 @@ class OpenVoxelGPTPanel(foo.Operator):
         return foo.OperatorConfig(
             name="open_voxelgpt_panel",
             label="Open VoxelGPT Panel",
+            unlisted=True,
         )
 
     def resolve_placement(self, ctx):
