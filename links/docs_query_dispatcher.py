@@ -13,17 +13,24 @@ import uuid
 
 from langchain.chains import RetrievalQA
 from langchain.document_loaders import DirectoryLoader
-from langchain.embeddings import OpenAIEmbeddings
 from langchain.text_splitter import TokenTextSplitter
 from langchain.vectorstores import Chroma
 
+import eta.core.utils as etau
+
 # pylint: disable=relative-beyond-top-level
-from .utils import get_llm, get_embedding_function, get_cache
+from .utils import (
+    get_cache,
+    get_chromadb_client,
+    get_embedding_function,
+    get_embedding_model,
+    get_llm,
+)
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOCS_EMBEDDINGS_DIR = os.path.join(ROOT_DIR, ".fiftyone_docs_embeddings")
-CHROMADB_DOCS_DIR = os.path.join(ROOT_DIR, ".fiftyone_docs_db")
+CHROMADB_DOCS_DIR = os.path.join(ROOT_DIR, "fiftyone_docs_db")
 
 DOC_TYPES = (
     "cheat_sheets",
@@ -48,7 +55,7 @@ PATTS_TO_LINKS = {
     "FiftyOne Dataset Zoo": "https://docs.voxel51.com/user_guide/dataset_zoo/index.html",
     "FiftyOne Plugins": "https://docs.voxel51.com/plugins/index.html",
     "FiftyOne App": "https://docs.voxel51.com/user_guide/app.html",
-    "FiftyOne Brain": "https://docs.voxel51.com/user_guide/brain.html"
+    "FiftyOne Brain": "https://docs.voxel51.com/user_guide/brain.html",
 }
 
 
@@ -95,7 +102,7 @@ def _generate_docs_embeddings():
 
 def _create_docs_vectorstore():
     docs_db = Chroma(
-        embedding_function=OpenAIEmbeddings(),
+        embedding_function=get_embedding_model(),
         persist_directory=CHROMADB_DOCS_DIR,
     )
     docs_db.persist()
@@ -123,9 +130,18 @@ def _create_docs_vectorstore():
 
 
 def _load_docs_vectorstore():
+    if os.access(CHROMADB_DOCS_DIR, os.W_OK):
+        persist_directory = CHROMADB_DOCS_DIR
+    else:
+        writeable_dir = ".fiftyone_docs_db"
+        if not os.path.isdir(writeable_dir):
+            etau.copy_dir(CHROMADB_DOCS_DIR, writeable_dir)
+
+        persist_directory = writeable_dir
+
     return Chroma(
-        embedding_function=OpenAIEmbeddings(),
-        persist_directory=CHROMADB_DOCS_DIR,
+        embedding_function=get_embedding_model(),
+        persist_directory=persist_directory,
     )
 
 
@@ -150,7 +166,7 @@ def _format_response(response):
     for patt in PATTS_TO_LINKS:
         md_response = re.sub(
             patt, _wrap_text(patt), md_response, flags=re.IGNORECASE
-            )
+        )
 
     return {
         "string": str_response,
