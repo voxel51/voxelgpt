@@ -9,7 +9,8 @@
     "scripts": {
         "dev": "IS_DEV=true && nodemon --watch ./src --ext js,jsx,ts,tsx --exec 'yarn build'",
         "build": "vite build",
-        "archive": "./scripts/archive.sh"
+        "archive": "./scripts/archive.sh",
+        "bump": "python ./scripts/update_version.py bump"
     },
     "dependencies": {
         "@emotion/react": "^11.11.0",
