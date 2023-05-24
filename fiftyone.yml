@@ -1,12 +1,12 @@
-fiftyone:
-  version: "*"
-name: "@voxel51/voxelgpt"
 description: VoxelGPT
-license: MIT
-version: 1.0.0
+fiftyone:
+  version: '*'
 js_bundle: dist/index.umd.js
+license: MIT
+name: '@voxel51/voxelgpt'
 operators:
-  - ask_voxelgpt
-  - ask_voxelgpt_panel
-  - open_voxelgpt_panel
-  - open_voxelgpt_panel_on_startup
+- ask_voxelgpt
+- ask_voxelgpt_panel
+- open_voxelgpt_panel
+- open_voxelgpt_panel_on_startup
+version: 1.0.0
