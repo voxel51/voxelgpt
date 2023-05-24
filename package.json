@@ -8,7 +8,8 @@
     },
     "scripts": {
         "dev": "IS_DEV=true && nodemon --watch ./src --ext js,jsx,ts,tsx --exec 'yarn build'",
-        "build": "vite build"
+        "build": "vite build",
+        "archive": "./scripts/archive.sh"
     },
     "dependencies": {
         "@emotion/react": "^11.11.0",
