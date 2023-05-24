@@ -5,20 +5,21 @@ FiftyOne docs query dispatcher.
 | `voxel51.com <https://voxel51.com/>`_
 |
 """
+import numpy as np
 import os
 import pickle
 import re
+from scipy.spatial.distance import cosine
 import uuid
 
 from langchain.chains import RetrievalQA
 from langchain.document_loaders import DirectoryLoader
+from langchain.schema import Document, BaseRetriever
 from langchain.text_splitter import TokenTextSplitter
-from langchain.vectorstores import Chroma
 
 # pylint: disable=relative-beyond-top-level
 from .utils import (
     get_cache,
-    get_chromadb_client,
     get_embedding_function,
     get_embedding_model,
     get_llm,
@@ -27,7 +28,6 @@ from .utils import (
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOCS_EMBEDDINGS_FILE = os.path.join(ROOT_DIR, "fiftyone_docs_embeddings.pkl")
-CHROMADB_DOCS_COLLECTION_NAME = "fiftyone_docs"
 
 DOC_TYPES = (
     "cheat_sheets",
@@ -97,40 +97,36 @@ def _generate_docs_embeddings():
         pickle.dump(all_embeddings_dict, f)
 
 
-def _create_docs_vectorstore():
-    docs_db = Chroma(
-        collection_name=CHROMADB_DOCS_COLLECTION_NAME,
-        embedding_function=get_embedding_model(),
-        client=get_chromadb_client(),
-    )
+class FiftyOneDocsRetriever(BaseRetriever):
+    def __init__(self, fiftyone_docs_embeddings):
+        self.contents = [
+            Document(page_content=doc["content"])
+            for doc in fiftyone_docs_embeddings
+        ]
+        self.embeddings = [
+            np.array(doc["embedding"]) for doc in fiftyone_docs_embeddings
+        ]
 
-    docs_embeddings_file = DOCS_EMBEDDINGS_FILE
-    with open(docs_embeddings_file, "rb") as f:
-        docs_embeddings = pickle.load(f)
+    def get_relevant_documents(self, query):
+        query_embedding = np.array(get_embedding_function()(query))
+        dists = np.array(
+            [cosine(query_embedding, emb) for emb in self.embeddings]
+        )
 
-    ids = []
-    embeddings = []
-    documents = []
+        sorted_ix = np.argsort(dists).astype(int)
+        return [self.contents[ix] for ix in sorted_ix[:5]]
 
-    for doc_id, doc in docs_embeddings.items():
-        ids.append(doc_id)
-        embeddings.append(doc["embedding"])
-        documents.append(doc["content"])
-
-    docs_db._collection.add(
-        metadatas=None,
-        embeddings=embeddings,
-        documents=documents,
-        ids=ids,
-    )
-
-    return docs_db
+    async def aget_relevant_documents(self, query: str):
+        raise NotImplementedError
 
 
 def _create_docs_qa_chain():
-    docs_db = _create_docs_vectorstore()
+    with open(DOCS_EMBEDDINGS_FILE, "rb") as f:
+        docs_embeddings = list(pickle.load(f).values())
+
+    retriever = FiftyOneDocsRetriever(docs_embeddings)
     docs_qa_chain = RetrievalQA.from_chain_type(
-        llm=get_llm(), chain_type="stuff", retriever=docs_db.as_retriever()
+        llm=get_llm(), chain_type="stuff", retriever=retriever
     )
     return docs_qa_chain
 
@@ -165,5 +161,5 @@ def _format_response(response):
 
 def run_docs_query(query):
     docs_qa = load_docs_qa_chain()
-    response = docs_qa.run(query).strip()
+    response = docs_qa.run([query]).strip()
     return _format_response(response)
