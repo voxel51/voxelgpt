@@ -11,13 +11,7 @@ import chromadb
 from chromadb.utils import embedding_functions
 from langchain.chains import OpenAIModerationChain
 from langchain.chat_models import ChatOpenAI
-
-
-client = None
-llm = None
-embedding_function = None
-moderator = None
-cache_key = "_voxelgpt"
+from langchain.embeddings import OpenAIEmbeddings
 
 
 def get_openai_key():
@@ -32,37 +26,46 @@ def get_openai_key():
 
 
 def get_chromadb_client():
-    global client
+    cache = get_cache()
+    if "chromadb_client" not in cache:
+        cache["chromadb_client"] = chromadb.Client()
 
-    if client is None:
-        client = chromadb.Client()
-
-    return client
+    return cache["chromadb_client"]
 
 
 def get_llm():
-    global llm
-
-    if llm is None:
-        llm = ChatOpenAI(
+    cache = get_cache()
+    if "llm" not in cache:
+        cache["llm"] = ChatOpenAI(
             openai_api_key=get_openai_key(),
             temperature=0,
             model_name="gpt-3.5-turbo",
         )
 
-    return llm
+    return cache["llm"]
 
 
 def get_embedding_function():
-    global embedding_function
-
-    if embedding_function is None:
-        embedding_function = embedding_functions.OpenAIEmbeddingFunction(
+    cache = get_cache()
+    if "embedding_function" not in cache:
+        cache[
+            "embedding_function"
+        ] = embedding_functions.OpenAIEmbeddingFunction(
             api_key=get_openai_key(),
             model_name="text-embedding-ada-002",
         )
 
-    return embedding_function
+    return cache["embedding_function"]
+
+
+def get_embedding_model():
+    cache = get_cache()
+    if "embedding_model" not in cache:
+        cache["embedding_model"] = OpenAIEmbeddings(
+            openai_api_key=get_openai_key()
+        )
+
+    return cache["embedding_model"]
 
 
 class FiftyOneModeration(OpenAIModerationChain):
@@ -71,17 +74,18 @@ class FiftyOneModeration(OpenAIModerationChain):
 
 
 def get_moderator():
-    global moderator
+    cache = get_cache()
+    if "moderator" not in cache:
+        cache["moderator"] = FiftyOneModeration(
+            openai_api_key=get_openai_key()
+        )
 
-    if moderator is None:
-        moderator = FiftyOneModeration(openai_api_key=get_openai_key())
-
-    return moderator
+    return cache["moderator"]
 
 
 def get_cache():
     g = globals()
-    if cache_key not in g:
-        g[cache_key] = {}
+    if "_voxelgpt" not in g:
+        g["_voxelgpt"] = {}
 
-    return g[cache_key]
+    return g["_voxelgpt"]
