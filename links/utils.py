@@ -6,8 +6,10 @@ Link utils.
 |
 """
 import os
+import threading
+import queue
 
-from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+from langchain.callbacks.base import BaseCallbackHandler
 from langchain.chains import OpenAIModerationChain
 from langchain.chat_models import ChatOpenAI
 from openai import Embedding
@@ -24,26 +26,36 @@ def get_openai_key():
     return api_key
 
 
-def get_llm(streaming=False):
-    key = "llm_streaming" if streaming else "llm"
+def get_llm():
     cache = get_cache()
-    if key not in cache:
-        if streaming:
-            cache[key] = ChatOpenAI(
-                openai_api_key=get_openai_key(),
-                temperature=0,
-                model_name="gpt-3.5-turbo",
-                streaming=True,
-                callbacks=[StreamingStdOutCallbackHandler()],
-            )
-        else:
-            cache[key] = ChatOpenAI(
-                openai_api_key=get_openai_key(),
-                temperature=0,
-                model_name="gpt-3.5-turbo",
-            )
+    if "llm" not in cache:
+        cache["llm"] = ChatOpenAI(
+            openai_api_key=get_openai_key(),
+            temperature=0,
+            model_name="gpt-3.5-turbo",
+        )
 
-    return cache[key]
+    return cache["llm"]
+
+
+def stream_llm(prompt):
+    g = ThreadedGenerator()
+    threading.Thread(target=_llm_thread, args=(g, prompt)).start()
+    return g
+
+
+def _llm_thread(g, prompt):
+    try:
+        llm = ChatOpenAI(
+            openai_api_key=get_openai_key(),
+            temperature=0,
+            model_name="gpt-3.5-turbo",
+            streaming=True,
+            callbacks=[StreamingHandler(g)],
+        )
+        llm.call_as_llm(prompt)
+    finally:
+        g.close()
 
 
 def embedding_function(queries):
@@ -79,3 +91,33 @@ def get_cache():
         g["_voxelgpt"] = {}
 
     return g["_voxelgpt"]
+
+
+class ThreadedGenerator(object):
+    def __init__(self):
+        self.queue = queue.Queue()
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        item = self.queue.get()
+        if item is StopIteration:
+            raise item
+
+        return item
+
+    def send(self, data):
+        self.queue.put(data)
+
+    def close(self):
+        self.queue.put(StopIteration)
+
+
+class StreamingHandler(BaseCallbackHandler):
+    def __init__(self, gen):
+        super().__init__()
+        self.gen = gen
+
+    def on_llm_new_token(self, token, **kwargs):
+        self.gen.send(token)

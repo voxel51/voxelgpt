@@ -6,6 +6,7 @@ VoxelGPT entrypoints.
 |
 """
 from collections import defaultdict
+import sys
 
 import fiftyone as fo
 
@@ -113,6 +114,7 @@ def ask_voxelgpt(query, sample_collection=None, chat_history=None):
         sample_collection=sample_collection,
         chat_history=chat_history,
         dialect="string",
+        allow_streaming=True,
     ):
         type = response["type"]
         data = response["data"]
@@ -121,6 +123,9 @@ def ask_voxelgpt(query, sample_collection=None, chat_history=None):
             view = data["view"]
         elif type == "message":
             print(data["message"])
+        elif type == "streaming":
+            sys.stdout.write(data["content"])
+            sys.stdout.flush()
 
     return view
 
@@ -130,6 +135,7 @@ def ask_voxelgpt_generator(
     sample_collection=None,
     chat_history=None,
     dialect="string",
+    allow_streaming=True,
 ):
     """Generator that emits responses from VoxelGPT with respect to the given
     query.
@@ -139,6 +145,10 @@ def ask_voxelgpt_generator(
     -   Messages in the format::
 
         {"type": "message", "data": {"message": message}}
+
+    -   Streaming content in the format:
+
+        {"type": "streaming", "data": {"content": content, "last": True/False}}
 
     -   Views in the format::
 
@@ -156,6 +166,7 @@ def ask_voxelgpt_generator(
         chat_history (None): an optional chat history list
         dialect ("string"): the response format to return. Supported values are
             ``("string", "markdown", "raw")``
+        allow_streaming (True): whether to allow streaming responses
     """
     if dialect not in _SUPPORTED_DIALECTS:
         raise ValueError(
@@ -193,10 +204,30 @@ def ask_voxelgpt_generator(
     # Intent classification
     intent = classify_query_intent(query)
     if intent == "documentation":
-        yield _respond(run_docs_query(query))
+        if allow_streaming:
+            message = ""
+            for content in run_docs_query(query, streaming=True):
+                message += content
+                yield _emit_streaming_content(content)
+
+            _emit_streaming_content("", last=True)
+            _log_chat_history("GPT", message, chat_history)
+        else:
+            yield _respond(run_docs_query(query))
+
         return
     elif intent == "computer_vision":
-        yield _respond(run_computer_vision_query(query))
+        if allow_streaming:
+            message = ""
+            for content in run_computer_vision_query(query, streaming=True):
+                message += content
+                yield _emit_streaming_content(content)
+
+            _emit_streaming_content("", last=True)
+            _log_chat_history("GPT", message, chat_history)
+        else:
+            yield _respond(run_computer_vision_query(query))
+
         return
     elif intent != "display":
         yield _respond(_clarify_message())
@@ -513,6 +544,10 @@ def _full_collection_message(sample_collection):
 
 def _emit_message(message, _hist):
     return {"type": "message", "data": {"message": message, "history": _hist}}
+
+
+def _emit_streaming_content(content, last=False):
+    return {"type": "streaming", "data": {"content": content, "last": last}}
 
 
 def _emit_view(view):

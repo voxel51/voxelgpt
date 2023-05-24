@@ -156,7 +156,7 @@ def _format_response(response):
     }
 
 
-def run_docs_query(query):
+def run_docs_query(query, streaming=False):
     docs_qa = load_docs_qa_chain()
     response = docs_qa.run([query]).strip()
     return _format_response(response)

@@ -78,6 +78,7 @@ class AskVoxelGPT(foo.Operator):
                     query,
                     sample_collection=sample_collection,
                     dialect="string",
+                    allow_streaming=False,
                 ):
                     type = response["type"]
                     data = response["data"]
@@ -146,11 +147,14 @@ class AskVoxelGPTPanel(foo.Operator):
                 # pylint: disable=no-name-in-module
                 from voxelgpt import ask_voxelgpt_generator
 
+                streaming_message = None
+
                 for response in ask_voxelgpt_generator(
                     query,
                     sample_collection=sample_collection,
                     chat_history=chat_history,
                     dialect="markdown",
+                    allow_streaming=True,
                 ):
                     type = response["type"]
                     data = response["data"]
@@ -171,6 +175,24 @@ class AskVoxelGPTPanel(foo.Operator):
                         yield self.message(
                             ctx, data["message"], history=data["history"]
                         )
+                    elif type == "streaming":
+                        kwargs = {}
+
+                        if streaming_message is None:
+                            streaming_message = data["content"]
+                        else:
+                            streaming_message += data["content"]
+
+                            # @todo(ritch): implement overwrite_last in client
+                            kwargs["overwrite_last"] = True
+
+                        if data["last"]:
+                            kwargs["history"] = streaming_message
+
+                        yield self.message(ctx, streaming_message, **kwargs)
+
+                        if data["last"]:
+                            streaming_message = None
         except Exception as e:
             yield self.error(ctx, e)
         finally:
