@@ -18,6 +18,7 @@ from langchain.vectorstores import Chroma
 # pylint: disable=relative-beyond-top-level
 from .utils import (
     get_cache,
+    get_chromadb_client,
     get_embedding_function,
     get_embedding_model,
     get_llm,
@@ -100,6 +101,7 @@ def _create_docs_vectorstore():
     docs_db = Chroma(
         collection_name=CHROMADB_DOCS_COLLECTION_NAME,
         embedding_function=get_embedding_model(),
+        client=get_chromadb_client(),
     )
 
     docs_embeddings_file = DOCS_EMBEDDINGS_FILE
