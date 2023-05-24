@@ -37,10 +37,9 @@ export class ShowMessage extends Operator {
   async execute(ctx) {
     if (ctx.params.message || ctx.params.outputs) {
       ctx.state.set(state.atoms.receiving, true)
-      if (ctx.params.update_last) {
-        ctx.hooks.updateLastIncomingMessage({
-          ...ctx.params
-        })
+      const {update_last, ...params} = ctx.params
+      if (update_last) {
+        ctx.hooks.updateLastIncomingMessage(params)
       } else {
         ctx.hooks.addMessage({
           type: 'incoming',
