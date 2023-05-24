@@ -5,7 +5,6 @@ FiftyOne docs query dispatcher.
 | `voxel51.com <https://voxel51.com/>`_
 |
 """
-from glob import glob
 import os
 import pickle
 import re
