@@ -10,7 +10,7 @@ import os
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.chains import OpenAIModerationChain
 from langchain.chat_models import ChatOpenAI
-import openai
+from openai import Embedding
 
 
 def get_openai_key():
@@ -47,11 +47,7 @@ def get_llm(streaming=False):
 
 
 def embedding_function(queries):
-    resp = openai.Embedding.create(
-        model="text-embedding-ada-002",
-        input=queries,
-    )
-
+    resp = Embedding.create(model="text-embedding-ada-002", input=queries)
     return [r["embedding"] for r in resp["data"]]
 
 

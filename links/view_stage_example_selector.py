@@ -6,13 +6,13 @@ View stage example selector.
 |
 """
 import hashlib
-import numpy as np
 import os
 import pickle
-from scipy.spatial.distance import cosine
 
 from langchain.prompts import FewShotPromptTemplate, PromptTemplate
+import numpy as np
 import pandas as pd
+from scipy.spatial.distance import cosine
 
 # pylint: disable=relative-beyond-top-level
 from .utils import get_embedding_function, get_cache
@@ -25,6 +25,7 @@ EXAMPLE_EMBEDDINGS_PATH = os.path.join(
     EXAMPLES_DIR, "viewstage_embeddings.pkl"
 )
 VIEW_STAGE_EXAMPLES_PATH = os.path.join(EXAMPLES_DIR, "viewstage_examples.csv")
+
 VIEW_STAGE_EXAMPLE_PROMPT = PromptTemplate(
     input_variables=["input", "output"],
     template="Input: {input}\nOutput: {output}",
@@ -59,7 +60,8 @@ def get_or_create_embeddings(queries):
 
     if new_queries:
         print("Generating %d embeddings..." % len(new_queries))
-        new_embeddings = get_embedding_function()(new_queries)
+        model = get_embedding_function()
+        new_embeddings = model(new_queries)
         for key, embedding in zip(new_hashes, new_embeddings):
             example_embeddings[key] = embedding
 
@@ -177,6 +179,7 @@ def get_examples():
     keys = ("viewstage_examples", "viewstage_embeddings")
     if keys[0] not in cache or keys[1] not in cache:
         cache[keys[0]], cache[keys[1]] = _load_examples()
+
     return cache[keys[0]], cache[keys[1]]
 
 
@@ -241,7 +244,8 @@ def get_similar_examples(sample_collection, query, runs, label_fields):
         sample_collection, runs, label_fields
     )
 
-    query_embedding = np.array(get_embedding_function()([query]))
+    model = get_embedding_function()
+    query_embedding = np.array(model([query]))
 
     dists = np.array([cosine(query_embedding, emb) for emb in ex_embeddings])
 
@@ -283,5 +287,4 @@ def generate_view_stage_examples_prompt(
     )
 
     prompt = similar_examples_prompt_template.format(text=query)
-    prompt = _replace_run_keys(prompt, runs)
-    return prompt
+    return _replace_run_keys(prompt, runs)

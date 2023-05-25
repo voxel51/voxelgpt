@@ -5,17 +5,17 @@ FiftyOne docs query dispatcher.
 | `voxel51.com <https://voxel51.com/>`_
 |
 """
-import numpy as np
 import os
 import pickle
 import re
-from scipy.spatial.distance import cosine
 import uuid
 
 from langchain.chains import RetrievalQA
 from langchain.document_loaders import DirectoryLoader
 from langchain.schema import Document, BaseRetriever
 from langchain.text_splitter import TokenTextSplitter
+import numpy as np
+from scipy.spatial.distance import cosine
 
 # pylint: disable=relative-beyond-top-level
 from .utils import (
@@ -41,7 +41,6 @@ DOC_TYPES = (
     "tutorials",
     "user_guide",
 )
-
 
 PATTS_TO_LINKS = {
     "FiftyOne Docs": "https://docs.voxel51.com/",
@@ -72,6 +71,8 @@ def _generate_docs_embeddings():
     docs_dir = _get_docs_build_dir()
     all_embeddings_dict = {}
 
+    model = get_embedding_function()
+
     for doc_type in DOC_TYPES:
         print(f"Generating embeddings for {doc_type}...")
         doc_type_dir = os.path.join(docs_dir, doc_type)
@@ -83,7 +84,7 @@ def _generate_docs_embeddings():
 
         ids = [str(uuid.uuid1()) for _ in texts]
         contents = [text.page_content for text in texts]
-        embeddings = get_embedding_function()(contents)
+        embeddings = model(contents)
 
         curr_embeddings_dict = {
             id: {"content": content, "embedding": embedding}
@@ -97,17 +98,15 @@ def _generate_docs_embeddings():
 
 
 class FiftyOneDocsRetriever(BaseRetriever):
-    def __init__(self, fiftyone_docs_embeddings):
+    def __init__(self, embeddings):
         self.contents = [
-            Document(page_content=doc["content"])
-            for doc in fiftyone_docs_embeddings
+            Document(page_content=doc["content"]) for doc in embeddings
         ]
-        self.embeddings = [
-            np.array(doc["embedding"]) for doc in fiftyone_docs_embeddings
-        ]
+        self.embeddings = [np.array(doc["embedding"]) for doc in embeddings]
+        self.model = get_embedding_function()
 
     def get_relevant_documents(self, query):
-        query_embedding = np.array(get_embedding_function()(query))
+        query_embedding = np.array(self.model(query))
         dists = np.array(
             [cosine(query_embedding, emb) for emb in self.embeddings]
         )
@@ -121,13 +120,12 @@ class FiftyOneDocsRetriever(BaseRetriever):
 
 def _create_docs_qa_chain():
     with open(DOCS_EMBEDDINGS_FILE, "rb") as f:
-        docs_embeddings = list(pickle.load(f).values())
+        embeddings = list(pickle.load(f).values())
 
-    retriever = FiftyOneDocsRetriever(docs_embeddings)
-    docs_qa_chain = RetrievalQA.from_chain_type(
+    retriever = FiftyOneDocsRetriever(embeddings)
+    return RetrievalQA.from_chain_type(
         llm=get_llm(), chain_type="stuff", retriever=retriever
     )
-    return docs_qa_chain
 
 
 def load_docs_qa_chain():
