@@ -10,7 +10,7 @@ import threading
 import queue
 
 from langchain.callbacks.base import BaseCallbackHandler
-from langchain.chains import OpenAIModerationChain
+from langchain.chains import OpenAIModerationChain, RetrievalQA
 from langchain.chat_models import ChatOpenAI
 from openai import Embedding
 
@@ -54,6 +54,31 @@ def _llm_thread(g, prompt):
             callbacks=[StreamingHandler(g)],
         )
         llm.call_as_llm(prompt)
+    finally:
+        g.close()
+
+
+def stream_retriever(retriever, prompt):
+    g = ThreadedGenerator()
+    threading.Thread(
+        target=_retriever_thread, args=(g, retriever, prompt)
+    ).start()
+    return g
+
+
+def _retriever_thread(g, retriever, prompt):
+    try:
+        llm = ChatOpenAI(
+            openai_api_key=get_openai_key(),
+            temperature=0,
+            model_name="gpt-3.5-turbo",
+            streaming=True,
+            callbacks=[StreamingHandler(g)],
+        )
+        qa = RetrievalQA.from_chain_type(
+            llm=llm, chain_type="stuff", retriever=retriever
+        )
+        qa.run(prompt)
     finally:
         g.close()
 

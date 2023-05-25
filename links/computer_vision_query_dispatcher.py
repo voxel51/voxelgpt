@@ -30,15 +30,20 @@ def _load_query_prefix():
     return cache[key]
 
 
-def run_computer_vision_query(query, streaming=False):
+def _get_prompt(query):
     prefix = _load_query_prefix()
-    prompt = prefix + PromptTemplate(
+    return prefix + PromptTemplate(
         input_variables=["query"],
         template="Question: {query}\nAnswer:",
     ).format(query=query)
 
-    if not streaming:
-        return get_llm().call_as_llm(prompt).strip()
 
+def run_computer_vision_query(query):
+    prompt = _get_prompt(query)
+    return get_llm().call_as_llm(prompt).strip()
+
+
+def stream_computer_vision_query(query):
+    prompt = _get_prompt(query)
     for content in stream_llm(prompt):
         yield content
