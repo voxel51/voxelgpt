@@ -275,12 +275,13 @@ ask_voxelgpt("Does FiftyOne integrate with CVAT?")
 ```
 
 ```
-Yes, FiftyOne integrates with CVAT, which is an open-source image and video
-annotation tool. You can upload your data directly from FiftyOne to CVAT to
-add or edit labels. FiftyOne provides simple setup instructions that you can
-use to specify the necessary account credentials and server endpoint to use.
-CVAT provides three levels of abstraction for annotation workflows: projects,
-tasks, and jobs.
+Yes, FiftyOne integrates with CVAT, one of the most popular open-source image and video annotation tools available. You can use CVAT either through the hosted server at app.cvat.ai or through a self-hosted server. FiftyOne provides simple setup instructions that you can use to specify the necessary account credentials and server endpoint to use. The tight integration between FiftyOne and CVAT allows you to curate and explore datasets in FiftyOne and then send off samples or existing labels for annotation in CVAT with just one line of code. To use CVAT, you must create an account on a CVAT server. By default, FiftyOne uses app.cvat.ai. If you haven’t already, go to app.cvat.ai and create an account now. Another option is to set up CVAT locally and then configure FiftyOne to use your self-hosted server. To connect to a CVAT server, you must provide your login credentials, which can be done in a variety of ways, including storing them in environment variables or in your annotation config.
+
+Sources:
+- https://docs.voxel51.com/integrations/cvat.html
+- https://docs.voxel51.com/tutorials/cvat_annotation.html
+- https://docs.voxel51.com/integrations/index.html
+- https://docs.voxel51.com/user_guide/annotation.html
 ```
 
 When VoxelGPT creates a view in response to your query, it is returned:
