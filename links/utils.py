@@ -5,6 +5,7 @@ Link utils.
 | `voxel51.com <https://voxel51.com/>`_
 |
 """
+import hashlib
 import os
 import threading
 import queue
@@ -13,6 +14,11 @@ from langchain.callbacks.base import BaseCallbackHandler
 from langchain.chains import OpenAIModerationChain, RetrievalQA
 from langchain.chat_models import ChatOpenAI
 from openai import Embedding
+
+
+def hash_query(query):
+    hash_object = hashlib.md5(query.encode())
+    return hash_object.hexdigest()
 
 
 def get_openai_key():
