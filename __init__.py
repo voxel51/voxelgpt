@@ -14,37 +14,6 @@ import fiftyone.operators as foo
 import fiftyone.operators.types as types
 
 
-# @todo replace with `fou.add_sys_path`
-class add_sys_path(object):
-    """Context manager that temporarily inserts a path to ``sys.path``."""
-
-    def __init__(self, path, index=0):
-        self.path = path
-        self.index = index
-
-    def __enter__(self):
-        sys.path.insert(self.index, self.path)
-
-    def __exit__(self, *args):
-        try:
-            sys.path.remove(self.path)
-        except:
-            pass
-
-
-# @todo replace with `dataset.get_plugin_setting`
-def get_plugin_setting(dataset, plugin_name, key, default=None):
-    value = dataset.app_config.plugins.get(plugin_name, {}).get(key, None)
-
-    if value is None:
-        value = fo.app_config.plugins.get(plugin_name, {}).get(key, None)
-
-    if value is None:
-        value = default
-
-    return value
-
-
 class AskVoxelGPT(foo.Operator):
     @property
     def config(self):
@@ -290,6 +259,33 @@ class OpenVoxelGPTPanelOnStartup(foo.Operator):
                     name="voxelgpt", isActive=True, layout="horizontal"
                 ),
             )
+
+
+class add_sys_path(object):
+    def __init__(self, path, index=0):
+        self.path = path
+        self.index = index
+
+    def __enter__(self):
+        sys.path.insert(self.index, self.path)
+
+    def __exit__(self, *args):
+        try:
+            sys.path.remove(self.path)
+        except:
+            pass
+
+
+def get_plugin_setting(dataset, plugin_name, key, default=None):
+    value = dataset.app_config.plugins.get(plugin_name, {}).get(key, None)
+
+    if value is None:
+        value = fo.app_config.plugins.get(plugin_name, {}).get(key, None)
+
+    if value is None:
+        value = default
+
+    return value
 
 
 def register(p):
