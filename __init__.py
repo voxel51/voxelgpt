@@ -141,9 +141,13 @@ class AskVoxelGPTPanel(foo.Operator):
 
                         yield self.view(ctx, data["view"])
                     elif type == "message":
-                        yield self.message(
-                            ctx, data["message"], history=data["history"]
-                        )
+                        kwargs = {}
+
+                        if data["overwrite"]:
+                            kwargs["overwrite_last"] = True
+
+                        kwargs["history"] = data["history"]
+                        yield self.message(ctx, data["message"], **kwargs)
                     elif type == "streaming":
                         kwargs = {}
 

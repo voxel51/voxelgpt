@@ -91,7 +91,12 @@ def ask_voxelgpt_interactive(
                 session.view = coll
 
 
-def ask_voxelgpt(query, sample_collection=None, chat_history=None):
+def ask_voxelgpt(
+    query,
+    sample_collection=None,
+    allow_streaming=True,
+    chat_history=None,
+):
     """Prompts VoxelGPT with the given query with respect to the given sample
     collection.
 
@@ -104,6 +109,7 @@ def ask_voxelgpt(query, sample_collection=None, chat_history=None):
         query: a prompt string
         sample_collection (None): a
             :class:`fiftyone.core.collections.SampleCollection` to query
+        allow_streaming (True): whether to allow streaming responses
         chat_history (None): an optional chat history list
 
     Returns:
@@ -116,7 +122,7 @@ def ask_voxelgpt(query, sample_collection=None, chat_history=None):
         query,
         sample_collection=sample_collection,
         dialect="string",
-        allow_streaming=True,
+        allow_streaming=allow_streaming,
         chat_history=chat_history,
     ):
         type = response["type"]
@@ -125,7 +131,8 @@ def ask_voxelgpt(query, sample_collection=None, chat_history=None):
         if type == "view":
             view = data["view"]
         elif type == "message":
-            print(data["message"])
+            if not data["overwrite"]:
+                print(data["message"])
         elif type == "streaming":
             sys.stdout.write(data["content"])
             sys.stdout.flush()
@@ -147,15 +154,33 @@ def ask_voxelgpt_generator(
 
     -   Messages in the format::
 
-        {"type": "message", "data": {"message": message}}
+        {
+            "type": "message",
+            "data": {
+                "message": message,         # in your chosen dialect
+                "history": history,         # string added to `chat_history`
+                "overwrite": True/False     # overwrite previous message?
+            }
+        }
 
     -   Streaming content in the format:
 
-        {"type": "streaming", "data": {"content": content, "last": True/False}}
+        {
+            "type": "streaming",
+            "data": {
+                "content": content,         # a chunk of streaming content
+                "last": True/False          # last chunk in the stream?
+            }
+        }
 
     -   Views in the format::
 
-        {"type": "view", "data": {"view": view}}
+        {
+            "type": "view",
+            "data": {
+                "view": view
+            }
+        }
 
     You can use the ``dialect`` parameter to configure the message format.
 
@@ -179,20 +204,20 @@ def ask_voxelgpt_generator(
     if chat_history is None:
         chat_history = []
 
-    def _respond(message):
+    def _respond(message, overwrite=False):
         if isinstance(message, str):
             message = {"string": message, "markdown": message}
 
         str_msg = message.get("string", None)
-        if str_msg:
+        if str_msg is not None:
             _log_chat_history("GPT", str_msg, chat_history)
 
         if dialect == "raw":
             return str_msg
 
         msg = message.get(dialect, None)
-        if msg:
-            return _emit_message(msg, str_msg)
+        if msg is not None:
+            return _emit_message(msg, str_msg, overwrite=overwrite)
 
     if not moderate_query(query):
         yield _respond(_moderation_fail_message())
@@ -209,14 +234,17 @@ def ask_voxelgpt_generator(
     if intent == "documentation":
         if allow_streaming:
             message = ""
-            for content in stream_docs_query(query):
-                message += content
-                yield _emit_streaming_content(content)
+            for content in stream_docs_query(query, sources=True):
+                if isinstance(content, dict):
+                    message = content
+                else:
+                    message += content
+                    yield _emit_streaming_content(content)
 
-            _emit_streaming_content("", last=True)
-            _log_chat_history("GPT", message, chat_history)
+            yield _emit_streaming_content("", last=True)
+            yield _respond(message, overwrite=True)
         else:
-            yield _respond(run_docs_query(query))
+            yield _respond(run_docs_query(query, sources=True))
 
         return
     elif intent == "computer_vision":
@@ -226,8 +254,8 @@ def ask_voxelgpt_generator(
                 message += content
                 yield _emit_streaming_content(content)
 
-            _emit_streaming_content("", last=True)
-            _log_chat_history("GPT", message, chat_history)
+            yield _emit_streaming_content("", last=True)
+            yield _respond(message, overwrite=True)
         else:
             yield _respond(run_computer_vision_query(query))
 
@@ -545,8 +573,15 @@ def _full_collection_message(sample_collection):
     return f"Okay, let's load your entire {ctype}"
 
 
-def _emit_message(message, _hist):
-    return {"type": "message", "data": {"message": message, "history": _hist}}
+def _emit_message(message, history, overwrite=False):
+    return {
+        "type": "message",
+        "data": {
+            "message": message,
+            "history": history,
+            "overwrite": overwrite,
+        },
+    }
 
 
 def _emit_streaming_content(content, last=False):

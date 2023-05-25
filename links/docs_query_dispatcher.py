@@ -10,7 +10,7 @@ import pickle
 import re
 import uuid
 
-from langchain.chains import RetrievalQAWithSourcesChain
+from langchain.chains import RetrievalQA, RetrievalQAWithSourcesChain
 from langchain.document_loaders import (
     DirectoryLoader,
     UnstructuredMarkdownLoader,
@@ -26,6 +26,7 @@ from .utils import (
     get_embedding_function,
     get_llm,
     stream_retriever,
+    query_retriever,
 )
 
 
@@ -69,17 +70,6 @@ STANDALONE_DOCS = (
     "index.html",
     "release-notes.html",
 )
-
-PATTS_TO_LINKS = {
-    "FiftyOne Docs": "https://docs.voxel51.com/",
-    "FiftyOne User Guide": "https://docs.voxel51.com/user_guide/index.html",
-    "FiftyOne Teams": "https://docs.voxel51.com/teams/index.html",
-    "FiftyOne Model Zoo": "https://docs.voxel51.com/user_guide/model_zoo/index.html",
-    "FiftyOne Dataset Zoo": "https://docs.voxel51.com/user_guide/dataset_zoo/index.html",
-    "FiftyOne Plugins": "https://docs.voxel51.com/plugins/index.html",
-    "FiftyOne App": "https://docs.voxel51.com/user_guide/app.html",
-    "FiftyOne Brain": "https://docs.voxel51.com/user_guide/brain.html",
-}
 
 
 def _make_api_doc_path(name, docs_dir):
@@ -135,7 +125,7 @@ def _generate_docs_embeddings():
     docs_dir = _get_docs_build_dir()
     model = get_embedding_function()
 
-    ## STANDALONE DOCS
+    # STANDALONE DOCS
     for filename in STANDALONE_DOCS:
         filepath = os.path.join(docs_dir, filename)
         loader = UnstructuredMarkdownLoader(filepath)
@@ -143,7 +133,7 @@ def _generate_docs_embeddings():
             loader, all_embeddings_dict
         )
 
-    ## DOCS CATEGORIES
+    # DOCS CATEGORIES
     for doc_type in DOC_TYPES:
         print(f"Generating embeddings for {doc_type}...")
         doc_type_dir = os.path.join(docs_dir, doc_type)
@@ -152,7 +142,7 @@ def _generate_docs_embeddings():
             loader, all_embeddings_dict
         )
 
-    ## API DOCS
+    # API DOCS
     for api_doc_path in API_DOC_PATHS:
         doc = _make_api_doc_path(api_doc_path, docs_dir)
         loader = UnstructuredMarkdownLoader(doc)
@@ -196,14 +186,6 @@ def _create_docs_retriever():
     return FiftyOneDocsRetriever(embeddings)
 
 
-def _create_docs_qa_chain():
-    return RetrievalQAWithSourcesChain.from_chain_type(
-        llm=get_llm(),
-        chain_type="stuff",
-        retriever=get_docs_retriever(),
-    )
-
-
 def get_docs_retriever():
     cache = get_cache()
     key = "docs_retriever"
@@ -212,27 +194,20 @@ def get_docs_retriever():
     return cache[key]
 
 
-def get_docs_qa_chain():
-    cache = get_cache()
-    key = "docs_qa_chain"
-    if key not in cache:
-        cache[key] = _create_docs_qa_chain()
-    return cache[key]
-
-
-def _wrap_text(patt):
-    link = PATTS_TO_LINKS[patt]
-    return f"[{patt}]({link})"
-
-
 def _format_response(response):
-    str_response = response
+    answer = response["answer"]
+    sources = [s.strip() for s in response["sources"].split(",")]
 
-    md_response = response
-    for patt in PATTS_TO_LINKS:
-        md_response = re.sub(
-            patt, _wrap_text(patt), md_response, flags=re.IGNORECASE
-        )
+    # String
+    str_response = answer
+    if sources:
+        str_response += "\nSources:\n"
+        str_response += "\n".join(f"- {s}" for s in sources)
+
+    # Convert all URLs to [url](url)
+    patt = r"(https?://[^\s]+)"
+    repl = r"[\1](\1)"
+    md_response = re.sub(patt, repl, str_response)
 
     return {
         "string": str_response,
@@ -240,19 +215,37 @@ def _format_response(response):
     }
 
 
-def run_docs_query(query):
-    docs_qa = get_docs_qa_chain()
-    response = docs_qa({"question": query})
-    answer = response["answer"]
-    sources = response["sources"].split(",")
-    response = answer + "Sources:\n" + "\n".join(sources)
-    return _format_response(response)
-
-
-def stream_docs_query(query):
+def run_docs_query(query, sources=True):
     retriever = get_docs_retriever()
-    for content in stream_retriever(retriever, query):
+
+    response = query_retriever(retriever, query, sources=sources)
+    if isinstance(response, dict):
+        response = _format_response(response)
+
+    return response
+
+
+def stream_docs_query(query, sources=True):
+    retriever = get_docs_retriever()
+
+    parsing_sources = False
+    for content in stream_retriever(retriever, query, sources=sources):
         if isinstance(content, Exception):
             raise content
+
+        # Full response with sources
+        if isinstance(content, dict):
+            yield _format_response(content)
+            return
+
+        if parsing_sources:
+            yield f"- {content.strip().rstrip(',')}\n"
+            continue
+
+        # https://github.com/hwchase17/langchain/blob/2ceb807da24e3ad7f04ff79120842982f341cda8/langchain/chains/qa_with_sources/base.py#L131
+        if "SOURCES:" in content:
+            parsing_sources = True
+            yield "\nSources:\n"
+            continue
 
         yield content

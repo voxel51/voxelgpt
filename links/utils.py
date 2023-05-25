@@ -6,13 +6,26 @@ Link utils.
 |
 """
 import os
+import re
 import threading
 import queue
 
 from langchain.callbacks.base import BaseCallbackHandler
-from langchain.chains import OpenAIModerationChain, RetrievalQA
+from langchain.chains import (
+    OpenAIModerationChain,
+    RetrievalQA,
+    RetrievalQAWithSourcesChain,
+)
 from langchain.chat_models import ChatOpenAI
 from openai import Embedding
+
+
+def get_cache():
+    g = globals()
+    if "_voxelgpt" not in g:
+        g["_voxelgpt"] = {}
+
+    return g["_voxelgpt"]
 
 
 def get_openai_key():
@@ -27,15 +40,11 @@ def get_openai_key():
 
 
 def get_llm():
-    cache = get_cache()
-    if "llm" not in cache:
-        cache["llm"] = ChatOpenAI(
-            openai_api_key=get_openai_key(),
-            temperature=0,
-            model_name="gpt-3.5-turbo",
-        )
-
-    return cache["llm"]
+    return ChatOpenAI(
+        openai_api_key=get_openai_key(),
+        temperature=0,
+        model_name="gpt-3.5-turbo",
+    )
 
 
 def stream_llm(prompt):
@@ -60,15 +69,32 @@ def _llm_thread(g, prompt):
         g.close()
 
 
-def stream_retriever(retriever, prompt):
+def query_retriever(retriever, prompt, sources=True):
+    if not sources:
+        qa = RetrievalQA.from_chain_type(
+            llm=get_llm(),
+            chain_type="stuff",
+            retriever=retriever,
+        )
+        return qa.run([prompt]).strip()
+
+    qa = RetrievalQAWithSourcesChain.from_chain_type(
+        llm=get_llm(),
+        chain_type="stuff",
+        retriever=retriever,
+    )
+    return qa({"question": prompt})
+
+
+def stream_retriever(retriever, prompt, sources=True):
     g = ThreadedGenerator()
     threading.Thread(
-        target=_retriever_thread, args=(g, retriever, prompt)
+        target=_retriever_thread, args=(g, retriever, sources, prompt)
     ).start()
     return g
 
 
-def _retriever_thread(g, retriever, prompt):
+def _retriever_thread(g, retriever, sources, prompt):
     try:
         llm = ChatOpenAI(
             openai_api_key=get_openai_key(),
@@ -77,10 +103,18 @@ def _retriever_thread(g, retriever, prompt):
             streaming=True,
             callbacks=[StreamingHandler(g)],
         )
-        qa = RetrievalQA.from_chain_type(
-            llm=llm, chain_type="stuff", retriever=retriever
-        )
-        qa.run(prompt)
+
+        if sources:
+            qa = RetrievalQAWithSourcesChain.from_chain_type(
+                llm=llm, chain_type="stuff", retriever=retriever
+            )
+            response = qa({"question": prompt})
+            g.send(response)
+        else:
+            qa = RetrievalQA.from_chain_type(
+                llm=llm, chain_type="stuff", retriever=retriever
+            )
+            qa.run([prompt])
     except Exception as e:
         g.send(e)
     finally:
@@ -93,10 +127,7 @@ def embedding_function(queries):
 
 
 def get_embedding_function():
-    cache = get_cache()
-    if "embedding_function" not in cache:
-        cache["embedding_function"] = embedding_function
-    return cache["embedding_function"]
+    return embedding_function
 
 
 class FiftyOneModeration(OpenAIModerationChain):
@@ -105,21 +136,7 @@ class FiftyOneModeration(OpenAIModerationChain):
 
 
 def get_moderator():
-    cache = get_cache()
-    if "moderator" not in cache:
-        cache["moderator"] = FiftyOneModeration(
-            openai_api_key=get_openai_key()
-        )
-
-    return cache["moderator"]
-
-
-def get_cache():
-    g = globals()
-    if "_voxelgpt" not in g:
-        g["_voxelgpt"] = {}
-
-    return g["_voxelgpt"]
+    return FiftyOneModeration(openai_api_key=get_openai_key())
 
 
 class ThreadedGenerator(object):
@@ -144,9 +161,27 @@ class ThreadedGenerator(object):
 
 
 class StreamingHandler(BaseCallbackHandler):
-    def __init__(self, gen):
+    """Splits raw tokens into whitespace-delimited words."""
+
+    def __init__(self, gen, words=True):
         super().__init__()
         self.gen = gen
+        self.words = words
+        self._curr_word = ""
 
     def on_llm_new_token(self, token, **kwargs):
-        self.gen.send(token)
+        if not self.words:
+            self.gen.send(token)
+            return
+
+        # (chars, whitespace, chars, whitespace, ...)
+        chunks = re.split("(\\s+)", token)
+
+        self._curr_word += "".join(chunks[:2])
+        if len(chunks) > 1:
+            self.gen.send(self._curr_word)
+            self._curr_word = "".join(chunks[2:])
+
+    def on_llm_end(self, *args, **kwargs):
+        if self._curr_word:
+            self.gen.send(self._curr_word)
