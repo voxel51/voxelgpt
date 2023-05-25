@@ -5,30 +5,38 @@ Query intent classifier.
 | `voxel51.com <https://voxel51.com/>`_
 |
 """
+import numpy as np
 import os
+import pickle
 
 from langchain.prompts import PromptTemplate, FewShotPromptTemplate
 import pandas as pd
+from scipy.spatial.distance import cosine
 
 # pylint: disable=relative-beyond-top-level
-from .utils import get_llm, get_cache
-
+from .utils import get_llm, get_cache, hash_query, get_embedding_function
+from .view_stage_example_selector import (
+    get_examples as get_view_stage_examples,
+)
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EXAMPLES_DIR = os.path.join(ROOT_DIR, "examples")
 PROMPTS_DIR = os.path.join(ROOT_DIR, "prompts")
 
-QUERY_INTENT_STAGE_EXAMPLES_PATH = os.path.join(
-    EXAMPLES_DIR, "query_intent_stages_examples.csv"
+NON_VIEWSTAGE_EXAMPLES_PATH = os.path.join(
+    EXAMPLES_DIR, "query_intent_examples.csv"
 )
-QUERY_INTENT_QA_EXAMPLES_PATH = os.path.join(
-    EXAMPLES_DIR, "query_intent_qa_examples.csv"
+
+NON_VIEWSTAGE_EMBEDDINGS_PATH = os.path.join(
+    EXAMPLES_DIR, "query_intent_embeddings.pkl"
 )
-INTENT_DISPLAY_TASK_RULES_PATH = os.path.join(
-    PROMPTS_DIR, "intent_classification_stages_rules.txt"
+VIEWSTAGE_EXAMPLES_PATH = os.path.join(EXAMPLES_DIR, "viewstage_examples.csv")
+VIEWSTAGE_EMBEDDINGS_PATH = os.path.join(
+    EXAMPLES_DIR, "viewstage_embeddings.pkl"
 )
-INTENT_QA_TASK_RULES_PATH = os.path.join(
-    PROMPTS_DIR, "intent_classification_qa_rules.txt"
+
+INTENT_TASK_RULES_PATH = os.path.join(
+    PROMPTS_DIR, "intent_classification_rules.txt"
 )
 
 DISPLAY_KEYWORDS = (
@@ -45,48 +53,105 @@ DOCUMENTATION_KEYWORDS = (
 )
 
 
-def _load_prefix(path):
-    with open(path, "r") as f:
-        return f.read()
+def _load_viewstage_examples():
+    viewstage_examples, viewstage_embeddings = get_view_stage_examples()
+    viewstage_examples = viewstage_examples[["query"]]
+    viewstage_examples = viewstage_examples.assign(intent="display")
+    viewstage_examples["hash"] = viewstage_examples["query"].apply(
+        lambda x: hash_query(x)
+    )
+    return viewstage_examples, viewstage_embeddings
 
 
-def _load_query_classifier_prefix(type):
-    if type == "display":
-        return _load_prefix(INTENT_DISPLAY_TASK_RULES_PATH)
+def _load_non_viewstage_examples():
+    examples = pd.read_csv(NON_VIEWSTAGE_EXAMPLES_PATH, on_bad_lines="skip")
+    examples = examples[["query", "intent"]]
+    examples["hash"] = examples["query"].apply(lambda x: hash_query(x))
+
+    embeddings = _get_or_create_embeddings(examples)
+    return examples, embeddings
+
+
+def _get_or_create_embeddings(examples):
+    if os.path.isfile(NON_VIEWSTAGE_EMBEDDINGS_PATH):
+        print("Loading embeddings from disk...")
+        with open(NON_VIEWSTAGE_EMBEDDINGS_PATH, "rb") as f:
+            example_embeddings = pickle.load(f)
     else:
-        return _load_prefix(INTENT_QA_TASK_RULES_PATH)
+        example_embeddings = {}
+
+    queries = examples["query"].tolist()
+    hashes = examples["hash"].tolist()
+
+    new_hashes = []
+    new_queries = []
+
+    for hash, query in zip(hashes, queries):
+
+        if hash not in example_embeddings:
+            new_hashes.append(hash)
+            new_queries.append(query)
+
+    if new_queries:
+        print("Generating %d embeddings..." % len(new_queries))
+        model = get_embedding_function()
+        new_embeddings = model(new_queries)
+        for hash, embedding in zip(new_hashes, new_embeddings):
+            example_embeddings[hash] = embedding
+
+    if new_queries:
+        print("Saving embeddings to disk...")
+
+        with open(NON_VIEWSTAGE_EMBEDDINGS_PATH, "wb") as f:
+            pickle.dump(example_embeddings, f)
+
+    return example_embeddings
 
 
-def _get_examples(path):
-    df = pd.read_csv(path)
-    df = df.sample(frac=1).reset_index(drop=True)
-    examples = []
+def _load_examples():
+    nv_ex, nv_emb = _load_non_viewstage_examples()
+    v_ex, v_emb = _load_viewstage_examples()
 
-    for _, row in df.iterrows():
-        example = {"query": row.query, "intent": row.intent}
-        examples.append(example)
-    return examples
+    examples = pd.concat([nv_ex, v_ex])
+    embeddings = {**nv_emb, **v_emb}
+
+    queries = examples["query"].tolist()
+    intents = examples["intent"].tolist()
+    hashes = examples["hash"].tolist()
+    ordered_embeddings = [np.array(embeddings[key]) for key in hashes]
+    return queries, intents, ordered_embeddings
 
 
-def _get_query_intent_examples(type):
+def _get_examples():
     cache = get_cache()
-    key = "query_intent_classifier_prompt_template"
-    if key in cache:
-        return cache[key]
-
-    examples = _get_examples(QUERY_INTENT_STAGE_EXAMPLES_PATH)
-    cache[key] = examples
-    return examples
+    keys = ("queries", "intents", "embeddings")
+    if keys[0] not in cache or keys[1] not in cache or keys[2] not in cache:
+        cache[keys[0]], cache[keys[1]], cache[keys[2]] = _load_examples()
+    return cache[keys[0]], cache[keys[1]], cache[keys[2]]
 
 
-def _get_query_classifier_prompt_template(type):
-    cache = get_cache()
-    key = "template_" + type
-    if key in cache:
-        return cache[key]
+def get_similar_examples(query, k=20):
+    queries, intents, embeddings = _get_examples()
 
-    prefix = _load_query_classifier_prefix(type)
-    intent_examples = _get_query_intent_examples(type)
+    model = get_embedding_function()
+    query_embedding = np.array(model([query]))
+
+    dists = np.array([cosine(query_embedding, emb) for emb in embeddings])
+
+    sorted_ix = np.argsort(dists).astype(int)
+
+    similar_queries = [queries[ix] for ix in sorted_ix[:k]]
+    similar_intents = [intents[ix] for ix in sorted_ix[:k]]
+
+    return [
+        {"query": sq, "intent": ss}
+        for sq, ss in zip(similar_queries, similar_intents)
+    ]
+
+
+def _assemble_query_intent_prompt(query):
+    prefix = _load_query_classifier_prefix()
+    examples = get_similar_examples(query)
 
     intent_example_formatter_template = """
     Query: {query}
@@ -99,7 +164,7 @@ def _get_query_classifier_prompt_template(type):
     )
 
     template = FewShotPromptTemplate(
-        examples=intent_examples,
+        examples=examples,
         example_prompt=classification_prompt,
         prefix=prefix,
         suffix="Query: {query}\nIntent:",
@@ -107,13 +172,20 @@ def _get_query_classifier_prompt_template(type):
         example_separator="\n",
     )
 
-    cache[key] = template
-    return template
-
-
-def _assemble_query_intent_classifier_prompt(query, type):
-    template = _get_query_classifier_prompt_template(type)
     return template.format(query=query)
+
+
+def _classify_intent_with_examples(query):
+    prompt = _assemble_query_intent_prompt(query)
+    res = get_llm().call_as_llm(prompt).strip()
+    if "documentation" in res:
+        return "documentation"
+    elif "computer vision" in res:
+        return "computer_vision"
+    elif "display" in res:
+        return "display"
+    else:
+        return "confused"
 
 
 def _match_display_keywords(query):
@@ -130,7 +202,7 @@ def _match_docs_keywords(query):
     return False
 
 
-def _match_keywords(query):
+def _classify_intent_with_keywords(query):
     if _match_display_keywords(query):
         return "display"
     elif _match_docs_keywords(query):
@@ -139,34 +211,18 @@ def _match_keywords(query):
         return
 
 
-def classify_query_intent_stages(query):
-    # if _match_display_keywords(query):
-    #     return "display"
-    prompt = _assemble_query_intent_classifier_prompt(query, "display")
-    res = get_llm().call_as_llm(prompt).strip()
-    if "display" in res or "object" in res or "description" in res:
-        return "display"
-    else:
-        return "confused"
-
-
-def classify_query_intent_qa(query):
-    prompt = _assemble_query_intent_classifier_prompt(query, "qa")
-    res = get_llm().call_as_llm(prompt).strip()
-    if "documentation" in res:
-        return "documentation"
-    elif "computer vision" in res:
-        return "computer_vision"
-    else:
-        return "confused"
+def _load_query_classifier_prefix():
+    cache = get_cache()
+    key = "query_classifier_prefix"
+    if key not in cache:
+        with open(INTENT_TASK_RULES_PATH, "r") as f:
+            cache[key] = f.read()
+    return cache[key]
 
 
 def classify_query_intent(query):
-    intent = _match_keywords(query)
+    intent = _classify_intent_with_keywords(query)
     if intent:
         return intent
-    intent = classify_query_intent_stages(query)
-    if intent == "display":
-        return intent
-    else:
-        return classify_query_intent_qa(query)
+    intent = _classify_intent_with_examples(query)
+    return intent
