@@ -1,0 +1,190 @@
+query,intent,added_by
+what brain methods are there?,documentation,Jacob
+what is an evaluation key?,documentation,Jacob
+how do I remove duplicate images from my dataset?,documentation,Jacob
+how do I evaluate models in 51?,documentation,Jacob
+how do I find annotation mistakes,documentation,Jacob
+Can I remove duplicate or near-duplicate images?,documentation,Jacob
+how do I add model predictions to my data?,documentation,Jacob
+what tutorials does Voxel51 have around the library?,documentation,Jacob
+what workflows are supported?,documentation,Jacob
+what is the embeddings panel?,documentation,Jacob
+what methods does compute_visualization support?,documentation,Jacob
+how do I use lasso selection in the app?,documentation,Jacob
+can I change the color scheme?,documentation,Jacob
+what is a vector field?,documentation,Jacob
+is umap supported?,documentation,Jacob
+can I use tsne to visualize my samples?,documentation,Jacob
+how do I load the berkeley deep drive dataset?,documentation,Jacob
+what is a brain key?,documentation,Jacob
+what arguments does filter_labels take,documentation,Jacob
+what is the ViewField F?,documentation,Jacob
+what is the F symbol?,documentation,Jacob
+how are view expressions used in fiftyone?,documentation,Jacob
+can i specify the layout of spaces in the app?,documentation,Jacob
+what are the similarity backends,documentation,Jacob
+what does the supports_prompts argument represent?,documentation,Jacob
+how is the SDK related to the app?,documentation,Jacob
+how do I use find_duplicates?,documentation,Jacob
+where do I see the default similarity backend?,documentation,Jacob
+are embeddings automatically computed for my images?,documentation,Jacob
+how do I use Qdrant for similarity searches?,documentation,Jacob
+Can I use pinecone to search my images?,documentation,Jacob
+it is possible to delete samples?,documentation,Jacob
+where are hardness results stored?,documentation,Jacob
+how do I see my brain runs?,documentation,Jacob
+can I change the name of a brain run?,documentation,Jacob
+why would I use teams?,documentation,Jacob
+what is the difference between open source and teams?,documentation,Jacob
+can I collaborate with others?,documentation,Jacob
+how do I manage permissions?,documentation,Jacob
+my dataset is large. Can I load the media files directly from the cloud?,documentation,Jacob
+can I save a local copy of my images?,documentation,Jacob
+will I ever need to upgrade or downgrade my deployment?,documentation,Jacob
+what features do guests have access to?,documentation,Jacob
+how do the guest and member roles differ?,documentation,Jacob
+"if I'm an admin, can I set permissions for team members?",documentation,Jacob
+my media files are stored in an S3 bucket. Is that okay?,documentation,Jacob
+"I know fiftyone supports google cloud and amazon S3, but does it work with microsoft azure?",documentation,Jacob
+what is a polyline?,documentation,Jacob
+how do I use the annotate() method?,documentation,Jacob
+is there a way to configure my CVAT login credentials?,documentation,Jacob
+what is a label_schema?,documentation,Jacob
+can I load in annotations from Label studio or labelbox?,documentation,Jacob
+can I set the IoU threshold used for evaluations?,documentation,Jacob
+does fiftyone support activity-net style evaluation?,documentation,Jacob
+can I filter my dataset for false positives?,documentation,Jacob
+how do I get a mean average precision with evaluation?,documentation,Jacob
+what is a grouped dataset?,documentation,Jacob
+can I make a different group slice display in the app?,documentation,Jacob
+is set_values the same as set_field?,documentation,Jacob
+tell me more about the orthographic projections,documentation,Jacob
+can I draw labels on my images?,documentation,Jacob
+how do I customize the label rendering?,documentation,Jacob
+what aggregations can I run?,documentation,Jacob
+how do I see the min and max values for a field,documentation,Jacob
+what is a dynamic attribute?,documentation,Jacob
+can I see histograms of my data in the app?,documentation,Jacob
+how do I get an individual frame in a video?,documentation,Jacob
+do I need to install pytorch or tensorflow to work with fiftyone?,documentation,Jacob
+nkduabvieufbvef,invalid,Jacob
+what is the meaning of life?,invalid,Jacob
+make me a ton of money,invalid,Jacob
+4+12**2,invalid,Jacob
+I like images and videos,invalid,Jacob
+Show me the label mapping,invalid,Jacob
+How do I install the FiftyOne library on my system?,documentation,Jacob
+Can you explain the main features of the FiftyOne library?,documentation,Jacob
+What are some good resources to learn FiftyOne?,documentation,Jacob
+How do I load datasets into FiftyOne?,documentation,Jacob
+What kind of visualizations can I create using FiftyOne?,documentation,Jacob
+How does FiftyOne integrate with PyTorch?,documentation,Jacob
+Can I use FiftyOne for annotation tasks?,documentation,Jacob
+What is the utility of the FiftyOne App in the FiftyOne library?,documentation,Jacob
+How can I export datasets from FiftyOne in a specific format?,documentation,Jacob
+What kind of dataset formats are supported by FiftyOne?,documentation,Jacob
+How does FiftyOne assist in exploring and debugging my models?,documentation,Jacob
+Can I use FiftyOne to compare different models' predictions?,documentation,Jacob
+How do I apply transformations to images in a FiftyOne dataset?,documentation,Jacob
+Is there a way to handle segmentation masks in FiftyOne?,documentation,Jacob
+Can you explain how FiftyOne handles object detection tasks?,documentation,Jacob
+Does FiftyOne have features to support video datasets?,documentation,Jacob
+How to handle annotations in FiftyOne?,documentation,Jacob
+How can FiftyOne assist in finding edge cases and anomalies in my dataset?,documentation,Jacob
+What are the benefits of using FiftyOne for my computer vision projects?,documentation,Jacob
+What's the weather like in New York?,invalid,Jacob
+How do I prepare a chocolate soufflé?,invalid,Jacob
+Can you tell me about the history of the Eiffel Tower?,invalid,Jacob
+Who won the NBA championship in 2022?,invalid,Jacob
+Can you recommend some thriller books?,invalid,Jacob
+What's the tallest mountain in the world?,invalid,Jacob
+What is the capital of Australia?,invalid,Jacob
+What are the symptoms of COVID-19?,invalid,Jacob
+How to get to the nearest post office from here?,invalid,Jacob
+Tell me a joke,invalid,Jacob
+Who invented the light bulb?,invalid,Jacob
+Explain the concept of black holes.,invalid,Jacob
+Is there a way to just get bounding boxes around the possibly missing and possibly spurious objects in my dataset?,documentation,Jacob
+I am storing related sample IDs as StringField objects in a separate field on my data and I want to use them to match sample IDs that are stored as ObjectIdField objects. How do I do this?,documentation,Jacob
+what is the dataset zoo?,documentation,Jacob
+what does the filter_labels view stage do?,documentation,Jacob
+Is there an equivalent of take for frames in a video dataset,documentation,Jacob
+can I sort samples by their filepath?,documentation,Jacob
+Is there a way to hide little detection bounding boxes?,documentation,Jacob
+how can I create annotation jobs for two users and retrieve/load annotations individually for them?,documentation,Jacob
+How do I add instance segmentation masks to my data,documentation,Jacob
+can I see the app in a jupyter notebook?,documentation,Jacob
+"how do I split this into train, test, and validation splits?",documentation,Jacob
+is it possible to color embeddings by tag?,documentation,Jacob
+can i concatenate two datasets which are each in coco format?,documentation,Jacob
+what i do need to do to export my data?,documentation,Jacob
+how do I create a project with FiftyOne’s CVAT utils and initialize it with certain classes using label_schema,documentation,Jacob
+what does the support metric mean from evaluation report?,documentation,Jacob
+Is there a way to lazy-load hi-res satellite images into the app?,documentation,Jacob
+can I filter bounding boxes based on their absolute width and height?,documentation,Jacob
+what is a panel?,documentation,Jacob
+what is the brain,documentation,Jacob
+Is it possible to relate multiple detections on different samples in FiftyOne?,documentation,Jacob
+how do i merge 2 datasets into a grouped dataset according to their values in a certain field,documentation,Jacob
+can I send the worst predictions to Label Studio for annotation?,documentation,Jacob
+how do I work with point clouds?,documentation,Jacob
+"I have run a number of evaluations on the same dataset, and I want to compute evaluation metrics for each label separately. What is the best way to do this?",documentation,Jacob
+Is it possible to export a dataset with splits in it?,documentation,Jacob
+what's the point of calling the values() method on a very large dataset?,documentation,Jacob
+is it possible to store the metadata for all of the files in one group?,documentation,Jacob
+Is there an easy way to display only the bounding boxes and not the masks for detections that have both?,documentation,Jacob
+can I open the app alongside an interactive plot in JupyterLab?,documentation,Jacob
+can I load data from CVAT directly into fiftyone?,documentation,Jacob
+I want to pull only the samples that have an attribute set on a Detections field. The field is a bool and will only belong to detections of a certain label. What is the best way to do this?,documentation,Jacob
+Is it possible to use FiftyOne with images available at external URLs (in google images for example) without downloading the images first?,documentation,Jacob
+"My dataset is not currently labeled, so I’m sending the whole thing. Is there a limit to how many files can be sent in a single batch?",documentation,Jacob
+Who was Albert Einstein?,invalid,Jacob
+What's the best way to grow tomatoes at home?,invalid,Jacob
+Who wrote the novel '1984'?,invalid,Jacob
+Can you recommend some thriller books?,invalid,Jacob
+What's the tallest mountain in the world?,invalid,Jacob
+What is the capital of Australia?,invalid,Jacob
+What are the symptoms of COVID-19?,invalid,Jacob
+How to get to the nearest post office from here?,invalid,Jacob
+Tell me a joke,invalid,Jacob
+Who invented the light bulb?,invalid,Jacob
+Can you suggest ways to automate data annotation for computer vision tasks?,computer vision,Jacob
+What are the best methods for data preprocessing in computer vision?,computer vision,Jacob
+How can I handle missing values in my dataset?,computer vision,Jacob
+What is data augmentation in computer vision and how can it improve my model?,computer vision,Jacob
+Can you explain the concept of class imbalance and how to deal with it?,computer vision,Jacob
+What are some common edge cases in image classification tasks?,computer vision,Jacob
+How can I identify and remove redundant features from my dataset?,computer vision,Jacob
+What are some techniques to handle outliers in my data?,computer vision,Jacob
+What is cross-validation and how can it improve my model's performance?,computer vision,Jacob
+How can I improve the quality of images in my computer vision dataset?,computer vision,Jacob
+how do I load a dataset,documentation,Jacob
+can I work with videos?,documentation,Jacob
+tell me about Voxel51,documentation,Jacob
+how do I install a plugin?,documentation,Jacob
+what does uniqueness mean?,documentation,Jacob
+what is mistakenness?,documentation,Jacob
+How can I use data normalization to improve my model's performance?,computer vision,Jacob
+Can you suggest ways to automate data annotation for computer vision tasks?,computer vision,Jacob
+What techniques can be used to balance a skewed dataset in machine learning?,computer vision,Jacob
+what brain methods are there?,documentation,Jacob
+what is an evaluation key?,documentation,Jacob
+how do I remove duplicate images from my dataset?,documentation,Jacob
+How can I build an object detection system for real-time applications like surveillance or autonomous vehicles?,computer vision,Jacob
+Can I understand how Convolutional Neural Networks (CNNs) work and why they are suitable for image processing tasks?,computer vision,Jacob
+What strategies can I use to gather and prepare a large dataset of labeled images for a specific computer vision task?,computer vision,Jacob
+How can I implement image segmentation to differentiate and isolate specific objects within an image?,computer vision,Jacob
+How can I handle cases of occlusion where one object in an image partially or entirely covers another?,computer vision,Jacob
+What is the role of a Region of Interest (ROI) in computer vision and how can I identify or define it in a given task?,computer vision,Jacob
+Can I understand the concept of feature extraction in the context of computer vision and provide an example of how it might be implemented?,computer vision,Jacob
+How can I handle the problem of varying light conditions in outdoor computer vision applications?,computer vision,Jacob
+How can I assess the quality of a dataset before using it for analysis or model training?,computer vision,Jacob
+"What are some common causes of data quality issues, and how can I prevent them?",computer vision,Jacob
+How can I handle missing or inconsistent data in a dataset?,computer vision,Jacob
+What strategies can I use to identify and deal with outliers in my data?,computer vision,Jacob
+How can I ensure that my data is accurately labeled and annotated?,computer vision,Jacob
+How can I check for and address bias in my dataset?,computer vision,Jacob
+How can I perform data cleansing to improve the quality of a dataset?,computer vision,Jacob
+How can I validate the accuracy of data after it has been processed or transformed?,computer vision,Jacob
+What tools and techniques can I use to automate data quality checks?,computer vision,Jacob
+How can I measure the impact of data quality on the performance of my machine learning models or data analysis?,computer vision,Jacob
