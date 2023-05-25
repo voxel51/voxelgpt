@@ -9,6 +9,7 @@ import os
 
 import chromadb
 from chromadb.utils import embedding_functions
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.chains import OpenAIModerationChain
 from langchain.chat_models import ChatOpenAI
 from langchain.embeddings import OpenAIEmbeddings
@@ -33,16 +34,26 @@ def get_chromadb_client():
     return cache["chromadb_client"]
 
 
-def get_llm():
+def get_llm(streaming=False):
+    key = "llm_streaming" if streaming else "llm"
     cache = get_cache()
-    if "llm" not in cache:
-        cache["llm"] = ChatOpenAI(
-            openai_api_key=get_openai_key(),
-            temperature=0,
-            model_name="gpt-3.5-turbo",
-        )
+    if key not in cache:
+        if streaming:
+            cache[key] = ChatOpenAI(
+                openai_api_key=get_openai_key(),
+                temperature=0,
+                model_name="gpt-3.5-turbo",
+                streaming=True,
+                callbacks=[StreamingStdOutCallbackHandler()],
+            )
+        else:
+            cache[key] = ChatOpenAI(
+                openai_api_key=get_openai_key(),
+                temperature=0,
+                model_name="gpt-3.5-turbo",
+            )
 
-    return cache["llm"]
+    return cache[key]
 
 
 def get_embedding_function():
