@@ -46,4 +46,7 @@ def run_computer_vision_query(query):
 def stream_computer_vision_query(query):
     prompt = _get_prompt(query)
     for content in stream_llm(prompt):
+        if isinstance(content, Exception):
+            raise content
+
         yield content

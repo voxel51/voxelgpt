@@ -179,4 +179,7 @@ def run_docs_query(query):
 def stream_docs_query(query):
     retriever = get_docs_retriever()
     for content in stream_retriever(retriever, query):
+        if isinstance(content, Exception):
+            raise content
+
         yield content

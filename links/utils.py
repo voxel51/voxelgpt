@@ -54,6 +54,8 @@ def _llm_thread(g, prompt):
             callbacks=[StreamingHandler(g)],
         )
         llm.call_as_llm(prompt)
+    except Exception as e:
+        g.send(e)
     finally:
         g.close()
 
@@ -79,6 +81,8 @@ def _retriever_thread(g, retriever, prompt):
             llm=llm, chain_type="stuff", retriever=retriever
         )
         qa.run(prompt)
+    except Exception as e:
+        g.send(e)
     finally:
         g.close()
 
