@@ -183,7 +183,7 @@ class ThreadedGenerator(object):
 
 
 class StreamingHandler(BaseCallbackHandler):
-    """Splits raw tokens into whitespace-delimited words."""
+    """Pass `words=True` to split tokens into whitespace-delimited words."""
 
     def __init__(self, gen, words=False):
         super().__init__()
