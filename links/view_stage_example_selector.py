@@ -5,7 +5,6 @@ View stage example selector.
 | `voxel51.com <https://voxel51.com/>`_
 |
 """
-import hashlib
 import os
 import pickle
 
@@ -15,7 +14,7 @@ import pandas as pd
 from scipy.spatial.distance import cosine
 
 # pylint: disable=relative-beyond-top-level
-from .utils import get_embedding_function, get_cache
+from .utils import get_embedding_function, get_cache, hash_query
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -30,11 +29,6 @@ VIEW_STAGE_EXAMPLE_PROMPT = PromptTemplate(
     input_variables=["input", "output"],
     template="Input: {input}\nOutput: {output}",
 )
-
-
-def hash_query(query):
-    hash_object = hashlib.md5(query.encode())
-    return hash_object.hexdigest()
 
 
 def get_or_create_embeddings(queries):
