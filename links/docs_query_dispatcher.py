@@ -7,7 +7,6 @@ FiftyOne docs query dispatcher.
 """
 import os
 import pickle
-import re
 import uuid
 
 from langchain.chains import RetrievalQA, RetrievalQAWithSourcesChain
@@ -31,8 +30,10 @@ from .utils import (
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PROMPTS_DIR = os.path.join(ROOT_DIR, "prompts")
+
 DOCS_EMBEDDINGS_FILE = os.path.join(ROOT_DIR, "fiftyone_docs_embeddings.pkl")
-PROMPT_TEMPLATE_FILE = os.path.join(ROOT_DIR, "prompts/docs_qa_template.txt")
+PROMPT_TEMPLATE_FILE = os.path.join(PROMPTS_DIR, "docs_qa_template.txt")
 
 DOC_TYPES = (
     "cheat_sheets",
@@ -71,16 +72,6 @@ STANDALONE_DOCS = (
     "index.html",
     "release-notes.html",
 )
-
-
-def load_prompt_template():
-    """Loads the prompt template for the FiftyOne documentation.
-
-    Returns:
-        the prompt template
-    """
-    with open(PROMPT_TEMPLATE_FILE, "r") as f:
-        return f.read()
 
 
 def _make_api_doc_path(name, docs_dir):
@@ -190,6 +181,19 @@ class FiftyOneDocsRetriever(BaseRetriever):
         raise NotImplementedError
 
 
+def get_prompt_template():
+    cache = get_cache()
+    key = "docs_prompt_template"
+    if key not in cache:
+        cache[key] = _load_prompt_template()
+    return cache[key]
+
+
+def _load_prompt_template():
+    with open(PROMPT_TEMPLATE_FILE, "r") as f:
+        return f.read()
+
+
 def _create_docs_retriever():
     with open(DOCS_EMBEDDINGS_FILE, "rb") as f:
         embeddings = list(pickle.load(f).values())
@@ -205,59 +209,17 @@ def get_docs_retriever():
     return cache[key]
 
 
-def _format_response(response):
-    answer = response["answer"]
-    sources = [s.strip() for s in response["sources"].split(",")]
-
-    # String
-    str_response = answer
-    if sources:
-        str_response += "\nSources:\n"
-        str_response += "\n".join(f"- {s}" for s in sources)
-
-    # Convert all URLs to [url](url)
-    patt = r"(https?://[^\s]+)"
-    repl = r"[\1](\1)"
-    md_response = re.sub(patt, repl, str_response)
-
-    return {
-        "string": str_response,
-        "markdown": md_response,
-    }
-
-
 def run_docs_query(query):
     retriever = get_docs_retriever()
-
-    response = query_retriever(retriever, query)
-    if isinstance(response, dict):
-        response = _format_response(response)
-
-    return response
+    prompt_template = get_prompt_template()
+    return query_retriever(retriever, prompt_template, query)
 
 
 def stream_docs_query(query):
     retriever = get_docs_retriever()
-    prompt_template = load_prompt_template()
-    parsing_sources = False
-
+    prompt_template = get_prompt_template()
     for content in stream_retriever(retriever, prompt_template, query):
         if isinstance(content, Exception):
             raise content
-
-        # Full response with sources
-        if isinstance(content, dict):
-            yield _format_response(content)
-            return
-
-        if parsing_sources:
-            yield f"{content.strip().rstrip(',')}\n"
-            continue
-
-        # https://github.com/hwchase17/langchain/blob/2ceb807da24e3ad7f04ff79120842982f341cda8/langchain/chains/qa_with_sources/base.py#L131
-        if "SOURCES:" in content:
-            parsing_sources = True
-            yield "\nSources:\n"
-            continue
 
         yield content

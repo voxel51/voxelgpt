@@ -6,6 +6,7 @@ VoxelGPT entrypoints.
 |
 """
 from collections import defaultdict
+import re
 import sys
 
 import fiftyone as fo
@@ -242,9 +243,9 @@ def ask_voxelgpt_generator(
                     yield _emit_streaming_content(content)
 
             yield _emit_streaming_content("", last=True)
-            yield _respond(message, overwrite=True)
+            yield _respond(_format_docs_message(message), overwrite=True)
         else:
-            yield _respond(run_docs_query(query, sources=True))
+            yield _respond(_format_docs_message(run_docs_query(query)))
 
         return
     elif intent == "computer_vision":
@@ -460,6 +461,19 @@ def _clarify_message():
 
 def _specific_message():
     return "I'm sorry, I don't understand. Can you be more specific?"
+
+
+def _format_docs_message(response):
+    # Markdown
+    # Convert all URLs to [url](url)
+    patt = r"(https?://[^\s]+)"
+    repl = r"[\1](\1)"
+    md_response = re.sub(patt, repl, response)
+
+    return {
+        "string": response,
+        "markdown": md_response,
+    }
 
 
 def _algorithms_message(algorithms):

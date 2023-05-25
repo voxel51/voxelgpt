@@ -69,7 +69,8 @@ def _llm_thread(g, prompt):
 
 
 def query_retriever(retriever, prompt_template, query):
-    qa = get_qa_with_sources_chain(retriever, prompt_template, get_llm())
+    llm = get_llm()
+    qa = FiftyOneQAWithSourcesChain(llm, retriever, prompt_template)
     return qa(query)
 
 
@@ -90,12 +91,8 @@ def _retriever_thread(g, retriever, prompt_template, query):
             streaming=True,
             callbacks=[StreamingHandler(g)],
         )
-
-        qa = get_qa_with_sources_chain(retriever, prompt_template, llm)
-
-        response = qa(query)
-        g.send(response)
-
+        qa = FiftyOneQAWithSourcesChain(llm, retriever, prompt_template)
+        qa(query)
     except Exception as e:
         g.send(e)
     finally:
@@ -120,7 +117,7 @@ def get_moderator():
     return FiftyOneModeration(openai_api_key=get_openai_key())
 
 
-class FiftyOneQAWithSourcesChain:
+class FiftyOneQAWithSourcesChain(object):
     def __init__(self, llm, retriever, prompt_template):
         self.llm = llm
         self.retriever = retriever
@@ -164,14 +161,6 @@ class FiftyOneQAWithSourcesChain:
         return self.llm.call_as_llm(prompt)
 
 
-def get_qa_with_sources_chain(retriever, prompt_template, llm):
-    return FiftyOneQAWithSourcesChain(
-        llm=llm,
-        retriever=retriever,
-        prompt_template=prompt_template,
-    )
-
-
 class ThreadedGenerator(object):
     def __init__(self):
         self.queue = queue.Queue()
@@ -196,7 +185,7 @@ class ThreadedGenerator(object):
 class StreamingHandler(BaseCallbackHandler):
     """Splits raw tokens into whitespace-delimited words."""
 
-    def __init__(self, gen, words=True):
+    def __init__(self, gen, words=False):
         super().__init__()
         self.gen = gen
         self.words = words
