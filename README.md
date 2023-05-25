@@ -216,15 +216,20 @@ You:
     does FiftyOne integrate with Label Studio?
 
 VoxelGPT:
-    Yes, FiftyOne integrates with Label Studio, which is an open-source data
-    labeling tool with a user-friendly UI. The integration allows you to easily
-    upload your data directly from FiftyOne to Label Studio for labeling. You
-    can get started with Label Studio through a simple pip install to get a
+    Yes, FiftyOne integrates with Label Studio. The integration allows you to
+    easily upload your data directly from FiftyOne to Label Studio for labeling.
+    You can get started with Label Studio through a simple pip install to get a
     local server up and running. FiftyOne provides simple setup instructions
     that you can use to specify the necessary account credentials and server
-    endpoint to use. FiftyOne also provides an API to create projects, upload
-    data, define label schemas, and download annotations using Label Studio,
-    all programmatically in Python.
+    endpoint to use. FiftyOne provides an API to create projects, upload data,
+    define label schemas, and download annotations using Label Studio, all
+    programmatically in Python. All of the following label types are supported
+    for image datasets: Classification, Detections, Instance segmentations,
+    Polygons and polylines, Keypoints, Scalar fields, and Semantic segmentation.
+
+    Sources:
+    - https://docs.voxel51.com/integrations/index.html
+    - https://docs.voxel51.com/integrations/labelstudio.html
 
 You:
     show me predicted airplanes
