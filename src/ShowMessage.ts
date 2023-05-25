@@ -23,6 +23,7 @@ export class ShowMessage extends Operator {
             return [
               ...current.filter(m => m !== lastIncomingMessage),
               {
+                type: 'incoming',
                 ...lastIncomingMessage,
                 ...message
               }
@@ -37,9 +38,9 @@ export class ShowMessage extends Operator {
   async execute(ctx) {
     if (ctx.params.message || ctx.params.outputs) {
       ctx.state.set(state.atoms.receiving, true)
-      const {update_last, ...params} = ctx.params
-      if (update_last) {
-        ctx.hooks.updateLastIncomingMessage(params)
+      const {overwrite_last} = ctx.params.data || {}
+      if (overwrite_last) {
+        ctx.hooks.updateLastIncomingMessage(ctx.params)
       } else {
         ctx.hooks.addMessage({
           type: 'incoming',

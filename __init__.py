@@ -182,7 +182,7 @@ class AskVoxelGPTPanel(foo.Operator):
                             streaming_message = data["content"]
                         else:
                             streaming_message += data["content"]
-                            kwargs["update_last"] = True
+                            kwargs["overwrite_last"] = True
 
                         if data["last"]:
                             kwargs["history"] = streaming_message
