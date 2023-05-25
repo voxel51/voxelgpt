@@ -25,9 +25,6 @@ EXAMPLE_EMBEDDINGS_PATH = os.path.join(
     EXAMPLES_DIR, "viewstage_embeddings.pkl"
 )
 VIEW_STAGE_EXAMPLES_PATH = os.path.join(EXAMPLES_DIR, "viewstage_examples.csv")
-
-# CHROMADB_COLLECTION_NAME = "fiftyone_view_stage_examples"
-
 VIEW_STAGE_EXAMPLE_PROMPT = PromptTemplate(
     input_variables=["input", "output"],
     template="Input: {input}\nOutput: {output}",

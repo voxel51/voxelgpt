@@ -21,7 +21,6 @@ from langchain.text_splitter import TokenTextSplitter
 from .utils import (
     get_cache,
     get_embedding_function,
-    get_embedding_model,
     get_llm,
 )
 

@@ -330,8 +330,6 @@ VoxelGPT uses:
 -   OpenAI's
     [text-embedding-ada-002 model](https://platform.openai.com/docs/guides/embeddings/embedding-models)
     to embed input text prompts
--   [Chroma](https://www.trychroma.com) for in-memory vector searches to
-    identify relevant examples to include in prompts
 -   [LangChain](https://github.com/hwchase17/langchain) provides the connective
     tissue for the application
 -   OpenAI's [GPT-3.5 model](https://platform.openai.com/docs/models/gpt-3-5)
