@@ -18,6 +18,7 @@ from langchain.prompts import FewShotPromptTemplate, PromptTemplate
 from langchain.chat_models import ChatOpenAI
 from openai import Embedding
 
+
 PROTECT_MAPS = [
     ("{source}", "<SOURCE>"),
     ("{page_content}", "<CONTENT>"),
