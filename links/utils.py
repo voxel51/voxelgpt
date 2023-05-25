@@ -18,6 +18,25 @@ from langchain.prompts import FewShotPromptTemplate, PromptTemplate
 from langchain.chat_models import ChatOpenAI
 from openai import Embedding
 
+PROTECT_MAPS = [
+    ("{source}", "<SOURCE>"),
+    ("{page_content}", "<CONTENT>"),
+    ("{", "LEFT_BRACE"),
+    ("}", "RIGHT_BRACE"),
+]
+
+
+def protect_text(text):
+    for k, v in PROTECT_MAPS:
+        text = text.replace(k, v)
+    return text
+
+
+def unprotect_text(text):
+    for k, v in PROTECT_MAPS:
+        text = text.replace(v, k)
+    return text
+
 
 def get_cache():
     g = globals()
@@ -131,7 +150,7 @@ class FiftyOneQAWithSourcesChain(object):
 
         examples = [
             {
-                "page_content": doc.page_content,
+                "page_content": protect_text(doc.page_content),
                 "source": doc.metadata["source"],
             }
             for doc in docs
@@ -150,7 +169,7 @@ class FiftyOneQAWithSourcesChain(object):
                 question=query,
                 summaries=summaries,
             )
-            return prompt
+            return unprotect_text(prompt)
 
         return _build_prompt
 
