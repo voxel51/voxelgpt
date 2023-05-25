@@ -52,7 +52,8 @@ def ask_voxelgpt_interactive(
 
     .. note::
 
-        To end your session, press `ENTER` without a prompt or type `exit`.
+        Type `exit` or `^c` to end your session, or type `reset` to clear your
+        chat history.
 
     Args:
         sample_collection (None): a
@@ -64,14 +65,26 @@ def ask_voxelgpt_interactive(
     if chat_history is None:
         chat_history = []
 
+    empty = 0
+
     while True:
-        query = input("How can I help you? ")
-        if not query or query == "exit":
+        if empty >= 5:
+            query = input("How can I help you? ('exit' to quit) ")
+        else:
+            query = input("How can I help you? ")
+
+        if not query:
+            empty += 1
+            continue
+
+        if query.lower() == "exit":
             break
 
-        if query == "reset":
+        if query.lower() == "reset":
             chat_history.clear()
             continue
+
+        empty = 0
 
         coll = ask_voxelgpt(
             query,
@@ -136,6 +149,9 @@ def ask_voxelgpt(
                 print(data["message"])
         elif type == "streaming":
             sys.stdout.write(data["content"])
+            if data["last"]:
+                sys.stdout.write("\n")
+
             sys.stdout.flush()
 
     return view
@@ -266,15 +282,17 @@ def ask_voxelgpt_generator(
         return
 
     if sample_collection is None:
-        raise ValueError(
+        yield _respond(
             "You must provide a sample collection in order for me to respond "
             "to this query"
         )
+        return
 
     if sample_collection.media_type not in ("image", "video"):
-        raise ValueError(
+        yield _respond(
             "Only image or video collections are currently supported"
         )
+        return
 
     # Algorithms
     algorithms = select_algorithms(query)
