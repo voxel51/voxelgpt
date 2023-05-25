@@ -182,9 +182,7 @@ class AskVoxelGPTPanel(foo.Operator):
                             streaming_message = data["content"]
                         else:
                             streaming_message += data["content"]
-
-                            # @todo(ritch): implement overwrite_last in client
-                            kwargs["overwrite_last"] = True
+                            kwargs["update_last"] = True
 
                         if data["last"]:
                             kwargs["history"] = streaming_message
