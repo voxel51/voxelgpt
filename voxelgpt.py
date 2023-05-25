@@ -6,13 +6,17 @@ VoxelGPT entrypoints.
 |
 """
 from collections import defaultdict
+import sys
 
 import fiftyone as fo
 
 from links.query_moderator import moderate_query
 from links.query_intent_classifier import classify_query_intent
-from links.docs_query_dispatcher import run_docs_query
-from links.computer_vision_query_dispatcher import run_computer_vision_query
+from links.docs_query_dispatcher import run_docs_query, stream_docs_query
+from links.computer_vision_query_dispatcher import (
+    run_computer_vision_query,
+    stream_computer_vision_query,
+)
 from links.view_stage_example_selector import (
     generate_view_stage_examples_prompt,
 )
@@ -111,8 +115,9 @@ def ask_voxelgpt(query, sample_collection=None, chat_history=None):
     for response in ask_voxelgpt_generator(
         query,
         sample_collection=sample_collection,
-        chat_history=chat_history,
         dialect="string",
+        allow_streaming=True,
+        chat_history=chat_history,
     ):
         type = response["type"]
         data = response["data"]
@@ -121,6 +126,9 @@ def ask_voxelgpt(query, sample_collection=None, chat_history=None):
             view = data["view"]
         elif type == "message":
             print(data["message"])
+        elif type == "streaming":
+            sys.stdout.write(data["content"])
+            sys.stdout.flush()
 
     return view
 
@@ -128,8 +136,9 @@ def ask_voxelgpt(query, sample_collection=None, chat_history=None):
 def ask_voxelgpt_generator(
     query,
     sample_collection=None,
-    chat_history=None,
     dialect="string",
+    allow_streaming=True,
+    chat_history=None,
 ):
     """Generator that emits responses from VoxelGPT with respect to the given
     query.
@@ -139,6 +148,10 @@ def ask_voxelgpt_generator(
     -   Messages in the format::
 
         {"type": "message", "data": {"message": message}}
+
+    -   Streaming content in the format:
+
+        {"type": "streaming", "data": {"content": content, "last": True/False}}
 
     -   Views in the format::
 
@@ -153,9 +166,10 @@ def ask_voxelgpt_generator(
         query: a prompt string
         sample_collection (None): a
             :class:`fiftyone.core.collections.SampleCollection` to query
-        chat_history (None): an optional chat history list
         dialect ("string"): the response format to return. Supported values are
             ``("string", "markdown", "raw")``
+        allow_streaming (True): whether to allow streaming responses
+        chat_history (None): an optional chat history list
     """
     if dialect not in _SUPPORTED_DIALECTS:
         raise ValueError(
@@ -193,10 +207,30 @@ def ask_voxelgpt_generator(
     # Intent classification
     intent = classify_query_intent(query)
     if intent == "documentation":
-        yield _respond(run_docs_query(query))
+        if allow_streaming:
+            message = ""
+            for content in stream_docs_query(query):
+                message += content
+                yield _emit_streaming_content(content)
+
+            _emit_streaming_content("", last=True)
+            _log_chat_history("GPT", message, chat_history)
+        else:
+            yield _respond(run_docs_query(query))
+
         return
     elif intent == "computer_vision":
-        yield _respond(run_computer_vision_query(query))
+        if allow_streaming:
+            message = ""
+            for content in stream_computer_vision_query(query):
+                message += content
+                yield _emit_streaming_content(content)
+
+            _emit_streaming_content("", last=True)
+            _log_chat_history("GPT", message, chat_history)
+        else:
+            yield _respond(run_computer_vision_query(query))
+
         return
     elif intent != "display":
         yield _respond(_clarify_message())
@@ -513,6 +547,10 @@ def _full_collection_message(sample_collection):
 
 def _emit_message(message, _hist):
     return {"type": "message", "data": {"message": message, "history": _hist}}
+
+
+def _emit_streaming_content(content, last=False):
+    return {"type": "streaming", "data": {"content": content, "last": last}}
 
 
 def _emit_view(view):

@@ -10,7 +10,7 @@ import os
 from langchain.prompts import PromptTemplate
 
 # pylint: disable=relative-beyond-top-level
-from .utils import get_llm, get_cache
+from .utils import get_llm, stream_llm, get_cache
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -30,12 +30,23 @@ def _load_query_prefix():
     return cache[key]
 
 
-def run_computer_vision_query(query):
+def _get_prompt(query):
     prefix = _load_query_prefix()
-    prompt = prefix + PromptTemplate(
+    return prefix + PromptTemplate(
         input_variables=["query"],
         template="Question: {query}\nAnswer:",
     ).format(query=query)
 
-    response = get_llm().call_as_llm(prompt)
-    return response.strip()
+
+def run_computer_vision_query(query):
+    prompt = _get_prompt(query)
+    return get_llm().call_as_llm(prompt).strip()
+
+
+def stream_computer_vision_query(query):
+    prompt = _get_prompt(query)
+    for content in stream_llm(prompt):
+        if isinstance(content, Exception):
+            raise content
+
+        yield content

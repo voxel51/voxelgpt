@@ -15,6 +15,22 @@ export class ShowMessage extends Operator {
     return {
       addMessage: (message) => {
         setMessages(current => [...current, message])
+      },
+      updateLastIncomingMessage: (message) => {
+        setMessages(current => {
+          const lastIncomingMessage = current.filter(m => m.type === 'incoming').pop()
+          if (lastIncomingMessage) {
+            return [
+              ...current.filter(m => m !== lastIncomingMessage),
+              {
+                type: 'incoming',
+                ...lastIncomingMessage,
+                ...message
+              }
+            ]
+          }
+          return current
+        })
       }
     }
   }
@@ -22,10 +38,15 @@ export class ShowMessage extends Operator {
   async execute(ctx) {
     if (ctx.params.message || ctx.params.outputs) {
       ctx.state.set(state.atoms.receiving, true)
-      ctx.hooks.addMessage({
-        type: 'incoming',
-        ...ctx.params
-      })
+      const {overwrite_last} = ctx.params.data || {}
+      if (overwrite_last) {
+        ctx.hooks.updateLastIncomingMessage(ctx.params)
+      } else {
+        ctx.hooks.addMessage({
+          type: 'incoming',
+          ...ctx.params
+        })
+      }
     }
     if (ctx.params.done) {
       ctx.state.set(state.atoms.receiving, false)

@@ -18781,16 +18781,37 @@ Please use another name.`);
       return {
         addMessage: (message) => {
           setMessages((current) => [...current, message]);
+        },
+        updateLastIncomingMessage: (message) => {
+          setMessages((current) => {
+            const lastIncomingMessage = current.filter((m) => m.type === "incoming").pop();
+            if (lastIncomingMessage) {
+              return [
+                ...current.filter((m) => m !== lastIncomingMessage),
+                {
+                  type: "incoming",
+                  ...lastIncomingMessage,
+                  ...message
+                }
+              ];
+            }
+            return current;
+          });
         }
       };
     }
     async execute(ctx) {
       if (ctx.params.message || ctx.params.outputs) {
         ctx.state.set(atoms.receiving, true);
-        ctx.hooks.addMessage({
-          type: "incoming",
-          ...ctx.params
-        });
+        const { overwrite_last } = ctx.params.data || {};
+        if (overwrite_last) {
+          ctx.hooks.updateLastIncomingMessage(ctx.params);
+        } else {
+          ctx.hooks.addMessage({
+            type: "incoming",
+            ...ctx.params
+          });
+        }
       }
       if (ctx.params.done) {
         ctx.state.set(atoms.receiving, false);

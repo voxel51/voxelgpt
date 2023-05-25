@@ -22,6 +22,7 @@ from .utils import (
     get_cache,
     get_embedding_function,
     get_llm,
+    stream_retriever,
 )
 
 
@@ -118,17 +119,30 @@ class FiftyOneDocsRetriever(BaseRetriever):
         raise NotImplementedError
 
 
-def _create_docs_qa_chain():
+def _create_docs_retriever():
     with open(DOCS_EMBEDDINGS_FILE, "rb") as f:
         embeddings = list(pickle.load(f).values())
 
-    retriever = FiftyOneDocsRetriever(embeddings)
+    return FiftyOneDocsRetriever(embeddings)
+
+
+def _create_docs_qa_chain():
     return RetrievalQA.from_chain_type(
-        llm=get_llm(), chain_type="stuff", retriever=retriever
+        llm=get_llm(),
+        chain_type="stuff",
+        retriever=get_docs_retriever(),
     )
 
 
-def load_docs_qa_chain():
+def get_docs_retriever():
+    cache = get_cache()
+    key = "docs_retriever"
+    if key not in cache:
+        cache[key] = _create_docs_retriever()
+    return cache[key]
+
+
+def get_docs_qa_chain():
     cache = get_cache()
     key = "docs_qa_chain"
     if key not in cache:
@@ -157,6 +171,15 @@ def _format_response(response):
 
 
 def run_docs_query(query):
-    docs_qa = load_docs_qa_chain()
+    docs_qa = get_docs_qa_chain()
     response = docs_qa.run([query]).strip()
     return _format_response(response)
+
+
+def stream_docs_query(query):
+    retriever = get_docs_retriever()
+    for content in stream_retriever(retriever, query):
+        if isinstance(content, Exception):
+            raise content
+
+        yield content
