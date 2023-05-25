@@ -7,12 +7,10 @@ Link utils.
 """
 import os
 
-import chromadb
-from chromadb.utils import embedding_functions
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.chains import OpenAIModerationChain
 from langchain.chat_models import ChatOpenAI
-from langchain.embeddings import OpenAIEmbeddings
+from openai import Embedding
 
 
 def get_openai_key():
@@ -24,14 +22,6 @@ def get_openai_key():
         )
 
     return api_key
-
-
-def get_chromadb_client():
-    cache = get_cache()
-    if "chromadb_client" not in cache:
-        cache["chromadb_client"] = chromadb.Client()
-
-    return cache["chromadb_client"]
 
 
 def get_llm(streaming=False):
@@ -56,27 +46,16 @@ def get_llm(streaming=False):
     return cache[key]
 
 
+def embedding_function(queries):
+    resp = Embedding.create(model="text-embedding-ada-002", input=queries)
+    return [r["embedding"] for r in resp["data"]]
+
+
 def get_embedding_function():
     cache = get_cache()
     if "embedding_function" not in cache:
-        cache[
-            "embedding_function"
-        ] = embedding_functions.OpenAIEmbeddingFunction(
-            api_key=get_openai_key(),
-            model_name="text-embedding-ada-002",
-        )
-
+        cache["embedding_function"] = embedding_function
     return cache["embedding_function"]
-
-
-def get_embedding_model():
-    cache = get_cache()
-    if "embedding_model" not in cache:
-        cache["embedding_model"] = OpenAIEmbeddings(
-            openai_api_key=get_openai_key()
-        )
-
-    return cache["embedding_model"]
 
 
 class FiftyOneModeration(OpenAIModerationChain):

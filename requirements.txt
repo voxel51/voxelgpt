@@ -1,4 +1,4 @@
-chromadb
-langchain
+langchain>=0.0.179
 openai
 pandas
+scipy

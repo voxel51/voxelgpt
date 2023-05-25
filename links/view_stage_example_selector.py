@@ -6,25 +6,25 @@ View stage example selector.
 |
 """
 import hashlib
-import json
 import os
+import pickle
 
 from langchain.prompts import FewShotPromptTemplate, PromptTemplate
+import numpy as np
 import pandas as pd
+from scipy.spatial.distance import cosine
 
 # pylint: disable=relative-beyond-top-level
-from .utils import get_chromadb_client, get_embedding_function, get_cache
+from .utils import get_embedding_function, get_cache
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EXAMPLES_DIR = os.path.join(ROOT_DIR, "examples")
 
 EXAMPLE_EMBEDDINGS_PATH = os.path.join(
-    EXAMPLES_DIR, "viewstage_embeddings.json"
+    EXAMPLES_DIR, "viewstage_embeddings.pkl"
 )
 VIEW_STAGE_EXAMPLES_PATH = os.path.join(EXAMPLES_DIR, "viewstage_examples.csv")
-
-CHROMADB_COLLECTION_NAME = "fiftyone_view_stage_examples"
 
 VIEW_STAGE_EXAMPLE_PROMPT = PromptTemplate(
     input_variables=["input", "output"],
@@ -40,8 +40,8 @@ def hash_query(query):
 def get_or_create_embeddings(queries):
     if os.path.isfile(EXAMPLE_EMBEDDINGS_PATH):
         print("Loading embeddings from disk...")
-        with open(EXAMPLE_EMBEDDINGS_PATH, "r") as f:
-            example_embeddings = json.load(f)
+        with open(EXAMPLE_EMBEDDINGS_PATH, "rb") as f:
+            example_embeddings = pickle.load(f)
     else:
         example_embeddings = {}
 
@@ -60,7 +60,8 @@ def get_or_create_embeddings(queries):
 
     if new_queries:
         print("Generating %d embeddings..." % len(new_queries))
-        new_embeddings = get_embedding_function()(new_queries)
+        model = get_embedding_function()
+        new_embeddings = model(new_queries)
         for key, embedding in zip(new_hashes, new_embeddings):
             example_embeddings[key] = embedding
 
@@ -69,74 +70,11 @@ def get_or_create_embeddings(queries):
 
     if new_queries:
         print("Saving embeddings to disk...")
-        with open(EXAMPLE_EMBEDDINGS_PATH, "w") as f:
-            json.dump(example_embeddings, f)
+
+        with open(EXAMPLE_EMBEDDINGS_PATH, "wb") as f:
+            pickle.dump(example_embeddings, f)
 
     return query_embeddings
-
-
-def _format_bool_column(col):
-    return [str(int(entry)) for entry in col.tolist()]
-
-
-def _contains_match_or_filter_labels(stages_list):
-    cond = ("match" in stages_list) or ("filter_labels" in stages_list)
-    return str(int(cond))
-
-
-def create_chroma_collection(client):
-    collection = client.create_collection(
-        CHROMADB_COLLECTION_NAME,
-        embedding_function=get_embedding_function(),
-    )
-
-    examples = pd.read_csv(VIEW_STAGE_EXAMPLES_PATH, on_bad_lines="skip")
-    queries = examples["query"].tolist()
-    media_types = examples["media_type"].tolist()
-    geos = _format_bool_column(examples["geo"])
-    label_types = examples["label_type"].tolist()
-    text_sims = _format_bool_column(examples["text_sim"])
-    image_sims = _format_bool_column(examples["image_sim"])
-    evals = _format_bool_column(examples["eval"])
-    metas = _format_bool_column(examples["metadata"])
-
-    stages_lists = examples["stages"].tolist()
-    match_filter = [
-        _contains_match_or_filter_labels(sl) for sl in stages_lists
-    ]
-
-    ids = [f"{i}" for i in range(len(queries))]
-    metadatas = [
-        {
-            "input": query,
-            "output": sl,
-            "media_type": mt,
-            "geo": geo,
-            "label_type": lt,
-            "text_sim": ts,
-            "image_sim": ims,
-            "eval": eval,
-            "meta": meta,
-            "match_filter": mf,
-        }
-        for query, sl, mt, geo, lt, ts, ims, eval, meta, mf in zip(
-            queries,
-            stages_lists,
-            media_types,
-            geos,
-            label_types,
-            text_sims,
-            image_sims,
-            evals,
-            metas,
-            match_filter,
-        )
-    ]
-
-    embeddings = get_or_create_embeddings(queries)
-    collection.add(embeddings=embeddings, metadatas=metadatas, ids=ids)
-
-    return collection
 
 
 def has_geo_field(sample_collection):
@@ -202,25 +140,6 @@ def _parse_runs_and_labels(runs, label_fields):
     return reduced_runs, reduced_label_fields
 
 
-def _load_examples_vectorstore():
-    client = get_chromadb_client()
-    try:
-        collection = client.get_collection(
-            CHROMADB_COLLECTION_NAME,
-            embedding_function=get_embedding_function(),
-        )
-    except:
-        collection = create_chroma_collection(client)
-    return collection
-
-
-def initialize_examples_vectorstore():
-    cache = get_cache()
-    key = "viewstage_examples_db"
-    examples_db = _load_examples_vectorstore()
-    cache[key] = examples_db
-
-
 def _get_evaluation_type(sample_collection, eval_key):
     eval_cls = sample_collection.get_evaluation_info(eval_key).config.cls
     if "openimages" in eval_cls:
@@ -234,29 +153,47 @@ def _get_evaluation_type(sample_collection, eval_key):
     return None
 
 
-def get_similar_examples(sample_collection, query, runs, label_fields):
-    cache = get_cache()
-    key = "viewstage_examples_db"
+def _load_examples():
+    examples = pd.read_csv(VIEW_STAGE_EXAMPLES_PATH, on_bad_lines="skip")
+    examples["meta"] = examples["metadata"]
+    examples["contains_match"] = examples["stages"].str.contains("match\(")
+    examples["contains_filter_labels"] = examples["stages"].str.contains(
+        "filter_labels\("
+    )
+    examples["mfl"] = (
+        examples["contains_match"] | examples["contains_filter_labels"]
+    )
+    examples["hash"] = examples["query"].apply(lambda x: hash_query(x))
 
-    if key not in cache:
-        initialize_examples_vectorstore()
-    examples_db = cache[key]
+    with open(EXAMPLE_EMBEDDINGS_PATH, "rb") as f:
+        embeddings = pickle.load(f)
+
+    embeddings = {
+        key: np.array(embeddings[key]) for key in examples["hash"].tolist()
+    }
+    return examples, embeddings
+
+
+def get_examples():
+    cache = get_cache()
+    keys = ("viewstage_examples", "viewstage_embeddings")
+    if keys[0] not in cache or keys[1] not in cache:
+        cache[keys[0]], cache[keys[1]] = _load_examples()
+
+    return cache[keys[0]], cache[keys[1]]
+
+
+def _get_filtered_examples(sample_collection, runs, label_fields):
+    examples, embeddings = get_examples()
+    media_type = sample_collection.media_type
+    _filter = examples["media_type"].isin([media_type, "all"])
 
     red_runs, red_label_fields = _parse_runs_and_labels(runs, label_fields)
-
-    media_type = sample_collection.media_type
     geo = has_geo_field(sample_collection)
     text_sim = "text_similarity" in red_runs
     image_sim = "image_similarity" in red_runs
     meta = "metadata" in red_runs
     eval = "evaluation" in red_runs
-
-    _filter = {
-        "$or": [
-            {"media_type": {"$eq": "all"}},
-            {"media_type": {"$eq": media_type}},
-        ]
-    }
 
     if red_label_fields or eval:
         if red_label_fields:
@@ -278,34 +215,50 @@ def get_similar_examples(sample_collection, query, runs, label_fields):
             eval_types = []
 
         label_types = list(set(label_field_types + eval_types + ["all"]))
+        _filter = _filter & examples["label_type"].isin(label_types)
 
-        _label_filter_or = [{"label_type": {"$eq": lt}} for lt in label_types]
+    ## contains match() or filter_labels() in stages
+    mfl_cond = red_label_fields and not text_sim
 
-        _label_filter = {"$or": _label_filter_or}
+    conds = [geo, text_sim, image_sim, meta, eval, mfl_cond]
+    strs = ["geo", "text_sim", "image_sim", "meta", "eval", "mfl"]
 
-        _filter = {"$and": [_filter, _label_filter]}
+    for cond, cond_str in zip(conds, strs):
+        if not cond:
+            _filter = _filter & (examples[cond_str] == False)
 
-    def add_and_to_filter(_filter, new_str):
-        _filter = {"$and": [_filter, {new_str: {"$eq": "0"}}]}
-        return _filter
+    filtered_examples = examples[_filter]
 
-    match_filter = red_label_fields and not text_sim
+    filtered_queries, filtered_stages, hashes = (
+        filtered_examples["query"].tolist(),
+        filtered_examples["stages"].tolist(),
+        filtered_examples["hash"].tolist(),
+    )
+    filtered_embeddings = [embeddings[key] for key in hashes]
 
-    conds = [geo, text_sim, image_sim, meta, eval, match_filter]
-    strs = ["geo", "text_sim", "image_sim", "meta", "eval", "match_filter"]
+    return filtered_queries, filtered_stages, filtered_embeddings
 
-    for cond, new_str in zip(conds, strs):
-        _filter = add_and_to_filter(_filter, new_str) if not cond else _filter
 
-    res = examples_db.query(
-        query_texts=[query], n_results=20, where=_filter, include=["metadatas"]
-    )["metadatas"][0]
+def get_similar_examples(sample_collection, query, runs, label_fields):
+    ex_queries, ex_stages, ex_embeddings = _get_filtered_examples(
+        sample_collection, runs, label_fields
+    )
 
-    similar_examples = [
-        {"input": r["input"], "output": r["output"]} for r in res
+    model = get_embedding_function()
+    query_embedding = np.array(model([query]))
+
+    dists = np.array([cosine(query_embedding, emb) for emb in ex_embeddings])
+
+    sorted_ix = np.argsort(dists).astype(int)
+
+    k = 20
+    similar_queries = [ex_queries[ix] for ix in sorted_ix[:k]]
+    similar_stages = [ex_stages[ix] for ix in sorted_ix[:k]]
+
+    return [
+        {"input": sq, "output": ss}
+        for sq, ss in zip(similar_queries, similar_stages)
     ]
-
-    return similar_examples
 
 
 def generate_view_stage_examples_prompt_template(
@@ -334,5 +287,4 @@ def generate_view_stage_examples_prompt(
     )
 
     prompt = similar_examples_prompt_template.format(text=query)
-    prompt = _replace_run_keys(prompt, runs)
-    return prompt
+    return _replace_run_keys(prompt, runs)
