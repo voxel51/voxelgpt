@@ -32,6 +32,7 @@ from .utils import (
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOCS_EMBEDDINGS_FILE = os.path.join(ROOT_DIR, "fiftyone_docs_embeddings.pkl")
+PROMPT_TEMPLATE_FILE = os.path.join(ROOT_DIR, "prompts/docs_qa_template.txt")
 
 DOC_TYPES = (
     "cheat_sheets",
@@ -70,6 +71,16 @@ STANDALONE_DOCS = (
     "index.html",
     "release-notes.html",
 )
+
+
+def load_prompt_template():
+    """Loads the prompt template for the FiftyOne documentation.
+
+    Returns:
+        the prompt template
+    """
+    with open(PROMPT_TEMPLATE_FILE, "r") as f:
+        return f.read()
 
 
 def _make_api_doc_path(name, docs_dir):
@@ -215,21 +226,22 @@ def _format_response(response):
     }
 
 
-def run_docs_query(query, sources=True):
+def run_docs_query(query):
     retriever = get_docs_retriever()
 
-    response = query_retriever(retriever, query, sources=sources)
+    response = query_retriever(retriever, query)
     if isinstance(response, dict):
         response = _format_response(response)
 
     return response
 
 
-def stream_docs_query(query, sources=True):
+def stream_docs_query(query):
     retriever = get_docs_retriever()
-
+    prompt_template = load_prompt_template()
     parsing_sources = False
-    for content in stream_retriever(retriever, query, sources=sources):
+
+    for content in stream_retriever(retriever, prompt_template, query):
         if isinstance(content, Exception):
             raise content
 
@@ -239,7 +251,7 @@ def stream_docs_query(query, sources=True):
             return
 
         if parsing_sources:
-            yield f"- {content.strip().rstrip(',')}\n"
+            yield f"{content.strip().rstrip(',')}\n"
             continue
 
         # https://github.com/hwchase17/langchain/blob/2ceb807da24e3ad7f04ff79120842982f341cda8/langchain/chains/qa_with_sources/base.py#L131

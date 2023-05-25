@@ -234,7 +234,7 @@ def ask_voxelgpt_generator(
     if intent == "documentation":
         if allow_streaming:
             message = ""
-            for content in stream_docs_query(query, sources=True):
+            for content in stream_docs_query(query):
                 if isinstance(content, dict):
                     message = content
                 else:

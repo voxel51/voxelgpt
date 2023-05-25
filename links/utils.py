@@ -13,9 +13,8 @@ import queue
 from langchain.callbacks.base import BaseCallbackHandler
 from langchain.chains import (
     OpenAIModerationChain,
-    RetrievalQA,
-    RetrievalQAWithSourcesChain,
 )
+from langchain.prompts import FewShotPromptTemplate, PromptTemplate
 from langchain.chat_models import ChatOpenAI
 from openai import Embedding
 
@@ -69,32 +68,20 @@ def _llm_thread(g, prompt):
         g.close()
 
 
-def query_retriever(retriever, prompt, sources=True):
-    if not sources:
-        qa = RetrievalQA.from_chain_type(
-            llm=get_llm(),
-            chain_type="stuff",
-            retriever=retriever,
-        )
-        return qa.run([prompt]).strip()
-
-    qa = RetrievalQAWithSourcesChain.from_chain_type(
-        llm=get_llm(),
-        chain_type="stuff",
-        retriever=retriever,
-    )
-    return qa({"question": prompt})
+def query_retriever(retriever, prompt_template, query):
+    qa = get_qa_with_sources_chain(retriever, prompt_template, get_llm())
+    return qa(query)
 
 
-def stream_retriever(retriever, prompt, sources=True):
+def stream_retriever(retriever, prompt_template, query):
     g = ThreadedGenerator()
     threading.Thread(
-        target=_retriever_thread, args=(g, retriever, sources, prompt)
+        target=_retriever_thread, args=(g, retriever, prompt_template, query)
     ).start()
     return g
 
 
-def _retriever_thread(g, retriever, sources, prompt):
+def _retriever_thread(g, retriever, prompt_template, query):
     try:
         llm = ChatOpenAI(
             openai_api_key=get_openai_key(),
@@ -104,17 +91,11 @@ def _retriever_thread(g, retriever, sources, prompt):
             callbacks=[StreamingHandler(g)],
         )
 
-        if sources:
-            qa = RetrievalQAWithSourcesChain.from_chain_type(
-                llm=llm, chain_type="stuff", retriever=retriever
-            )
-            response = qa({"question": prompt})
-            g.send(response)
-        else:
-            qa = RetrievalQA.from_chain_type(
-                llm=llm, chain_type="stuff", retriever=retriever
-            )
-            qa.run([prompt])
+        qa = get_qa_with_sources_chain(retriever, prompt_template, llm)
+
+        response = qa(query)
+        g.send(response)
+
     except Exception as e:
         g.send(e)
     finally:
@@ -137,6 +118,58 @@ class FiftyOneModeration(OpenAIModerationChain):
 
 def get_moderator():
     return FiftyOneModeration(openai_api_key=get_openai_key())
+
+
+class FiftyOneQAWithSourcesChain:
+    def __init__(self, llm, retriever, prompt_template):
+        self.llm = llm
+        self.retriever = retriever
+        self.prompt_template = prompt_template
+
+    def prompt_builder(self, docs):
+        example_template = PromptTemplate(
+            template="Content: {page_content}\nSource: {source}",
+            input_variables=["page_content", "source"],
+        )
+
+        examples = [
+            {
+                "page_content": doc.page_content,
+                "source": doc.metadata["source"],
+            }
+            for doc in docs
+        ]
+
+        summaries = FewShotPromptTemplate(
+            examples=examples,
+            example_prompt=example_template,
+            prefix="",
+            suffix="",
+            input_variables=[],
+        ).format()
+
+        def _build_prompt(query):
+            prompt = self.prompt_template.format(
+                question=query,
+                summaries=summaries,
+            )
+            return prompt
+
+        return _build_prompt
+
+    def __call__(self, query):
+        docs = self.retriever.get_relevant_documents(query)
+        prompt_builder = self.prompt_builder(docs)
+        prompt = prompt_builder(query)
+        return self.llm.call_as_llm(prompt)
+
+
+def get_qa_with_sources_chain(retriever, prompt_template, llm):
+    return FiftyOneQAWithSourcesChain(
+        llm=llm,
+        retriever=retriever,
+        prompt_template=prompt_template,
+    )
 
 
 class ThreadedGenerator(object):
