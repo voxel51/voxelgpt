@@ -763,10 +763,7 @@ def _validate_filter_labels(stage, label_classes):
         tmp = args[0].split('"')
         label_field = tmp[1]
     else:
-        print("HI")
-        print(args)
         label_field = args[0][1:-1]
-        print(label_field)
         if label_field not in label_classes.keys():
             for field in label_classes.keys():
                 if field in label_field and field != label_field:
@@ -803,6 +800,7 @@ def _extract_query_from_examples(examples_prompt):
 
 def attempt_to_disambiguate(
     response,
+    sample_collection,
     required_brain_runs,
     label_classes,
     unmatched_classes,
@@ -823,8 +821,11 @@ def attempt_to_disambiguate(
 
     ### If we don't have text similarity, we can't do anything else
     if "text_similarity" not in required_brain_runs:
-        return response
-    sim_key = required_brain_runs["text_similarity"]
+        sim_key = _get_first_image_text_similarity_key(sample_collection)
+        if not sim_key:
+            return response
+    else:
+        sim_key = required_brain_runs["text_similarity"]["key"]
 
     if len(unmatched_classes) == 1:
         ### Case 2: 1 unmatched class & text_similarity
@@ -847,34 +848,20 @@ def _postprocess_stages(
 
     for stage in stages:
         _stage = stage
-        print(_stage)
         _stage = _convert_matches_to_text_similarities(
             _stage, sample_collection, required_brain_runs, unmatched_classes
         )
-        print("after convert matches to text similarities")
-        print(_stage)
         _stage = _validate_label_fields(
             _stage, sample_collection, label_classes
         )
-        print("after validate label fields")
-        print(_stage)
         _stage = _validate_label_class_case(_stage, label_classes)
-        print("after validate label class case")
-        print(_stage)
         _stage = _validate_stages_ner(_stage, label_classes)
-        print("after validate stages ner")
-        print(_stage)
         _stage = _validate_runs(_stage, sample_collection, required_brain_runs)
-        print("after validate runs")
-
         _stage = _correct_detection_match_stages(_stage)
         if "filter_labels" in _stage:
             _stage = _validate_filter_labels(_stage, label_classes)
-            print("after validate filter labels")
         if "match_labels" in _stage:
             _stage = _validate_match_labels(_stage, label_classes)
-            print("after validate match labels")
-        print(_stage)
         new_stages.append(_stage)
 
     return new_stages
@@ -904,6 +891,7 @@ def get_gpt_view_stage_strings(
     if "more" in response.lower() or "confused" in response.lower():
         response = attempt_to_disambiguate(
             response,
+            sample_collection,
             required_brain_runs,
             label_classes,
             unmatched_classes,
@@ -915,8 +903,6 @@ def get_gpt_view_stage_strings(
     elif "confused" in response.lower():
         return "_CONFUSED_"
     else:
-        print("else")
-        print(response)
         stages = split_into_stages(response)
         stages = _postprocess_stages(
             stages,
