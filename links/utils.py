@@ -5,6 +5,7 @@ Link utils.
 | `voxel51.com <https://voxel51.com/>`_
 |
 """
+import hashlib
 import os
 import re
 import threading
@@ -37,6 +38,11 @@ def unprotect_text(text):
     for k, v in PROTECT_MAPS:
         text = text.replace(v, k)
     return text
+
+
+def hash_query(query):
+    hash_object = hashlib.md5(query.encode())
+    return hash_object.hexdigest()
 
 
 def get_cache():

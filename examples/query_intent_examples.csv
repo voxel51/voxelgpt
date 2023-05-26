@@ -1,4 +1,72 @@
 query,intent,added_by
+what brain methods are there?,documentation,Jacob
+what is an evaluation key?,documentation,Jacob
+how do I remove duplicate images from my dataset?,documentation,Jacob
+how do I evaluate models in 51?,documentation,Jacob
+how do I find annotation mistakes,documentation,Jacob
+Can I remove duplicate or near-duplicate images?,documentation,Jacob
+how do I add model predictions to my data?,documentation,Jacob
+what tutorials does Voxel51 have around the library?,documentation,Jacob
+what workflows are supported?,documentation,Jacob
+what is the embeddings panel?,documentation,Jacob
+what methods does compute_visualization support?,documentation,Jacob
+how do I use lasso selection in the app?,documentation,Jacob
+can I change the color scheme?,documentation,Jacob
+what is a vector field?,documentation,Jacob
+is umap supported?,documentation,Jacob
+can I use tsne to visualize my samples?,documentation,Jacob
+how do I load the berkeley deep drive dataset?,documentation,Jacob
+what is a brain key?,documentation,Jacob
+what arguments does filter_labels take,documentation,Jacob
+what is the ViewField F?,documentation,Jacob
+what is the F symbol?,documentation,Jacob
+how are view expressions used in fiftyone?,documentation,Jacob
+can i specify the layout of spaces in the app?,documentation,Jacob
+what are the similarity backends,documentation,Jacob
+what does the supports_prompts argument represent?,documentation,Jacob
+how is the SDK related to the app?,documentation,Jacob
+how do I use find_duplicates?,documentation,Jacob
+where do I see the default similarity backend?,documentation,Jacob
+are embeddings automatically computed for my images?,documentation,Jacob
+how do I use Qdrant for similarity searches?,documentation,Jacob
+Can I use pinecone to search my images?,documentation,Jacob
+it is possible to delete samples?,documentation,Jacob
+where are hardness results stored?,documentation,Jacob
+how do I see my brain runs?,documentation,Jacob
+can I change the name of a brain run?,documentation,Jacob
+why would I use teams?,documentation,Jacob
+what is the difference between open source and teams?,documentation,Jacob
+can I collaborate with others?,documentation,Jacob
+how do I manage permissions?,documentation,Jacob
+my dataset is large. Can I load the media files directly from the cloud?,documentation,Jacob
+can I save a local copy of my images?,documentation,Jacob
+will I ever need to upgrade or downgrade my deployment?,documentation,Jacob
+what features do guests have access to?,documentation,Jacob
+how do the guest and member roles differ?,documentation,Jacob
+"if I'm an admin, can I set permissions for team members?",documentation,Jacob
+my media files are stored in an S3 bucket. Is that okay?,documentation,Jacob
+"I know fiftyone supports google cloud and amazon S3, but does it work with microsoft azure?",documentation,Jacob
+what is a polyline?,documentation,Jacob
+how do I use the annotate() method?,documentation,Jacob
+is there a way to configure my CVAT login credentials?,documentation,Jacob
+what is a label_schema?,documentation,Jacob
+can I load in annotations from Label studio or labelbox?,documentation,Jacob
+can I set the IoU threshold used for evaluations?,documentation,Jacob
+does fiftyone support activity-net style evaluation?,documentation,Jacob
+can I filter my dataset for false positives?,documentation,Jacob
+how do I get a mean average precision with evaluation?,documentation,Jacob
+what is a grouped dataset?,documentation,Jacob
+can I make a different group slice display in the app?,documentation,Jacob
+is set_values the same as set_field?,documentation,Jacob
+tell me more about the orthographic projections,documentation,Jacob
+can I draw labels on my images?,documentation,Jacob
+how do I customize the label rendering?,documentation,Jacob
+what aggregations can I run?,documentation,Jacob
+how do I see the min and max values for a field,documentation,Jacob
+what is a dynamic attribute?,documentation,Jacob
+can I see histograms of my data in the app?,documentation,Jacob
+how do I get an individual frame in a video?,documentation,Jacob
+do I need to install pytorch or tensorflow to work with fiftyone?,documentation,Jacob
 nkduabvieufbvef,invalid,Jacob
 what is the meaning of life?,invalid,Jacob
 make me a ton of money,invalid,Jacob
@@ -38,8 +106,8 @@ Who invented the light bulb?,invalid,Jacob
 Explain the concept of black holes.,invalid,Jacob
 Is there a way to just get bounding boxes around the possibly missing and possibly spurious objects in my dataset?,documentation,Jacob
 I am storing related sample IDs as StringField objects in a separate field on my data and I want to use them to match sample IDs that are stored as ObjectIdField objects. How do I do this?,documentation,Jacob
-what is the dataset zoo?,documentation,
-what does the filter_labels view stage do?,documentation,
+what is the dataset zoo?,documentation,Jacob
+what does the filter_labels view stage do?,documentation,Jacob
 Is there an equivalent of take for frames in a video dataset,documentation,Jacob
 can I sort samples by their filepath?,documentation,Jacob
 Is there a way to hide little detection bounding boxes?,documentation,Jacob
@@ -102,3 +170,21 @@ What techniques can be used to balance a skewed dataset in machine learning?,com
 what brain methods are there?,documentation,Jacob
 what is an evaluation key?,documentation,Jacob
 how do I remove duplicate images from my dataset?,documentation,Jacob
+How can I build an object detection system for real-time applications like surveillance or autonomous vehicles?,computer vision,Jacob
+Can I understand how Convolutional Neural Networks (CNNs) work and why they are suitable for image processing tasks?,computer vision,Jacob
+What strategies can I use to gather and prepare a large dataset of labeled images for a specific computer vision task?,computer vision,Jacob
+How can I implement image segmentation to differentiate and isolate specific objects within an image?,computer vision,Jacob
+How can I handle cases of occlusion where one object in an image partially or entirely covers another?,computer vision,Jacob
+What is the role of a Region of Interest (ROI) in computer vision and how can I identify or define it in a given task?,computer vision,Jacob
+Can I understand the concept of feature extraction in the context of computer vision and provide an example of how it might be implemented?,computer vision,Jacob
+How can I handle the problem of varying light conditions in outdoor computer vision applications?,computer vision,Jacob
+How can I assess the quality of a dataset before using it for analysis or model training?,computer vision,Jacob
+"What are some common causes of data quality issues, and how can I prevent them?",computer vision,Jacob
+How can I handle missing or inconsistent data in a dataset?,computer vision,Jacob
+What strategies can I use to identify and deal with outliers in my data?,computer vision,Jacob
+How can I ensure that my data is accurately labeled and annotated?,computer vision,Jacob
+How can I check for and address bias in my dataset?,computer vision,Jacob
+How can I perform data cleansing to improve the quality of a dataset?,computer vision,Jacob
+How can I validate the accuracy of data after it has been processed or transformed?,computer vision,Jacob
+What tools and techniques can I use to automate data quality checks?,computer vision,Jacob
+How can I measure the impact of data quality on the performance of my machine learning models or data analysis?,computer vision,Jacob
