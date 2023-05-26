@@ -185,14 +185,14 @@ def _classify_intent_with_examples(query):
 
 def _match_display_keywords(query):
     for keyword in DISPLAY_KEYWORDS:
-        if keyword in query:
+        if keyword in query.lower():
             return True
     return False
 
 
 def _match_docs_keywords(query):
     for keyword in DOCUMENTATION_KEYWORDS:
-        if keyword in query:
+        if keyword in query.lower():
             return True
     return False
 
