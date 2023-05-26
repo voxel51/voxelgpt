@@ -44,7 +44,6 @@ DISPLAY_KEYWORDS = (
     "show",
 )
 
-
 DOCUMENTATION_KEYWORDS = (
     "docs",
     "documentation",
@@ -87,7 +86,6 @@ def _get_or_create_embeddings(examples):
     new_queries = []
 
     for hash, query in zip(hashes, queries):
-
         if hash not in example_embeddings:
             new_hashes.append(hash)
             new_queries.append(query)
@@ -101,7 +99,6 @@ def _get_or_create_embeddings(examples):
 
     if new_queries:
         print("Saving embeddings to disk...")
-
         with open(NON_VIEWSTAGE_EMBEDDINGS_PATH, "wb") as f:
             pickle.dump(example_embeddings, f)
 
@@ -205,10 +202,9 @@ def _match_docs_keywords(query):
 def _classify_intent_with_keywords(query):
     if _match_display_keywords(query):
         return "display"
-    elif _match_docs_keywords(query):
+
+    if _match_docs_keywords(query):
         return "documentation"
-    else:
-        return
 
 
 def _load_query_classifier_prefix():
@@ -224,5 +220,5 @@ def classify_query_intent(query):
     intent = _classify_intent_with_keywords(query)
     if intent:
         return intent
-    intent = _classify_intent_with_examples(query)
-    return intent
+
+    return _classify_intent_with_examples(query)
