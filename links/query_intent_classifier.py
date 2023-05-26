@@ -73,7 +73,6 @@ def _load_non_viewstage_examples():
 
 def _get_or_create_embeddings(examples):
     if os.path.isfile(NON_VIEWSTAGE_EMBEDDINGS_PATH):
-        print("Loading embeddings from disk...")
         with open(NON_VIEWSTAGE_EMBEDDINGS_PATH, "rb") as f:
             example_embeddings = pickle.load(f)
     else:

@@ -33,7 +33,6 @@ VIEW_STAGE_EXAMPLE_PROMPT = PromptTemplate(
 
 def get_or_create_embeddings(queries):
     if os.path.isfile(EXAMPLE_EMBEDDINGS_PATH):
-        print("Loading embeddings from disk...")
         with open(EXAMPLE_EMBEDDINGS_PATH, "rb") as f:
             example_embeddings = pickle.load(f)
     else:
