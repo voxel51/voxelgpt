@@ -33,6 +33,26 @@ ALGORITHMS = (
     "metadata",
 )
 
+EVALUATION_KEYWORDS = (
+    "false",
+    "true",
+    "correct",
+    "incorrect",
+    "wrong",
+    "right",
+    "bad",
+    "good",
+    "fp",
+    "fn",
+    "tp",
+    "positive",
+    "negative",
+    "classif",
+    "eval",
+    "iou",
+    "intersection over union",
+)
+
 
 def get_algorithm_examples():
     df = pd.read_csv(ALGORITHM_EXAMPLES_PATH)
@@ -82,7 +102,19 @@ def generate_algorithm_selector_prompt(query):
     return template.format(query=query)
 
 
+def _ensure_evaluations(query, algorithms):
+    if "evaluation" not in algorithms:
+        return algorithms
+    else:
+        if any(keyword in query.lower() for keyword in EVALUATION_KEYWORDS):
+            return algorithms
+        else:
+            return [alg for alg in algorithms if alg != "evaluation"]
+
+
 def select_algorithms(query):
     algorithm_selector_prompt = generate_algorithm_selector_prompt(query)
     res = get_llm().call_as_llm(algorithm_selector_prompt)
-    return [alg for alg in ALGORITHMS if alg in res]
+    res = [alg for alg in ALGORITHMS if alg in res]
+    res = _ensure_evaluations(query, res)
+    return res

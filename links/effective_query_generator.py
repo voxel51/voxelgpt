@@ -48,6 +48,11 @@ def generate_effective_query(chat_history):
     if _keyword_is_present(chat_history):
         prompt = generate_dataset_view_prompt(chat_history)
         response = get_llm().call_as_llm(prompt)
-        return response.strip()
+        query = response.strip()
     else:
-        return chat_history[-1]
+        query = chat_history[-1]
+
+    if query[:6] == "User: ":
+        query = query[6:]
+
+    return query

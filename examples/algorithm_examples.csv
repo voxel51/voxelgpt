@@ -5,7 +5,7 @@ most similar to the first image created in 2022,N,Y,N,N,N,N,N,Jacob
 Predictions with confidence > 0.95,N,N,N,N,N,N,N,Jacob
 Most incorrect predictions of cats,N,N,N,N,Y,N,N,Jacob
 All labels with the 'error' tag,N,N,N,N,N,N,N,Jacob
-images with either a cat or a dog,N,N,N,N,N,Y,N,Jacob
+images with either a cat or a dog,N,N,N,N,N,N,N,Jacob
 predicted bounding boxes larger than 96**2 pixels,N,N,N,N,N,N,Y,Jacob
 most unique incorrect predictions,Y,N,N,N,Y,N,N,Jacob
 13 most unique Images,Y,N,N,N,N,N,N,Jacob
@@ -19,37 +19,37 @@ Contains a cat and a dog prediction,N,N,N,N,N,N,N,Jacob
 15 most wrong predictions,N,N,N,N,Y,N,N,Jacob
 unique,Y,N,N,N,N,N,N,Jacob
 3 most unique,Y,N,N,N,N,N,N,Jacob
-wrong,N,N,N,N,Y,Y,N,Jacob
+wrong,N,N,N,N,Y,N,N,Jacob
 20 most unique incorrect predictions,Y,N,N,N,N,N,N,Jacob
 2 most unique images that are similar to image with ID 'abc123',Y,Y,N,N,N,N,N,Jacob
 least unique images,Y,N,N,N,N,N,N,Jacob
-Least correct predictions from model 'model1',N,N,N,N,Y,Y,N,Jacob
+Least correct predictions from model 'model1',N,N,N,N,Y,N,N,Jacob
 Cloudy or night,N,Y,N,N,N,N,N,Jacob
 Images that most resemble the first image,N,Y,N,N,N,N,N,Jacob
 "10 Most similar images to the third image, with sim2",N,Y,N,N,N,N,N,Jacob
-FP dog detections,N,N,N,N,N,Y,N,Jacob
+FP dog detections,N,N,N,N,N,N,N,Jacob
 Images with the most false negatives,N,N,N,N,N,Y,N,Jacob
 Show the hardest false positives on validation split,N,N,N,Y,N,Y,N,Jacob
 sort by sample hardness,N,N,N,Y,N,N,N,Jacob
 show the most difficult samples to classify,N,N,N,Y,N,N,N,Jacob
 show me high confidence false positives,N,N,N,N,Y,Y,N,Allen
 Only include samples that have a value in their `predictions`,N,N,N,N,N,N,N,Allen
-what are all the missed detections,,,,,,Y,N,Allen
-find all the missed license plates,N,N,N,N,N,Y,N,Allen
+what are all the missed detections,,,,,,N,N,Allen
+find all the missed license plates,N,N,N,N,N,N,N,Allen
 show me all samples that contain giraffes,N,N,Y,N,N,N,N,Allen
 find false positives with confidence greater than 0.8,N,N,N,N,N,Y,N,Allen
 low confidence true positives,N,N,N,N,N,Y,N,Allen
 all false negatives involving cats,N,N,N,N,N,Y,N,Allen
 show me all images that are either cloudy or nighttime,N,N,Y,N,N,N,N,Allen
 Only include samples whose `numeric_field` value is positive,N,N,N,N,N,N,N,Allen
-show me all misclassified examples,N,N,N,N,Y,Y,N,Allen
+show me all misclassified examples,N,N,N,N,Y,N,N,Allen
 show me high confidence misclassifications,N,N,N,Y,Y,Y,N,Allen
 show me all misclassifications with a low confidence ,N,N,N,Y,Y,Y,N,Allen
 "filter the 'my_field' field for negative values, but show me all images, even those that aren't matches",N,N,N,N,N,N,N,Allen
 find the first 10 samples that have a car in it,N,N,N,N,N,N,N,Allen
-all examples where the correct label is not in the top 5 predictions,N,N,N,N,N,Y,N,Allen
+all examples where the correct label is not in the top 5 predictions,N,N,N,N,N,N,N,Allen
 show me all the video frames that have at least two detections,N,N,N,N,N,N,N,Allen
-show me all false positives in the open images evaluation,N,N,N,N,N,Y,N,Allen
+show me all false positives in the open images evaluation,N,N,N,N,N,N,N,Allen
 limit my dataset to 40 samples shuffled randomly,N,N,N,N,N,N,N,Allen
 images where `prediction1` was wrong and `prediction2` was right,N,N,N,N,N,Y,N,Allen
 find all incorrect detections using evaluation with iou threshold 0.8,N,N,N,N,N,Y,N,Allen
@@ -61,7 +61,7 @@ create a clips view for my videos,N,N,N,N,N,N,N,Allen
 give me all vehicles that were misclassified ,N,N,N,N,N,Y,N,Allen
 find all cars that were misclassified as trucks,N,N,N,Y,Y,Y,N,Allen
 show all images where the zipcode is in 07920 or 07923,N,N,N,N,N,N,N,Allen
-samples where `prediction1` and `prediction2` differ,N,N,N,N,N,Y,N,Allen
+samples where `prediction1` and `prediction2` differ,N,N,N,N,N,N,N,Allen
 show me all overly bright images,N,N,Y,N,N,N,N,Allen
 Samples whose image is less than 48 KB,N,N,N,N,N,N,Y,Jacob
 Images with width > 500 pixels,N,N,N,N,N,N,Y,Jacob
@@ -85,5 +85,5 @@ retrieve the images that are similar to a rubber duck,N,N,Y,N,N,N,N,Jacob
 "get the 100 images that look most like they come from an animated film, and shuffle them",N,N,Y,N,N,N,N,Jacob
 samples that look really crowded,N,N,Y,N,N,N,N,Jacob
 A grassy knoll,N,N,Y,N,N,N,N,Jacob
-Images with llamas,N,N,N,N,N,N,N,Jacob
-filter for detections of junk food,N,N,N,N,N,N,N,Jacob
+Images with llamas,N,N,Y,N,N,N,N,Jacob
+filter for detections of junk food,N,N,Y,N,N,N,N,Jacob

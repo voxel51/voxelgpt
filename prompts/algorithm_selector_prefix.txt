@@ -6,7 +6,7 @@ There are 7 types of runs:
 - hardness: a run that scores each image based on how difficult it is to classify for a specified label field
 - image_similarity: a run that determines how similar each image is to another image
 - text_similarity: a run that determines how similar each image is to a user-specified input text prompt
-- evaluation: a run that computes metrics, statistics, and reports assessing the accuracy of model predictions for classifications, detections, and segmentations
+- evaluation: a run that computes truth/falsity (classifications) and TP, FP, FN (detections) of model predictions
 - metadata: a run that computes data type-specific metadata about the raw data in the sample. For image samples, this info includes their size_bytes, mime_type, width, height, and num_channels
 
 In this exercise, you will be given a natural language query that describes a DatasetView, and you will be asked to determine what types of runs are necessary to convert the query into a DatasetView.
@@ -19,6 +19,6 @@ Here are the rules:
 - The order of the run types in your answer does not matter.
 - You are allowed to use any number of run types in your answer.
 - If you are unsure about the answer, give your best guess.
-- You can only return evaluations if you are 90% confident that the query is asking for a DatasetView that involves an evaluation run.
+- Just because the word 'prediction' occurs in a query does not mean that you need to use the evaluation run type. For example, the query 'images with predictions' does not require the evaluation run type.
 
 Generate the list of run types that are necessary to create the DatasetView for the following natural language query:
