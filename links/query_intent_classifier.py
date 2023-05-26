@@ -5,19 +5,18 @@ Query intent classifier.
 | `voxel51.com <https://voxel51.com/>`_
 |
 """
-import numpy as np
 import os
 import pickle
 
 from langchain.prompts import PromptTemplate, FewShotPromptTemplate
+import numpy as np
 import pandas as pd
 from scipy.spatial.distance import cosine
 
 # pylint: disable=relative-beyond-top-level
 from .utils import get_llm, get_cache, hash_query, get_embedding_function
-from .view_stage_example_selector import (
-    get_examples as get_view_stage_examples,
-)
+from .view_stage_example_selector import get_examples
+
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EXAMPLES_DIR = os.path.join(ROOT_DIR, "examples")
@@ -26,7 +25,6 @@ PROMPTS_DIR = os.path.join(ROOT_DIR, "prompts")
 NON_VIEWSTAGE_EXAMPLES_PATH = os.path.join(
     EXAMPLES_DIR, "query_intent_examples.csv"
 )
-
 NON_VIEWSTAGE_EMBEDDINGS_PATH = os.path.join(
     EXAMPLES_DIR, "query_intent_embeddings.pkl"
 )
@@ -34,7 +32,6 @@ VIEWSTAGE_EXAMPLES_PATH = os.path.join(EXAMPLES_DIR, "viewstage_examples.csv")
 VIEWSTAGE_EMBEDDINGS_PATH = os.path.join(
     EXAMPLES_DIR, "viewstage_embeddings.pkl"
 )
-
 INTENT_TASK_RULES_PATH = os.path.join(
     PROMPTS_DIR, "intent_classification_rules.txt"
 )
@@ -53,7 +50,7 @@ DOCUMENTATION_KEYWORDS = (
 
 
 def _load_viewstage_examples():
-    viewstage_examples, viewstage_embeddings = get_view_stage_examples()
+    viewstage_examples, viewstage_embeddings = get_examples()
     viewstage_examples = viewstage_examples[["query"]]
     viewstage_examples = viewstage_examples.assign(intent="display")
     viewstage_examples["hash"] = viewstage_examples["query"].apply(
