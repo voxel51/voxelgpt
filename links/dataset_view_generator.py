@@ -406,10 +406,15 @@ def _correct_detection_match_stages(
         else:
             new_stage = stage
     else:
+        print("stage not caught", stage)
+
         field_name = stage.split("F")[1].split(".")[0].strip()
-        class_name = stage.split("==")[1].strip()[:-1]
+        if "==" in stage:
+            class_name = stage.split("==")[1].strip()[:-1]
+        else:
+            class_name = stage.split("!=")[1].strip()[:-1]
         new_stage = (
-            f"match(F({field_name}.detections.label).contains({class_name}))"
+            f'match(F{field_name}.detections.label").contains({class_name}))'
         )
 
     return new_stage
@@ -666,9 +671,9 @@ def _validate_label_fields(stage, sample_collection, label_classes):
         if "ground_truth" in stage and "ground_truth" not in label_fields:
             gt_field = _get_ground_truth_field()
             new_stage = new_stage.replace("ground_truth", gt_field)
-        if "gt" in stage and "gt" not in label_fields:
+        if '"gt' in stage and "gt" not in label_fields:
             gt_field = _get_ground_truth_field()
-            new_stage = new_stage.replace("gt", gt_field)
+            new_stage = new_stage.replace('"gt', f'"{gt_field}')
         if "predictions" in stage and "predictions" not in label_fields:
             pred_field = _get_predictions_field()
             new_stage = new_stage.replace("predictions", pred_field)
