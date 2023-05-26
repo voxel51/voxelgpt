@@ -678,6 +678,10 @@ def _get_field_type(sample_collection, field_name):
     return field_type
 
 
+# def _correct_match_labels_stages(stage, sample_collection, label_classes):
+#     pass
+
+
 def _validate_label_fields(stages, sample_collection, label_classes):
     """
     Ensure that label fields are correct.
@@ -732,6 +736,51 @@ def _validate_label_fields(stages, sample_collection, label_classes):
     return verified_stages
 
 
+def _validate_filter_labels(stage, label_classes):
+    """
+    Correct a few common errors in filter_labels stage.
+
+    """
+    contents = stage[14:-1]
+    args = contents.split(",")
+
+    ##### correct label_field if needed
+
+    if args[0].strip() == "None":
+        for field in label_classes.keys():
+            if field in contents:
+                print(field)
+                contents = contents.replace("None", f'"{field}"')
+                print(contents)
+                break
+    else:
+        label_field = args[0][1:-1]
+        if label_field not in label_classes.keys():
+            for field in label_classes.keys():
+                if field in label_field and field != label_field:
+                    contents = contents.replace(label_field, field)
+                    break
+
+    ##### correct second argument if needed
+    if len(args) == 2:
+        arg1 = args[1].strip()
+        if arg1[0] == '"' and arg1[-1] == '"':
+            contents = contents.replace(arg1, f'F("label") == {arg1}')
+    if ").label" in contents:
+        contents = re.sub(r"F\(\"(.+?)\"\)\.label", r'F("label")', contents)
+    if ".label" in contents:
+        contents = re.sub(r'F\("([^"]*?)\.label"', r'F("label"', contents)
+    if ".confidence" in contents:
+        contents = re.sub(
+            r'F\("([^"]*?)\.confidence"', r'F("confidence"', contents
+        )
+    if '"label"' in contents and 'F("label")' not in contents:
+        contents = contents.replace('"label"', 'F("label")')
+    if '"confidence"' in contents and 'F("confidence")' not in contents:
+        contents = contents.replace('"confidence"', 'F("confidence")')
+    return f"filter_labels({contents})"
+
+
 def _postprocess_stages(
     stages,
     sample_collection,
@@ -744,13 +793,44 @@ def _postprocess_stages(
         stages, sample_collection, required_brain_runs, unmatched_classes
     )
 
-    stages = _correct_detection_match_stages(stages)
+    print("Before validation:")
+    print(stages)
+
+    ######
     stages = _validate_label_fields(stages, sample_collection, label_classes)
-    stages = _correct_detection_filter_stages(stages)
-    stages = _validate_stages_ner(stages, label_classes)
+    print("After _validate_label_fields:")
+    print(stages)
     stages = _validate_label_class_case(stages, label_classes)
+    print("After _validate_label_class_case:")
+    print(stages)
+    stages = _validate_stages_ner(stages, label_classes)
+    print("After _validate_stages_ner:")
+    print(stages)
     stages = _validate_runs(stages, sample_collection, required_brain_runs)
-    return stages
+    print("After _validate_runs:")
+    print(stages)
+
+    ######
+
+    stages = _correct_detection_match_stages(stages)
+    print("After _correct_detection_match_stages:")
+    print(stages)
+
+    print(stages)
+    stages = _correct_detection_filter_stages(stages)
+    print("After _correct_detection_filter_stages:")
+
+    new_stages = []
+
+    for stage in stages:
+        if "filter_labels" in stage:
+            new_stage = _validate_filter_labels(stage, label_classes)
+        else:
+            new_stage = stage
+
+        new_stages.append(new_stage)
+
+    return new_stages
 
 
 def get_gpt_view_stage_strings(
