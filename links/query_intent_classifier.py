@@ -183,7 +183,7 @@ def _classify_intent_with_examples(query):
     elif "computer vision" in res:
         return "computer_vision"
     elif "display" in res:
-        if _match_display_keywords(query):
+        if _match_how_to_keyphrases(query):
             return "documentation"
         return "display"
     else:
