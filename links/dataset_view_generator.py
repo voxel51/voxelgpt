@@ -876,6 +876,12 @@ def attempt_to_disambiguate(
         return f'[sort_by_similarity("{query}", brain_key="{sim_key}", k=100)]'
 
 
+def _validate_negation_operator(stage):
+    if "!F" in stage:
+        stage = stage.replace("!F", "~F")
+    return stage
+
+
 def _postprocess_stages(
     stages,
     sample_collection,
@@ -901,6 +907,9 @@ def _postprocess_stages(
             _stage = _validate_filter_labels(_stage, label_classes)
         if "match_labels" in _stage:
             _stage = _validate_match_labels(_stage, label_classes)
+
+        _stage = _validate_negation_operator(_stage)
+
         new_stages.append(_stage)
 
     return new_stages
