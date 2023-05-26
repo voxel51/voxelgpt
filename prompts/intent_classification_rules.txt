@@ -21,6 +21,7 @@ Context:
 
 Here are the rules:
 - If the prompt is sensible, you must return 'display', 'documentation', or 'computer vision'.
+- If the user's prompt has "how to" or "how do I" in it, you cannot return 'display'. If you do so, you will be penalized.
 - If the user's query does not fall into any of these 3 categories, it is not sensible, and you must return 'invalid'.
 - If you are unsure if a query is sensible, you should return 'display'.
 

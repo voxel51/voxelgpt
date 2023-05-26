@@ -176,6 +176,8 @@ def _classify_intent_with_examples(query):
     elif "computer vision" in res:
         return "computer_vision"
     elif "display" in res:
+        if "how to" in query or "how do" in query.lower():
+            return "documentation"
         return "display"
     else:
         return "confused"
