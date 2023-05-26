@@ -7,18 +7,50 @@ Link utils.
 """
 import hashlib
 import os
+import re
 import threading
 import queue
 
 from langchain.callbacks.base import BaseCallbackHandler
-from langchain.chains import OpenAIModerationChain, RetrievalQA
+from langchain.chains import (
+    OpenAIModerationChain,
+)
+from langchain.prompts import FewShotPromptTemplate, PromptTemplate
 from langchain.chat_models import ChatOpenAI
 from openai import Embedding
+
+
+PROTECT_MAPS = [
+    ("{source}", "<SOURCE>"),
+    ("{page_content}", "<CONTENT>"),
+    ("{", "LEFT_BRACE"),
+    ("}", "RIGHT_BRACE"),
+]
+
+
+def protect_text(text):
+    for k, v in PROTECT_MAPS:
+        text = text.replace(k, v)
+    return text
+
+
+def unprotect_text(text):
+    for k, v in PROTECT_MAPS:
+        text = text.replace(v, k)
+    return text
 
 
 def hash_query(query):
     hash_object = hashlib.md5(query.encode())
     return hash_object.hexdigest()
+
+
+def get_cache():
+    g = globals()
+    if "_voxelgpt" not in g:
+        g["_voxelgpt"] = {}
+
+    return g["_voxelgpt"]
 
 
 def get_openai_key():
@@ -33,15 +65,11 @@ def get_openai_key():
 
 
 def get_llm():
-    cache = get_cache()
-    if "llm" not in cache:
-        cache["llm"] = ChatOpenAI(
-            openai_api_key=get_openai_key(),
-            temperature=0,
-            model_name="gpt-3.5-turbo",
-        )
-
-    return cache["llm"]
+    return ChatOpenAI(
+        openai_api_key=get_openai_key(),
+        temperature=0,
+        model_name="gpt-3.5-turbo",
+    )
 
 
 def stream_llm(prompt):
@@ -66,15 +94,21 @@ def _llm_thread(g, prompt):
         g.close()
 
 
-def stream_retriever(retriever, prompt):
+def query_retriever(retriever, prompt_template, query):
+    llm = get_llm()
+    qa = FiftyOneQAWithSourcesChain(llm, retriever, prompt_template)
+    return qa(query)
+
+
+def stream_retriever(retriever, prompt_template, query):
     g = ThreadedGenerator()
     threading.Thread(
-        target=_retriever_thread, args=(g, retriever, prompt)
+        target=_retriever_thread, args=(g, retriever, prompt_template, query)
     ).start()
     return g
 
 
-def _retriever_thread(g, retriever, prompt):
+def _retriever_thread(g, retriever, prompt_template, query):
     try:
         llm = ChatOpenAI(
             openai_api_key=get_openai_key(),
@@ -83,10 +117,8 @@ def _retriever_thread(g, retriever, prompt):
             streaming=True,
             callbacks=[StreamingHandler(g)],
         )
-        qa = RetrievalQA.from_chain_type(
-            llm=llm, chain_type="stuff", retriever=retriever
-        )
-        qa.run(prompt)
+        qa = FiftyOneQAWithSourcesChain(llm, retriever, prompt_template)
+        qa(query)
     except Exception as e:
         g.send(e)
     finally:
@@ -99,10 +131,7 @@ def embedding_function(queries):
 
 
 def get_embedding_function():
-    cache = get_cache()
-    if "embedding_function" not in cache:
-        cache["embedding_function"] = embedding_function
-    return cache["embedding_function"]
+    return embedding_function
 
 
 class FiftyOneModeration(OpenAIModerationChain):
@@ -111,21 +140,51 @@ class FiftyOneModeration(OpenAIModerationChain):
 
 
 def get_moderator():
-    cache = get_cache()
-    if "moderator" not in cache:
-        cache["moderator"] = FiftyOneModeration(
-            openai_api_key=get_openai_key()
+    return FiftyOneModeration(openai_api_key=get_openai_key())
+
+
+class FiftyOneQAWithSourcesChain(object):
+    def __init__(self, llm, retriever, prompt_template):
+        self.llm = llm
+        self.retriever = retriever
+        self.prompt_template = prompt_template
+
+    def prompt_builder(self, docs):
+        example_template = PromptTemplate(
+            template="Content: {page_content}\nSource: {source}",
+            input_variables=["page_content", "source"],
         )
 
-    return cache["moderator"]
+        examples = [
+            {
+                "page_content": protect_text(doc.page_content),
+                "source": doc.metadata["source"],
+            }
+            for doc in docs
+        ]
 
+        summaries = FewShotPromptTemplate(
+            examples=examples,
+            example_prompt=example_template,
+            prefix="",
+            suffix="",
+            input_variables=[],
+        ).format()
 
-def get_cache():
-    g = globals()
-    if "_voxelgpt" not in g:
-        g["_voxelgpt"] = {}
+        def _build_prompt(query):
+            prompt = self.prompt_template.format(
+                question=query,
+                summaries=summaries,
+            )
+            return unprotect_text(prompt)
 
-    return g["_voxelgpt"]
+        return _build_prompt
+
+    def __call__(self, query):
+        docs = self.retriever.get_relevant_documents(query)
+        prompt_builder = self.prompt_builder(docs)
+        prompt = prompt_builder(query)
+        return self.llm.call_as_llm(prompt)
 
 
 class ThreadedGenerator(object):
@@ -150,9 +209,27 @@ class ThreadedGenerator(object):
 
 
 class StreamingHandler(BaseCallbackHandler):
-    def __init__(self, gen):
+    """Pass `words=True` to split tokens into whitespace-delimited words."""
+
+    def __init__(self, gen, words=False):
         super().__init__()
         self.gen = gen
+        self.words = words
+        self._curr_word = ""
 
     def on_llm_new_token(self, token, **kwargs):
-        self.gen.send(token)
+        if not self.words:
+            self.gen.send(token)
+            return
+
+        # (chars, whitespace, chars, whitespace, ...)
+        chunks = re.split("(\\s+)", token)
+
+        self._curr_word += "".join(chunks[:2])
+        if len(chunks) > 1:
+            self.gen.send(self._curr_word)
+            self._curr_word = "".join(chunks[2:])
+
+    def on_llm_end(self, *args, **kwargs):
+        if self._curr_word:
+            self.gen.send(self._curr_word)
