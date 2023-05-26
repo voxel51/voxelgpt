@@ -697,7 +697,7 @@ def _validate_match_labels(stage, label_classes):
         if len(field_names) == 0:
             field_names_str = ""
         elif len(field_names) == 1:
-            field_names_str = f", fields = {field_names}"
+            field_names_str = f', fields = "{field_names[0]}"'
         else:
             field_strs = [f'"{field_name}"' for field_name in field_names]
             field_names_str = f", fields = {field_strs}"
