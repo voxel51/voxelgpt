@@ -740,6 +740,13 @@ def _validate_match_labels(stage, label_classes):
         return stage
 
 
+def _add_parens(expression, split_char):
+    parts = expression.split(split_char)
+    parts = [p.strip() for p in parts]
+    parts = [f"({p})" if p[0] != "(" else p for p in parts]
+    return f" {split_char} ".join(parts)
+
+
 def _validate_filter_labels(stage, label_classes):
     """
     Correct a few common errors in filter_labels stage.
@@ -787,6 +794,29 @@ def _validate_filter_labels(stage, label_classes):
         contents = contents.replace('"label"', 'F("label")')
     if '"confidence"' in contents and 'F("confidence")' not in contents:
         contents = contents.replace('"confidence"', 'F("confidence")')
+
+    ##### correct AND statements if needed
+    if " and " in contents:
+        contents = contents.replace(" and ", " & ")
+
+    ##### correct OR statements if needed
+    if " or " in contents:
+        contents = contents.replace(" or ", " | ")
+
+    ##### add parens if needed
+    args = contents.split(",")
+    if len(args) == 2:
+        arg0, arg1 = args
+    else:
+        arg0 = args[0]
+        arg1 = ", ".join(args[1:])
+
+    if "&" in contents:
+        arg1 = _add_parens(arg1, "&")
+    if "|" in contents:
+        arg1 = _add_parens(arg1, "|")
+
+    contents = f"{arg0}, {arg1}"
     return f"filter_labels({contents})"
 
 
