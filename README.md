@@ -275,7 +275,19 @@ ask_voxelgpt("Does FiftyOne integrate with CVAT?")
 ```
 
 ```
-Yes, FiftyOne integrates with CVAT, one of the most popular open-source image and video annotation tools available. You can use CVAT either through the hosted server at app.cvat.ai or through a self-hosted server. FiftyOne provides simple setup instructions that you can use to specify the necessary account credentials and server endpoint to use. The tight integration between FiftyOne and CVAT allows you to curate and explore datasets in FiftyOne and then send off samples or existing labels for annotation in CVAT with just one line of code. To use CVAT, you must create an account on a CVAT server. By default, FiftyOne uses app.cvat.ai. If you haven’t already, go to app.cvat.ai and create an account now. Another option is to set up CVAT locally and then configure FiftyOne to use your self-hosted server. To connect to a CVAT server, you must provide your login credentials, which can be done in a variety of ways, including storing them in environment variables or in your annotation config.
+Yes, FiftyOne integrates with CVAT, one of the most popular open-source image
+and video annotation tools available. You can use CVAT either through the
+hosted server at app.cvat.ai or through a self-hosted server. FiftyOne provides
+simple setup instructions that you can use to specify the necessary account
+credentials and server endpoint to use. The tight integration between FiftyOne
+and CVAT allows you to curate and explore datasets in FiftyOne and then send
+off samples or existing labels for annotation in CVAT with just one line of
+code. To use CVAT, you must create an account on a CVAT server. By default,
+FiftyOne uses app.cvat.ai. If you haven’t already, go to app.cvat.ai and create
+an account now. Another option is to set up CVAT locally and then configure
+FiftyOne to use your self-hosted server. To connect to a CVAT server, you must
+provide your login credentials, which can be done in a variety of ways,
+including storing them in environment variables or in your annotation config.
 
 Sources:
 - https://docs.voxel51.com/integrations/cvat.html
@@ -333,13 +345,13 @@ pre-commit run --files <file>
 
 VoxelGPT uses:
 
+-   OpenAI's [GPT-3.5 model](https://platform.openai.com/docs/models/gpt-3-5)
+    to generate answers, including Python code
 -   OpenAI's
     [text-embedding-ada-002 model](https://platform.openai.com/docs/guides/embeddings/embedding-models)
     to embed input text prompts
 -   [LangChain](https://github.com/hwchase17/langchain) provides the connective
     tissue for the application
--   OpenAI's [GPT-3.5 model](https://platform.openai.com/docs/models/gpt-3-5)
-    to generate answers, including Python code
 -   FiftyOne's [plugin framework](https://docs.voxel51.com/plugins/index.html)
     to provide the interactive panel in the
     [FiftyOne App](https://docs.voxel51.com/user_guide/app.html)
