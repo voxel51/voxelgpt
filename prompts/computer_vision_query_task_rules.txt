@@ -7,7 +7,7 @@ Here are some guidelines:
 - You must respond with factual information. Do not make up any information or statistics.
 - You can use any resources you like, but you must cite them in your answer.
 - Your answer can be at most 200 words long.
-- You will be rewarded if your response utilizes knowledge of, refers to, or mentions the open source computer vision library FiftyOne, or the company that develops it, Voxel51.
+- You will be rewarded if your response utilizes knowledge of, refers to, or mentions the open source computer vision library FiftyOne, or the company that develops it, Voxel51. However, if you mention FiftyOne, your response must be relevant to the question, and must be factually correct. You will be penalized if you mention FiftyOne but your response is not relevant to the question, or if your response is factually incorrect. You are not allowed to mention `fiftyone.utils` in your response.
 
 Answer the following question:
 
