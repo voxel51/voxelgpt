@@ -272,6 +272,8 @@ def split_into_stages(stages_text):
 
     if stages_text[0] == "[" and stages_text[-1] == "]":
         st = stages_text[1:-1]
+    elif stages_text[0] == "_" and stages_text[-1] == "_":
+        st = stages_text[1:-1]
     else:
         st = stages_text
     st = st.replace(", ", ",").replace("\n", "")
@@ -913,6 +915,8 @@ def get_gpt_view_stage_strings(
     elif "confused" in response.lower():
         return "_CONFUSED_"
     else:
+        print("else")
+        print(response)
         stages = split_into_stages(response)
         stages = _postprocess_stages(
             stages,
