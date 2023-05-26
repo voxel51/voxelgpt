@@ -730,7 +730,16 @@ def _validate_match_labels(stage, label_classes):
         classes_str = f'F("label").is_in({class_strs})'
         contents = f"filter = {classes_str}{field_names_str}"
         return f"match_labels({contents})"
-        # return stage
+    elif "filter=" in contents:
+        for field in label_classes.keys():
+            if f'F("{field}")' in contents:
+                contents = contents.replace(f'F("{field}")', f'F("label")')
+
+                if "fields" not in contents:
+                    contents = f'{contents}, fields = "{field}"'
+
+                return f"match_labels({contents})"
+        return stage
     else:
         return stage
 
