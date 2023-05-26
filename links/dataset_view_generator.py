@@ -681,8 +681,22 @@ def _validate_label_fields(stage, sample_collection, label_classes):
 def _validate_match_labels(stage, label_classes):
     """
     Correct a few common errors in match_labels stage.
-
     """
+
+    def get_label_field(contents, used_classes):
+
+        ### first check for label field names in the stage string
+        for field_name in label_classes.keys():
+            if field_name in contents:
+                return field_name
+
+        ### if no label field names are found, check for class name matches
+        for fn, classes in label_classes.items():
+            if len(set(classes).union(used_classes)) > 0:
+                return fn
+
+        ### if no label field names or class names are found, return None
+        return None
 
     contents = stage[13:-1]
     if "labels" in contents and "{" in contents:
@@ -710,6 +724,16 @@ def _validate_match_labels(stage, label_classes):
 
         contents = f"filter = {classes_str}{field_names_str}"
         return f"match_labels({contents})"
+    elif "is_in" in contents:
+        is_in = contents.split("is_in([")[1].split("])")[0]
+        elems = [elem.replace('"', "") for elem in is_in.split(",")]
+        label_field = get_label_field(contents, elems)
+        field_names_str = f', fields = "{label_field}"'
+        class_strs = [f"{class_name}" for class_name in elems]
+        classes_str = f'F("label").is_in({class_strs})'
+        contents = f"filter = {classes_str}{field_names_str}"
+        return f"match_labels({contents})"
+        # return stage
     else:
         return stage
 
@@ -767,20 +791,33 @@ def _postprocess_stages(
 
     for stage in stages:
         _stage = stage
+        print(_stage)
         _stage = _convert_matches_to_text_similarities(
             _stage, sample_collection, required_brain_runs, unmatched_classes
         )
+        print("after convert matches to text similarities")
+        print(_stage)
         _stage = _validate_label_fields(
             _stage, sample_collection, label_classes
         )
+        print("after validate label fields")
+        print(_stage)
         _stage = _validate_label_class_case(_stage, label_classes)
+        print("after validate label class case")
+        print(_stage)
         _stage = _validate_stages_ner(_stage, label_classes)
+        print("after validate stages ner")
+        print(_stage)
         _stage = _validate_runs(_stage, sample_collection, required_brain_runs)
+        print("after validate runs")
+
         _stage = _correct_detection_match_stages(_stage)
         if "filter_labels" in _stage:
             _stage = _validate_filter_labels(_stage, label_classes)
         if "match_labels" in _stage:
             _stage = _validate_match_labels(_stage, label_classes)
+        print("after validate filter/match labels")
+        print(_stage)
         new_stages.append(_stage)
 
     return new_stages
@@ -807,9 +844,9 @@ def get_gpt_view_stage_strings(
     response = response.replace("LEFTBRACKET", "{")
     response = response.replace("RIGHTBRACKET", "}")
 
-    if "_MORE_" in response:
+    if "more" in response.lower():
         return "_MORE_"
-    elif "_CONFUSED_" in response:
+    elif "confused" in response.lower():
         return "_CONFUSED_"
     else:
         stages = split_into_stages(response)
