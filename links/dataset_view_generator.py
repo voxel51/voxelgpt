@@ -646,14 +646,6 @@ def _validate_label_fields(stage, sample_collection, label_classes):
             return f"{field}.detections.confidence"
 
     def _get_ground_truth_field():
-        if len(label_fields) == 1:
-            return label_fields[0]
-
-        for field in label_fields:
-            conf_field = _get_confidence_subfield(field)
-
-            if not sample_collection.first()[conf_field]:
-                return field
         return label_fields[0]
 
     def _get_predictions_field():
@@ -674,6 +666,9 @@ def _validate_label_fields(stage, sample_collection, label_classes):
         if "ground_truth" in stage and "ground_truth" not in label_fields:
             gt_field = _get_ground_truth_field()
             new_stage = new_stage.replace("ground_truth", gt_field)
+        if "gt" in stage and "gt" not in label_fields:
+            gt_field = _get_ground_truth_field()
+            new_stage = new_stage.replace("gt", gt_field)
         if "predictions" in stage and "predictions" not in label_fields:
             pred_field = _get_predictions_field()
             new_stage = new_stage.replace("predictions", pred_field)
