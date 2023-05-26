@@ -678,6 +678,42 @@ def _validate_label_fields(stage, sample_collection, label_classes):
         return new_stage
 
 
+def _validate_match_labels(stage, label_classes):
+    """
+    Correct a few common errors in match_labels stage.
+
+    """
+
+    contents = stage[13:-1]
+    if "labels" in contents and "{" in contents:
+        unique_classes = get_unique_class_list(label_classes)
+        present_classes = [
+            class_name
+            for class_name in unique_classes
+            if class_name in contents
+        ]
+        field_names = [fn for fn in label_classes.keys() if fn in contents]
+
+        if len(field_names) == 0:
+            field_names_str = ""
+        elif len(field_names) == 1:
+            field_names_str = f", fields = {field_names}"
+        else:
+            field_strs = [f'"{field_name}"' for field_name in field_names]
+            field_names_str = f", fields = {field_strs}"
+
+        if len(present_classes) == 1:
+            classes_str = f'F("label") == "{present_classes[0]}"'
+        else:
+            class_strs = [f'"{class_name}"' for class_name in present_classes]
+            classes_str = f'F("label").is_in({class_strs})'
+
+        contents = f"filter = {classes_str}{field_names_str}"
+        return f"match_labels({contents})"
+    else:
+        return stage
+
+
 def _validate_filter_labels(stage, label_classes):
     """
     Correct a few common errors in filter_labels stage.
@@ -687,7 +723,6 @@ def _validate_filter_labels(stage, label_classes):
     args = contents.split(",")
 
     ##### correct label_field if needed
-
     if args[0].strip() == "None":
         for field in label_classes.keys():
             if field in contents:
@@ -744,6 +779,8 @@ def _postprocess_stages(
         _stage = _correct_detection_match_stages(_stage)
         if "filter_labels" in _stage:
             _stage = _validate_filter_labels(_stage, label_classes)
+        if "match_labels" in _stage:
+            _stage = _validate_match_labels(_stage, label_classes)
         new_stages.append(_stage)
 
     return new_stages
