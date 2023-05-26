@@ -752,8 +752,19 @@ def _validate_filter_labels(stage, label_classes):
             if field in contents:
                 contents = contents.replace("None", f'"{field}"')
                 break
+    elif len(args) == 1:
+        for field in label_classes.keys():
+            if field in contents:
+                contents = contents.replace(field, "label")
+                contents = f'"{field}", {contents}'
+                return f"filter_labels({contents})"
+        tmp = args[0].split('"')
+        label_field = tmp[1]
     else:
+        print("HI")
+        print(args)
         label_field = args[0][1:-1]
+        print(label_field)
         if label_field not in label_classes.keys():
             for field in label_classes.keys():
                 if field in label_field and field != label_field:
@@ -778,6 +789,46 @@ def _validate_filter_labels(stage, label_classes):
     if '"confidence"' in contents and 'F("confidence")' not in contents:
         contents = contents.replace('"confidence"', 'F("confidence")')
     return f"filter_labels({contents})"
+
+
+def _extract_query_from_examples(examples_prompt):
+    example_lines = examples_prompt.split("\n")
+    return example_lines[-2]
+
+
+def attempt_to_disambiguate(
+    response,
+    required_brain_runs,
+    label_classes,
+    unmatched_classes,
+    examples_prompt,
+):
+
+    ### Case 1: one label field
+    if len(label_classes) == 1:
+        label_field = list(label_classes.keys())[0]
+        class_list = label_classes[label_field]
+
+        if len(class_list) == 1:
+            ### Case 1a: one class
+            return f'[filter_labels(F("{label_field}") == "{class_list[0]}")]'
+        elif len(class_list) > 1:
+            ### Case 1b: multiple classes
+            return f'[filter_labels(F("{label_field}").is_in({class_list}))]'
+
+    ### If we don't have text similarity, we can't do anything else
+    if "text_similarity" not in required_brain_runs:
+        return response
+    sim_key = required_brain_runs["text_similarity"]
+
+    if len(unmatched_classes) == 1:
+        ### Case 2: 1 unmatched class & text_similarity
+        uc = unmatched_classes[0]
+        return f'[sort_by_similarity("{uc}", brain_key="{sim_key}", k=100)]'
+    else:
+        ### Case 3: multiple unmatched classes & text_similarity
+        query = _extract_query_from_examples(examples_prompt)
+        return f'[sort_by_similarity("{query}", brain_key="{sim_key}", k=100)]'
 
 
 def _postprocess_stages(
@@ -814,9 +865,10 @@ def _postprocess_stages(
         _stage = _correct_detection_match_stages(_stage)
         if "filter_labels" in _stage:
             _stage = _validate_filter_labels(_stage, label_classes)
+            print("after validate filter labels")
         if "match_labels" in _stage:
             _stage = _validate_match_labels(_stage, label_classes)
-        print("after validate filter/match labels")
+            print("after validate match labels")
         print(_stage)
         new_stages.append(_stage)
 
@@ -843,6 +895,15 @@ def get_gpt_view_stage_strings(
 
     response = response.replace("LEFTBRACKET", "{")
     response = response.replace("RIGHTBRACKET", "}")
+
+    if "more" in response.lower() or "confused" in response.lower():
+        response = attempt_to_disambiguate(
+            response,
+            required_brain_runs,
+            label_classes,
+            unmatched_classes,
+            examples_prompt,
+        )
 
     if "more" in response.lower():
         return "_MORE_"
