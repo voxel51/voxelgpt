@@ -367,7 +367,7 @@ def _convert_matches_to_text_similarities(
         return stage
 
 
-def _correct_detection_match_stages(
+def _validate_match(
     stage,
 ):
     """
@@ -378,20 +378,40 @@ def _correct_detection_match_stages(
     """
 
     def _correct_length_stage(stage):
-        if "F" not in stage:
-            return stage
-        contents_F = stage.split("F(")[1].split(")")[0]
-        if "detections" in contents_F:
-            return stage
+        if "filter" not in stage:
+            if "F" not in stage:
+                return stage
+            contents_F = stage.split("F(")[1].split(")")[0]
+            if "detections" in contents_F:
+                return stage
+            else:
+                field_name = contents_F.split(".")[0]
+                det_subfield_name = field_name[:-1] + '.detections"'
+                return stage.replace(contents_F, det_subfield_name)
         else:
-            field_name = contents_F.split(".")[0]
-            det_subfield_name = field_name[:-1] + '.detections"'
-            return stage.replace(contents_F, det_subfield_name)
+            contents = stage[6:-1]
+            split_contents = contents.split("length()")
+            length_expr = split_contents[-1]
+            start = split_contents[0]
 
-    if "match" not in stage:
-        new_stage = stage
-    elif "length" in stage:
-        new_stage = _correct_length_stage(stage)
+            contents_F = stage.split("F(")[1].split(")")[0]
+            F_expr = f"F({contents_F})".replace(".label", "")
+
+            if "==" or "!=" in start:
+                negation = "~" in contents
+                eq_expr = "==" if "==" in start else "!="
+                class_name = start.split(eq_expr)[1].split(")")[0].strip()
+
+                filter_expr = f'.filter(F("label") {eq_expr} {class_name})'
+                contents = f"{F_expr}{filter_expr}.length(){length_expr}"
+                if negation:
+                    contents = f"~({contents})"
+                return f"match({contents})"
+
+            return stage
+
+    if "length" in stage:
+        return _correct_length_stage(stage)
     elif "detections.label" not in stage:
         new_stage = stage
     elif "contains" in stage or "is_subset" in stage:
@@ -406,8 +426,6 @@ def _correct_detection_match_stages(
         else:
             new_stage = stage
     else:
-        print("stage not caught", stage)
-
         field_name = stage.split("F")[1].split(".")[0].strip()
         if "==" in stage:
             class_name = stage.split("==")[1].strip()[:-1]
@@ -902,12 +920,12 @@ def _postprocess_stages(
         _stage = _validate_label_class_case(_stage, label_classes)
         _stage = _validate_stages_ner(_stage, label_classes)
         _stage = _validate_runs(_stage, sample_collection, required_brain_runs)
-        _stage = _correct_detection_match_stages(_stage)
+        if "match(" in stage:
+            _stage = _validate_match(_stage)
         if "filter_labels" in _stage:
             _stage = _validate_filter_labels(_stage, label_classes)
         if "match_labels" in _stage:
             _stage = _validate_match_labels(_stage, label_classes)
-
         _stage = _validate_negation_operator(_stage)
 
         new_stages.append(_stage)
