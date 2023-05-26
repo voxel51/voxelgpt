@@ -464,7 +464,6 @@ def _validate_label_class_case(stage, label_classes):
         return stage
     else:
         new_stage = stage
-        print(new_stage)
         for class_name in unique_classes:
             new_stage = re.sub(
                 class_name, class_name, new_stage, flags=re.IGNORECASE
@@ -692,9 +691,7 @@ def _validate_filter_labels(stage, label_classes):
     if args[0].strip() == "None":
         for field in label_classes.keys():
             if field in contents:
-                print(field)
                 contents = contents.replace("None", f'"{field}"')
-                print(contents)
                 break
     else:
         label_field = args[0][1:-1]
@@ -732,24 +729,16 @@ def _postprocess_stages(
     unmatched_classes,
 ):
     new_stages = []
-    print("POSTPROCESSING STAGES")
-    print(stages)
 
     for stage in stages:
         _stage = stage
         _stage = _convert_matches_to_text_similarities(
             _stage, sample_collection, required_brain_runs, unmatched_classes
         )
-        print("after convert matches to text similarities")
-        print(_stage)
         _stage = _validate_label_fields(
             _stage, sample_collection, label_classes
         )
-        print("after validate label fields")
-        print(_stage)
         _stage = _validate_label_class_case(_stage, label_classes)
-        print("after validate label class case")
-        print(_stage)
         _stage = _validate_stages_ner(_stage, label_classes)
         _stage = _validate_runs(_stage, sample_collection, required_brain_runs)
         _stage = _correct_detection_match_stages(_stage)
