@@ -159,18 +159,30 @@ class RunSelector(object):
     def select_run(self, query):
         available_runs = self.get_available_runs()
         if not available_runs:
-            print(self.compute_run_message())
-            return None
+            return None, self.compute_run_message().strip()
 
         if len(available_runs) == 1:
-            return available_runs[0]
+            return available_runs[0], None
 
         prompt = self.generate_prompt(query, available_runs)
         response = get_llm().call_as_llm(prompt).strip()
         if response not in available_runs:
             response = available_runs[0]
 
-        return response
+        return response, None
+
+
+_COMPUTE_EVALUATION_MESSAGE = """
+No evaluation runs found. If you want to evaluate your predictions (`pred_field`) against ground truth labels (`gt_field`), run the appropriate evaluation method:
+
+```py
+# ex: detection
+dataset.evaluate_detections(pred_field, gt_field=gt_field, eval_key="eval")
+
+# ex: classification
+dataset.evaluate_classifications(pred_field, gt_field=gt_field, eval_key="eval")
+```
+"""
 
 
 class EvaluationRunSelector(RunSelector):
@@ -181,29 +193,7 @@ class EvaluationRunSelector(RunSelector):
         return "evaluation"
 
     def compute_run_message(self):
-        return "No evaluation runs found."
-        # base_message =  "No evaluation runs found.\n\n"
-        # detection_message = "If you want to compute detection evaluation, please run the following command:\n"
-        # detection_command = """
-        # ```
-        # dataset.evaluate_detections(
-        #     "<det_predictions>",
-        #     eval_key="eval_det",
-        # )
-        # ```
-        # """
-
-        # classification_message = "If you want to compute classification evaluation, please run the following command:\n"
-        # classification_command = """
-        # ```
-        # dataset.evaluate_classifications(
-        #     "<classif_predictions>",
-        #     eval_key="eval_classif",
-        # )
-        # ```
-        # """
-        # message = base_message + detection_message + detection_command + classification_message + classification_command
-        # return message
+        return _COMPUTE_EVALUATION_MESSAGE
 
     def get_run_info(self, run):
         key = run.key
@@ -273,18 +263,28 @@ class EvaluationRunSelector(RunSelector):
     def select_run(self, query):
         available_runs = self.get_available_runs(query)
         if not available_runs:
-            print(self.compute_run_message())
-            return None
+            return None, self.compute_run_message().strip()
 
         if len(available_runs) == 1:
-            return available_runs[0]
+            return available_runs[0], None
 
         prompt = self.generate_prompt(query, available_runs)
         response = get_llm().call_as_llm(prompt).strip()
         if response not in available_runs:
             response = available_runs[0]
 
-        return response
+        return response, None
+
+
+_COMPUTE_UNIQUENESS_MESSAGE = """
+No uniqueness runs found. If you want to compute uniqueness, run the following command:
+
+```py
+import fiftyone.brain as fob
+
+fob.compute_uniqueness(dataset)
+```
+"""
 
 
 class UniquenessRunSelector(RunSelector):
@@ -295,14 +295,7 @@ class UniquenessRunSelector(RunSelector):
         return "uniqueness"
 
     def compute_run_message(self):
-        message = "No uniqueness runs found. If you want to compute uniqueness, please run the following command:\n"
-        command = """
-        ```
-        import fiftyone.brain as fob
-        fob.compute_uniqueness(dataset)
-        ```
-        """
-        return message + command
+        return _COMPUTE_UNIQUENESS_MESSAGE
 
     def get_run_info(self, run):
         key = run.key
@@ -321,6 +314,21 @@ class UniquenessRunSelector(RunSelector):
         return runs
 
 
+_COMPUTE_MISTAKENESS_MESSAGE = """
+No mistakenness runs found. To compute the difficulty of classifying samples (`pred_field`) with respect to ground truth labels (`gt_field`), run the following command:
+
+```py
+import fiftyone.brain as fob
+
+fob.compute_mistakenness(
+    dataset,
+    pred_field,
+    label_field=gt_field,
+)
+```
+"""
+
+
 class MistakennessRunSelector(RunSelector):
     """Selects the correct mistakenness run for a given query and dataset."""
 
@@ -329,18 +337,7 @@ class MistakennessRunSelector(RunSelector):
         return "mistakenness"
 
     def compute_run_message(self):
-        message = "No mistakenness runs found. To compute the difficulty of classifying samples (`<pred_field>`) with respect to ground truth label `<gt_field>`, please run the following command:\n"
-        command = """
-        ```
-        import fiftyone.brain as fob
-        fob.compute_mistakenness(
-            dataset,
-            <pred_field>,
-            label_field=<gt_field>
-            )
-        ```
-        """
-        return message + command
+        return _COMPUTE_MISTAKENESS_MESSAGE
 
     def get_run_info(self, run):
         key = run.key
@@ -361,6 +358,17 @@ class MistakennessRunSelector(RunSelector):
         return runs
 
 
+_COMPUTE_IMAGE_SIMILARITY_MESSAGE = """
+No similarity index found. To generate a similarity index for your samples, run the following command:
+
+```py
+import fiftyone.brain as fob
+
+fob.compute_similarity(dataset, brain_key="img_sim")
+```
+"""
+
+
 class ImageSimilarityRunSelector(RunSelector):
     """Selects the correct image similarity run for a given query and dataset."""
 
@@ -369,14 +377,7 @@ class ImageSimilarityRunSelector(RunSelector):
         return "image_similarity"
 
     def compute_run_message(self):
-        message = "No similarity index found. To generate a similarity index for your samples, please run the following command:\n"
-        command = """
-        ```
-        import fiftyone.brain as fob
-        fob.compute_similarity(dataset, brain_key="img_sim")
-        ```
-        """
-        return message + command
+        return _COMPUTE_IMAGE_SIMILARITY_MESSAGE
 
     def get_run_info(self, run):
         key = run.key
@@ -404,6 +405,21 @@ class ImageSimilarityRunSelector(RunSelector):
         return runs
 
 
+_COMPUTE_TEXT_SIMILARITY_MESSAGE = """
+No similarity index found that supports text prompts. To generate a similarity index for your samples, run the following command:
+
+```py
+import fiftyone.brain as fob
+
+fob.compute_similarity(
+    dataset,
+    model="clip-vit-base32-torch",
+    brain_key="text_sim",
+)
+```
+"""
+
+
 class TextSimilarityRunSelector(RunSelector):
     """Selects the correct text similarity run for a given query and dataset."""
 
@@ -412,14 +428,7 @@ class TextSimilarityRunSelector(RunSelector):
         return "text_similarity"
 
     def compute_run_message(self):
-        message = "No similarity index found that supports text prompts. To generate a similarity index for your samples, please run the following command:\n"
-        command = """
-        ```
-        import fiftyone.brain as fob
-        fob.compute_similarity(dataset, model="clip-vit-base32-torch", brain_key="text_sim")
-        ```
-        """
-        return message + command
+        return _COMPUTE_TEXT_SIMILARITY_MESSAGE
 
     def get_run_info(self, run):
         key = run.key
@@ -448,6 +457,17 @@ class TextSimilarityRunSelector(RunSelector):
         return runs
 
 
+_COMPUTE_HARDNESS_MESSAGE = """
+No hardness run found. To measure of the uncertainty of your model's predictions (`label_field`) on the samples in your dataset, run the following command:
+
+```py
+import fiftyone.brain as fob
+
+fob.compute_hardness(dataset, label_field)
+```
+"""
+
+
 class HardnessRunSelector(RunSelector):
     """Selects the correct hardness run for a given query and dataset."""
 
@@ -456,14 +476,7 @@ class HardnessRunSelector(RunSelector):
         return "hardness"
 
     def compute_run_message(self):
-        message = "No hardness run found. To measure of the uncertainty of your model's predictions (in `label_field`) on the samples in your dataset, please run the following command:\n"
-        command = """
-        ```
-        import fiftyone.brain as fob
-        fob.compute_hardness(dataset, label_field)
-        ```
-        """
-        return message + command
+        return _COMPUTE_HARDNESS_MESSAGE
 
     def get_run_info(self, run):
         key = run.key
@@ -482,6 +495,15 @@ class HardnessRunSelector(RunSelector):
         return runs
 
 
+_COMPUTE_METADATA_MESSAGE = """
+No metadata found. To compute metadata for your samples, run the following command:
+
+```py
+dataset.compute_metadata()
+```
+"""
+
+
 class MetadataRunSelector(RunSelector):
     """Class for metadata computation validation."""
 
@@ -490,13 +512,7 @@ class MetadataRunSelector(RunSelector):
         return "metadata"
 
     def compute_run_message(self):
-        message = "No metadata found. To compute metadata for your samples, please run the following command:\n"
-        command = """
-        ```
-        dataset.compute_metadata()
-        ```
-        """
-        return message + command
+        return _COMPUTE_METADATA_MESSAGE
 
     def get_run_info(self, run):
         return {"key": "metadata"}
@@ -528,13 +544,22 @@ class RunsSelector(object):
 
     def select_runs(self, query, run_types):
         selected_runs = {}
+        messages = []
         for rt in run_types:
             run_selector = run_selectors[rt](self.sample_collection)
-            run = run_selector.select_run(query)
+            run, msg = run_selector.select_run(query)
             if run:
                 selected_runs[rt] = run
 
-        return selected_runs
+            if msg:
+                messages.append(msg)
+
+        if messages:
+            message = "\n".join(messages)
+        else:
+            message = None
+
+        return selected_runs, message
 
 
 def select_runs(sample_collection, query, run_types):
