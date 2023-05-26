@@ -143,7 +143,7 @@ and then either:
 For example, try asking the following questions:
 
 -   What are some popular model architectures for computer vision?
--   How do I create views in FiftyOne?
+-   How do I search for specific objects in my dataset?
 -   Show me predicted airplanes
 
 **Pro tip:** use the [`now` keyword](#keywords) to incorporate your previous
