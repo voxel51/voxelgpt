@@ -793,7 +793,10 @@ def _validate_filter_labels(stage, label_classes):
 
 def _extract_query_from_examples(examples_prompt):
     example_lines = examples_prompt.split("\n")
-    return example_lines[-2]
+    query = example_lines[-2]
+    if query.startswith("Input: "):
+        query = query[7:]
+    return query
 
 
 def attempt_to_disambiguate(
