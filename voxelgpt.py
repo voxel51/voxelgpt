@@ -245,8 +245,6 @@ def ask_voxelgpt_generator(
     # Generate a new query that incorporates the chat history
     if chat_history:
         query = generate_effective_query(chat_history)
-        if query[:6] == "User: ":
-            query = query[6:]
 
     # Intent classification
     intent = classify_query_intent(query)
