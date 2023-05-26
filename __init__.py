@@ -5,9 +5,12 @@ VoxelGPT plugin.
 | `voxel51.com <https://voxel51.com/>`_
 |
 """
+import json
 import os
 import sys
 import traceback
+
+from bson import json_util
 
 import fiftyone as fo
 import fiftyone.operators as foo
@@ -43,11 +46,13 @@ class AskVoxelGPT(foo.Operator):
                 # pylint: disable=no-name-in-module
                 from voxelgpt import ask_voxelgpt_generator
 
+                streaming_message = None
+
                 for response in ask_voxelgpt_generator(
                     query,
                     sample_collection=sample_collection,
                     dialect="string",
-                    allow_streaming=False,
+                    allow_streaming=True,
                 ):
                     type = response["type"]
                     data = response["data"]
@@ -55,16 +60,44 @@ class AskVoxelGPT(foo.Operator):
                     if type == "view":
                         yield self.view(ctx, data["view"])
                     elif type == "message":
-                        yield self.message(ctx, data["message"], messages)
+                        kwargs = {}
+
+                        if data["overwrite"]:
+                            kwargs["overwrite_last"] = True
+
+                        yield self.message(
+                            ctx, data["message"], messages, **kwargs
+                        )
+                    elif type == "streaming":
+                        kwargs = {}
+
+                        if streaming_message is None:
+                            streaming_message = data["content"]
+                        else:
+                            streaming_message += data["content"]
+                            kwargs["overwrite_last"] = True
+
+                        yield self.message(
+                            ctx, streaming_message, messages, **kwargs
+                        )
+
+                        if data["last"]:
+                            streaming_message = None
         except Exception as e:
             yield self.error(ctx, e)
 
     def view(self, ctx, view):
         if view != ctx.view:
-            return ctx.trigger("set_view", params=dict(view=view._serialize()))
+            return ctx.trigger(
+                "set_view",
+                params=dict(view=serialize_view(view)),
+            )
 
-    def message(self, ctx, message, messages):
-        messages.append(message)
+    def message(self, ctx, message, messages, overwrite_last=False):
+        if overwrite_last:
+            messages[-1] = message
+        else:
+            messages.append(message)
 
         outputs = types.Object()
         outputs.str("query", label="You")
@@ -164,6 +197,8 @@ class AskVoxelGPTPanel(foo.Operator):
 
                         if data["last"]:
                             streaming_message = None
+                    elif type == "warning":
+                        yield self.warning(ctx, data["message"])
         except Exception as e:
             yield self.error(ctx, e)
         finally:
@@ -171,10 +206,17 @@ class AskVoxelGPTPanel(foo.Operator):
 
     def view(self, ctx, view):
         if view != ctx.view:
-            return ctx.trigger("set_view", params=dict(view=view._serialize()))
+            return ctx.trigger(
+                "set_view",
+                params=dict(view=serialize_view(view)),
+            )
 
     def message(self, ctx, message, **kwargs):
         return self.show_message(ctx, message, types.MarkdownView(), **kwargs)
+
+    def warning(self, ctx, message):
+        view = types.Warning(label=message)
+        return self.show_message(ctx, message, view)
 
     def error(self, ctx, exception):
         message = str(exception)
@@ -221,16 +263,14 @@ class AskVoxelGPTPanel(foo.Operator):
         # If we have an `orig_view` into the same dataset, start from it
         if orig_view is not None and orig_view["dataset"] == ctx.dataset.name:
             try:
-                sample_collection = fo.DatasetView._build(
-                    ctx.dataset, orig_view["stages"]
-                )
-                return chat_history, sample_collection, None
+                view = deserialize_view(ctx.dataset, orig_view["stages"])
+                return chat_history, view, None
             except:
                 pass
 
         orig_view = dict(
             dataset=ctx.dataset.name,
-            stages=ctx.view._serialize(),
+            stages=serialize_view(ctx.view),
         )
 
         return chat_history, ctx.view, orig_view
@@ -310,6 +350,14 @@ def get_plugin_setting(dataset, plugin_name, key, default=None):
         value = default
 
     return value
+
+
+def serialize_view(view):
+    return json.loads(json_util.dumps(view._serialize()))
+
+
+def deserialize_view(dataset, stages):
+    return fo.DatasetView._build(dataset, json_util.loads(json.dumps(stages)))
 
 
 def register(p):

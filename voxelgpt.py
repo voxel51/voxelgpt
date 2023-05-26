@@ -199,6 +199,15 @@ def ask_voxelgpt_generator(
             }
         }
 
+    -   Warnings in the formatt::
+
+        {
+            "type": "warning",
+            "data": {
+                "message": message
+            }
+        }
+
     You can use the ``dialect`` parameter to configure the message format.
 
     If you provide a chat history, your query and VoxelGPT's responses will be
@@ -300,9 +309,9 @@ def ask_voxelgpt_generator(
         yield _respond(_algorithms_message(algorithms))
 
     # Runs
-    runs = select_runs(sample_collection, query, algorithms)
-    if runs:
-        yield _respond(_runs_message(runs))
+    runs, runs_message = select_runs(sample_collection, query, algorithms)
+    if runs or runs_message:
+        yield _respond(_runs_message(runs, runs_message))
 
     # Fields
     fields = select_fields(sample_collection, query)
@@ -503,7 +512,8 @@ def _algorithms_message(algorithms):
     }
 
 
-def _runs_message(runs):
+def _runs_message(runs, runs_message):
+    prefix = "Identified potential runs: "
     runs_map = {}
     for run_type in list(runs.keys()):
         run_info = runs[run_type]
@@ -514,18 +524,29 @@ def _runs_message(runs):
 
         runs_map[run_type] = run_info[key]
 
-    prefix = "Identified potential runs: "
+    # String
+    str_message = ""
+    if runs_map:
+        str_message += prefix + str(runs_map)
+
+    if runs_message:
+        str_message += "\n" + runs_message + "\n"
 
     # Markdown
-    chunks = []
-    for run_type, key in runs_map.items():
-        chunks.append(f"\n - `{run_type}` run: `{key}`")
+    runs_md = ""
+    if runs_map:
+        chunks = []
+        for run_type, key in runs_map.items():
+            chunks.append(f"\n - `{run_type}` run: `{key}`")
 
-    markdown = "".join(chunks)
+        runs_md += prefix + "".join(chunks)
+
+    if runs_message:
+        runs_md += "\n" + runs_message + "\n"
 
     return {
-        "string": prefix + str(runs_map),
-        "markdown": prefix + markdown,
+        "string": str_message,
+        "markdown": runs_md,
     }
 
 
@@ -622,3 +643,7 @@ def _emit_streaming_content(content, last=False):
 
 def _emit_view(view):
     return {"type": "view", "data": {"view": view}}
+
+
+def _emit_warning(message):
+    return {"type": "warning", "data": {"message": message}}
