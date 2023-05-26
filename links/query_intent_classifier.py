@@ -48,6 +48,13 @@ DOCUMENTATION_KEYWORDS = (
     "fifty one",
 )
 
+HOW_TO_PHRASES = (
+    "how to",
+    "how do",
+    "how can",
+    "how should",
+)
+
 
 def _load_viewstage_examples():
     viewstage_examples, viewstage_embeddings = get_examples()
@@ -176,21 +183,30 @@ def _classify_intent_with_examples(query):
     elif "computer vision" in res:
         return "computer_vision"
     elif "display" in res:
+        if _match_how_to_keyphrases(query):
+            return "documentation"
         return "display"
     else:
         return "confused"
 
 
+def _match_how_to_keyphrases(query):
+    for keyphrase in HOW_TO_PHRASES:
+        if keyphrase in query.lower():
+            return True
+    return False
+
+
 def _match_display_keywords(query):
     for keyword in DISPLAY_KEYWORDS:
-        if keyword in query:
+        if keyword in query.lower():
             return True
     return False
 
 
 def _match_docs_keywords(query):
     for keyword in DOCUMENTATION_KEYWORDS:
-        if keyword in query:
+        if keyword in query.lower():
             return True
     return False
 
