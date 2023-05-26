@@ -305,13 +305,13 @@ Okay, I'm going to load dataset.take(10)
 VoxelGPT is trained to recognize certain keywords that help it understand your
 intent:
 
-| Keyword           | Meaning                                                                                                                                                                                                                                                       |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `show`/`display`  | Tells VoxelGPT that you want it to query your dataset and display the results                                                                                                                                                                                 |
-| `docs`/`FiftyOne` | Tells VoxelGPT that you want it to query the FiftyOne docs.                                                                                                                                                                                                   |
-| `now`             | Use your chat history as context to interpret your next query. For example, if you ask "show me images with people", and then ask "now show me the 10 most unique ones", VoxelGPT will understand that you want to show the 10 most unique images with people |
-| `reset`           | Resets the conversation history                                                                                                                                                                                                                               |
-| `exit`            | Exits interactive Python sessions                                                                                                                                                                                                                             |
+| Keyword                 | Meaning                                                                                                                                                                                                                                                      |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `show`/`display`        | Tells VoxelGPT that you want it to query your dataset and display the results                                                                                                                                                                                |
+| `docs`/`how`/`FiftyOne` | Tells VoxelGPT that you want it to query the FiftyOne docs.                                                                                                                                                                                                  |
+| `now`                   | Use your chat history as context to interpret your next query. For example, if you ask "show me images with people" and then ask "now show me the 10 most unique ones", VoxelGPT will understand that you want to show the 10 most unique images with people |
+| `reset`                 | Resets the conversation history                                                                                                                                                                                                                              |
+| `exit`                  | Exits interactive Python sessions                                                                                                                                                                                                                            |
 
 ## Contributing
 
