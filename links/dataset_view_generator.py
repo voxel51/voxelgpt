@@ -743,6 +743,8 @@ def _validate_match_labels(stage, label_classes):
             classes_str = f'F("label").is_in({class_strs})'
 
         contents = f"filter = {classes_str}{field_names_str}"
+        if ".label" in contents:
+            contents = contents.replace(".label", "")
         return f"match_labels({contents})"
     elif "is_in" in contents:
         is_in = contents.split("is_in([")[1].split("])")[0]
@@ -752,8 +754,12 @@ def _validate_match_labels(stage, label_classes):
         class_strs = [f"{class_name}" for class_name in elems]
         classes_str = f'F("label").is_in({class_strs})'
         contents = f"filter = {classes_str}{field_names_str}"
+        if ".label" in contents:
+            contents = contents.replace(".label", "")
         return f"match_labels({contents})"
     elif "filter=" in contents:
+        if ".label" in contents:
+            contents = contents.replace(".label", "")
         for field in label_classes.keys():
             if f'F("{field}")' in contents:
                 contents = contents.replace(f'F("{field}")', f'F("label")')
@@ -910,23 +916,33 @@ def _postprocess_stages(
     new_stages = []
 
     for stage in stages:
+        print("before:", stage)
         _stage = stage
         _stage = _convert_matches_to_text_similarities(
             _stage, sample_collection, required_brain_runs, unmatched_classes
         )
+        print("after _convert_matches_to_text_similarities:", _stage)
         _stage = _validate_label_fields(
             _stage, sample_collection, label_classes
         )
+        print("after _validate_label_fields:", _stage)
         _stage = _validate_label_class_case(_stage, label_classes)
+        print("after _validate_label_class_case:", _stage)
         _stage = _validate_stages_ner(_stage, label_classes)
+        print("after _validate_stages_ner:", _stage)
         _stage = _validate_runs(_stage, sample_collection, required_brain_runs)
+        print("after _validate_runs:", _stage)
         if "match(" in stage:
             _stage = _validate_match(_stage)
+            print("after _validate_match:", _stage)
         if "filter_labels" in _stage:
             _stage = _validate_filter_labels(_stage, label_classes)
+            print("after _validate_filter_labels:", _stage)
         if "match_labels" in _stage:
             _stage = _validate_match_labels(_stage, label_classes)
+            print("after _validate_match_labels:", _stage)
         _stage = _validate_negation_operator(_stage)
+        print("after _validate_negation_operator:", _stage)
 
         new_stages.append(_stage)
 
