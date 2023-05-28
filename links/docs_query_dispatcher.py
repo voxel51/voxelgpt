@@ -12,12 +12,9 @@ import pickle
 import uuid
 
 from langchain.document_loaders import (
-    DirectoryLoader,
-    UnstructuredMarkdownLoader,
     UnstructuredHTMLLoader,
 )
 from langchain.schema import Document, BaseRetriever
-from langchain.text_splitter import TokenTextSplitter
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 import numpy as np
 from scipy.spatial.distance import cosine
