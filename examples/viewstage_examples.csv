@@ -360,3 +360,11 @@ cars or pedestrians,"[filter_labels(""gt"", F(""label"").is_in([""car"", pedestr
 show me all the samples that were misclassified,"[match(F(""EVAL_KEY"") == False)]",Jacob,image,FALSE,FALSE,FALSE,TRUE,FALSE,classification
 I want any images that were correctly classified,"[match(F(""EVAL_KEY"") == True)]",Jacob,image,FALSE,FALSE,FALSE,TRUE,FALSE,classification
 show me the first 10 incorrectly classified predictions,"[match(F(""EVAL_KEY"") == False), limit(10)]",Jacob,image,FALSE,FALSE,FALSE,TRUE,FALSE,classification
+show me object patches for airplanes in the predictions field,"[filter_labels(""predictions"", F(""label"") == ""airplane""), to_patches(""predictions"")]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,detection
+all of the model1 detection patches in the first image,"[limit(1), to_patches(""model1"")]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,detection
+I only want to see the high confidence object detections predicted by resnet,"[limit(10), filter_labels(""resnet"", F(""confidence"")>0.9), to_patches(""resnet"")]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,detection
+display all the carrot objects in the wandb_05_09 field,"[filter_labels(""wandb_05_09"", F(""label"")==""carrot""), to_patches(""wandb_05_09"")",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,detection
+show me all the non-dog detections,"[filter_labels(""ground_truth"", F(""label"") != ""dog"")]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,detection
+only show samples that don't have a hat prediction,"[match(~F(""prediction.detections.label"").contains(""hat""))]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,detection
+animals that aren't horses,"[filter_labels(""ground_truth"", F(""label"") != ""horses""), sort_by_similarity(""animal"", brain_key = ""TEXT_SIM_KEY"", k = 25)]",Jacob,image,FALSE,TRUE,FALSE,FALSE,FALSE,all
+samples classified as anything but a snail,"[match(~(F(""cls.label"") == ""snail""))]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,classification
