@@ -810,6 +810,24 @@ def _validate_filter_labels(stage, label_classes):
                     contents = contents.replace(label_field, field)
                     break
 
+    ##### correct three-argument hallucination of form 'filter_labels("label_field", "==", "class_name")'
+    eq_pattern = r'"([^"]+)",\s*"==",\s*"([^"]+)"'
+    eq_matches = re.findall(eq_pattern, contents)
+    if eq_matches:
+        match = eq_matches[0]
+        label_field = match[0]
+        class_name = match[1]
+        return f'filter_labels("{label_field}", F("label") == "{class_name}")'
+
+    ##### correct three-argument hallucination of form 'filter_labels("label_field", "!=", "class_name")'
+    neq_pattern = r'"([^"]+)",\s*"!=",\s*"([^"]+)"'
+    neq_matches = re.findall(neq_pattern, contents)
+    if neq_matches:
+        match = neq_matches[0]
+        label_field = match[0]
+        class_name = match[2]
+        return f'filter_labels("{label_field}", F("label") != "{class_name}")'
+
     ##### correct second argument if needed
     if len(args) == 2:
         arg1 = args[1].strip()
