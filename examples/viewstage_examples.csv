@@ -368,3 +368,7 @@ show me all the non-dog detections,"[filter_labels(""ground_truth"", F(""label""
 only show samples that don't have a hat prediction,"[match(~F(""prediction.detections.label"").contains(""hat""))]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,detection
 animals that aren't horses,"[filter_labels(""ground_truth"", F(""label"") != ""horses""), sort_by_similarity(""animal"", brain_key = ""TEXT_SIM_KEY"", k = 25)]",Jacob,image,FALSE,TRUE,FALSE,FALSE,FALSE,all
 samples classified as anything but a snail,"[match(~(F(""cls.label"") == ""snail""))]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,classification
+samples with 2 or more Cats,"[match(F(""gt.detections"").filter(F(""label"") == ""Cat"").length() >= 2)]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,detection
+all images with at least 6 plates,"[match(F(""detections.detections"").filter(F(""label"") == ""plate"").length() >= 6)]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,detection
+images with no more than four lamps or lanterns,"[match(F(""ground_truth.detections"").filter(F(""label"").is_in([""lamp"", ""lantern""])).length() <= 4)",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,detection
+samples with exactly one prediction of a bed,"[match(F(""model.detections"").filter(F(""label"") == ""bed"").length() == 1)]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,detection
