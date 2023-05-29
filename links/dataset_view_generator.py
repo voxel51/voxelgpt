@@ -807,7 +807,7 @@ def _validate_filter_labels(stage, label_classes):
         if label_field not in label_classes.keys():
             for field in label_classes.keys():
                 if field in label_field and field != label_field:
-                    contents = contents.replace(label_field, field)
+                    contents = contents.replace(args[0], f'"{field}"')
                     break
 
     ##### correct three-argument hallucination of form 'filter_labels("label_field", "==", "class_name")'
