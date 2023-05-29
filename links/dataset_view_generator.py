@@ -94,6 +94,10 @@ TEXT_SIMILARITY_PROMPT = PromptTemplate(
     template=TEXT_SIMILARITY_PROMPT_TEMPLATE,
 )
 
+SIMILARITY_QUERY_PROMPT_PATH = os.path.join(
+    PROMPTS_DIR, "similarity_query_extractor_prompt.txt"
+)
+
 DETECTION_KEYWORDS = (
     "_fp",
     "_fn",
@@ -104,6 +108,17 @@ DETECTION_KEYWORDS = (
 )
 
 CLASSIFICATION_KEYWORDS = ("False", "True")
+
+TEXT_SIM_KEYWORDS = (
+    "show",
+    "display",
+    "find" "me",
+    "images",
+    "pictures",
+    "photos",
+    "videos",
+    "samples",
+)
 
 
 def generate_evaluation_prompt(sample_collection, eval_key):
@@ -957,6 +972,32 @@ def _validate_bool_condition(stage):
     return stage
 
 
+def load_similarity_query_prompt():
+    cache = get_cache()
+    key = "similarity_query_prefix"
+    if key not in cache:
+        with open(SIMILARITY_QUERY_PROMPT_PATH, "r") as f:
+            cache[key] = f.read()
+    return cache[key]
+
+
+def extract_similarity_query(stage):
+    pattern = r'sort_by_similarity\("([^"]+)"'
+    query = re.search(pattern, stage).group(1)
+    sim_query_prompt = load_similarity_query_prompt().replace("QUERY", query)
+    new_query = get_llm().call_as_llm(sim_query_prompt).strip()
+    return stage.replace(query, new_query)
+
+
+def _validate_text_similarity(stage):
+    if "sort_by_similarity" not in stage:
+        return stage
+    if any(keyword in stage for keyword in TEXT_SIM_KEYWORDS):
+        return extract_similarity_query(stage)
+    else:
+        return stage
+
+
 def _postprocess_stages(
     stages,
     sample_collection,
@@ -967,36 +1008,26 @@ def _postprocess_stages(
     new_stages = []
 
     for stage in stages:
-        print("before:", stage)
         _stage = stage
         _stage = _convert_matches_to_text_similarities(
             _stage, sample_collection, required_brain_runs, unmatched_classes
         )
-        print("after _convert_matches_to_text_similarities:", _stage)
         _stage = _validate_label_fields(
             _stage, sample_collection, label_classes
         )
-        print("after _validate_label_fields:", _stage)
         _stage = _validate_label_class_case(_stage, label_classes)
-        print("after _validate_label_class_case:", _stage)
         _stage = _validate_stages_ner(_stage, label_classes)
-        print("after _validate_stages_ner:", _stage)
         _stage = _validate_runs(_stage, sample_collection, required_brain_runs)
-        print("after _validate_runs:", _stage)
         if "match(" in stage:
             _stage = _validate_match(_stage)
-            print("after _validate_match:", _stage)
         if "filter_labels" in _stage:
             _stage = _validate_filter_labels(_stage, label_classes)
-            print("after _validate_filter_labels:", _stage)
         if "match_labels" in _stage:
             _stage = _validate_match_labels(_stage, label_classes)
-            print("after _validate_match_labels:", _stage)
 
         _stage = _validate_negation_operator(_stage)
-        print("after _validate_negation_operator:", _stage)
         _stage = _validate_bool_condition(_stage)
-
+        _stage = _validate_text_similarity(_stage)
         new_stages.append(_stage)
 
     return new_stages
