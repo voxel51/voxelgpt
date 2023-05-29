@@ -38,7 +38,6 @@ def get_or_create_embeddings(queries):
     else:
         example_embeddings = {}
 
-    query_embeddings = []
     query_hashes = []
     new_hashes = []
     new_queries = []
@@ -58,16 +57,13 @@ def get_or_create_embeddings(queries):
         for key, embedding in zip(new_hashes, new_embeddings):
             example_embeddings[key] = embedding
 
-    for key in query_hashes:
-        query_embeddings.append(example_embeddings[key])
-
     if new_queries:
         print("Saving embeddings to disk...")
 
         with open(EXAMPLE_EMBEDDINGS_PATH, "wb") as f:
             pickle.dump(example_embeddings, f)
 
-    return query_embeddings
+    return example_embeddings
 
 
 def has_geo_field(sample_collection):
@@ -158,8 +154,8 @@ def _load_examples():
     )
     examples["hash"] = examples["query"].apply(lambda x: hash_query(x))
 
-    with open(EXAMPLE_EMBEDDINGS_PATH, "rb") as f:
-        embeddings = pickle.load(f)
+    queries = examples["query"].tolist()
+    embeddings = get_or_create_embeddings(queries)
 
     embeddings = {
         key: np.array(embeddings[key]) for key in examples["hash"].tolist()
