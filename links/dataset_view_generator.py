@@ -924,27 +924,37 @@ def _validate_negation_operator(stage):
     return stage
 
 
-def _validate_bool_condition(stage):
+def _get_false_patterns(stage):
+    false_patterns = [
+        r",\s*False",
+        r",\s*invert\s*=\s*True",
+    ]
+
     if stage.startswith("match_labels"):
-        return stage
+        return false_patterns
     elif stage.startswith("match_tags"):
-        return stage
+        return false_patterns
     elif stage.startswith("exists"):
-        return stage
-
-    false_pattern = r",\s*bool\s*=\s*False"
-    false_matches = re.findall(false_pattern, stage)
-    if false_matches:
-        stage = re.sub(false_pattern, "", stage)
-        opening_paren_index = stage.index("(")
-        # Extract the function name
-        stage_name = stage[:opening_paren_index]
-
-        # Extract the contents
-        contents = stage[opening_paren_index + 1 : -1]
-        return f"{stage_name}(~({contents}))"
+        return false_patterns
     else:
-        return stage
+        return false_patterns + [r",\s*bool\s*=\s*False"]
+
+
+def _validate_bool_condition(stage):
+    false_patterns = _get_false_patterns(stage)
+
+    for pattern in false_patterns:
+        false_matches = re.findall(pattern, stage)
+        if false_matches:
+            stage = re.sub(pattern, "", stage)
+            opening_paren_index = stage.index("(")
+            # Extract the function name
+            stage_name = stage[:opening_paren_index]
+
+            # Extract the contents
+            contents = stage[opening_paren_index + 1 : -1]
+            return f"{stage_name}(~({contents}))"
+    return stage
 
 
 def _postprocess_stages(
