@@ -924,6 +924,29 @@ def _validate_negation_operator(stage):
     return stage
 
 
+def _validate_bool_condition(stage):
+    if stage.startswith("match_labels"):
+        return stage
+    elif stage.startswith("match_tags"):
+        return stage
+    elif stage.startswith("exists"):
+        return stage
+
+    false_pattern = r",\s*bool\s*=\s*False"
+    false_matches = re.findall(false_pattern, stage)
+    if false_matches:
+        stage = re.sub(false_pattern, "", stage)
+        opening_paren_index = stage.index("(")
+        # Extract the function name
+        stage_name = stage[:opening_paren_index]
+
+        # Extract the contents
+        contents = stage[opening_paren_index + 1 : -1]
+        return f"{stage_name}(~({contents}))"
+    else:
+        return stage
+
+
 def _postprocess_stages(
     stages,
     sample_collection,
@@ -959,8 +982,10 @@ def _postprocess_stages(
         if "match_labels" in _stage:
             _stage = _validate_match_labels(_stage, label_classes)
             print("after _validate_match_labels:", _stage)
+
         _stage = _validate_negation_operator(_stage)
         print("after _validate_negation_operator:", _stage)
+        _stage = _validate_bool_condition(_stage)
 
         new_stages.append(_stage)
 
