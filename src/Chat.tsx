@@ -13,6 +13,7 @@ const Chat = () => {
   const bottomRef = useRef(null);
   const messages = useRecoilValue(state.atoms.messages);
   const receiving = useRecoilValue(state.atoms.receiving);
+  const waiting = useRecoilValue(state.atoms.waiting);
 
   const scrollToBottom = useCallback(
     throttle(() => {
@@ -41,7 +42,7 @@ const Chat = () => {
     incoming: <ChatGPTAvatar />,
   };
 
-  const groupedMessages = groupConsecutiveMessages(messages, receiving);
+  const groupedMessages = groupConsecutiveMessages(messages, receiving, waiting);
 
   return (
     <div style={{ overflow: "auto" }} ref={ref}>
@@ -56,7 +57,7 @@ const Chat = () => {
 };
 
 // a function that groups consecutive messages of the same type
-function groupConsecutiveMessages(messages, receiving) {
+function groupConsecutiveMessages(messages, receiving, waiting) {
   const groups = [];
   let currentGroup = [];
   for (const message of messages) {
@@ -76,6 +77,7 @@ function groupConsecutiveMessages(messages, receiving) {
     lastGroup.last = true;
     if (lastGroup.type === "incoming") {
       lastGroup.receiving = receiving;
+      lastGroup.waiting = waiting;
     } else {
       groups.push({type: "incoming", messages: [], receiving: true});
     }

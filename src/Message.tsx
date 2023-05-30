@@ -8,8 +8,6 @@ import LoadingIndicator from './LoadingIndicator'
 import { ChatGPTAvatar } from './avatars'
 
 export const Message = ({ type, avatar, content = '', outputs, data }) => {
-  console.log('Message', { type, avatar, content, outputs, data })
-
   if (outputs) {
     const schema = types.Property.fromJSON(outputs)
 
@@ -48,11 +46,12 @@ export const Message = ({ type, avatar, content = '', outputs, data }) => {
   return null
 }
 
-export function MessageWrapper({ type, messages, receiving, last }) {
+export function MessageWrapper({ type, messages, receiving, waiting, last }) {
   const theme = useTheme()
   const isIncoming = type === 'incoming'
   const background =
     isIncoming ? theme.background.header : theme.background.level1
+  const showLoading = waiting || receiving;
 
   return (
     <Grid
@@ -76,7 +75,7 @@ export function MessageWrapper({ type, messages, receiving, last }) {
               />
             </Grid>
           ))}
-          {receiving && (
+          {showLoading && (
             <Grid container item xs={12} sx={{ pl: 1 }}>
               <Grid item>
                 <Box my={1.5}>

@@ -18,6 +18,10 @@ export const atoms = {
     key: "receiving",
     default: false,
   }),
+  waiting: atom({
+    key: "waiting",
+    default: false,
+  }),
   input: atom({
     key: "voxel-gpt-input",
     default: "",

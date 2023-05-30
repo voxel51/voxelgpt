@@ -38,6 +38,7 @@ export class ShowMessage extends Operator {
   async execute(ctx) {
     if (ctx.params.message || ctx.params.outputs) {
       ctx.state.set(state.atoms.receiving, true)
+      ctx.state.set(state.atoms.waiting, false)
       const {overwrite_last} = ctx.params.data || {}
       if (overwrite_last) {
         ctx.hooks.updateLastIncomingMessage(ctx.params)
@@ -50,6 +51,7 @@ export class ShowMessage extends Operator {
     }
     if (ctx.params.done) {
       ctx.state.set(state.atoms.receiving, false)
+      ctx.state.set(state.atoms.waiting, false)
     }
   }
 }

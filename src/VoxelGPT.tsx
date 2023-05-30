@@ -31,6 +31,7 @@ const ChatPanel = () => {
     executor.execute({ message });
   };
   const receiving = useRecoilValue(state.atoms.receiving);
+  const waiting = useRecoilValue(state.atoms.waiting);
   const hasMessages = messages.length > 0;
 
   return (
@@ -57,7 +58,7 @@ const ChatPanel = () => {
           <Actions />
           <InputBar
             hasMessages={hasMessages}
-            disabled={receiving}
+            disabled={receiving || waiting}
             onMessageSend={handleMessageSend}
           />
           <Typography
