@@ -7,65 +7,81 @@ import {
   ListItemButton,
   ListItemText,
   Paper,
-  Typography
-} from '@mui/material'
+  Typography,
+} from "@mui/material";
 
-import Dataset from '@mui/icons-material/Dataset';
-import EmojiObjects from '@mui/icons-material/EmojiObjects';
-import Psychology from '@mui/icons-material/Psychology';
-import QuestionAnswer from '@mui/icons-material/QuestionAnswer';
+import Dataset from "@mui/icons-material/Dataset";
+import Psychology from "@mui/icons-material/Psychology";
+import QuestionAnswer from "@mui/icons-material/QuestionAnswer";
+import SchemaIcon from "@mui/icons-material/Schema";
+import ManageSearchIcon from "@mui/icons-material/ManageSearch";
 
-
-import { useSetRecoilState } from 'recoil'
-import { atoms } from './state'
+import { useSetRecoilState } from "recoil";
+import { atoms } from "./state";
 
 const examples = [
-  { id: 'example-1', label: 'Show me the 25 images that are most likely to contain a road scene' },
+  { id: "example-1", label: "How do I export in COCO format?" },
   {
-    id: 'example-2',
-    label: 'Display images with a high confidence prediction evaluated as a false positive'
+    id: "example-2",
+    label: "What does the match() stage do?",
   },
-  { id: 'example-3', label: 'Just the most unique images that have food and people in them' }
-]
+  {
+    id: "example-3",
+    label:
+      "Show me samples with a high confidence prediction evaluated as a false positive",
+  },
+  {
+    id: "example-4",
+    label: "Show me 10 images that contain dogs using text similarity",
+  },
+];
 const capabilities = [
   {
-    id: 'capability-1',
-    label: 'Understands the schema of your dataset',
-    Icon: EmojiObjects
+    id: "capability-1",
+    label: "Can search the FiftyOne docs for answers and link to its sources",
+    Icon: ManageSearchIcon,
   },
   {
-    id: 'capability-2',
-    label: 'Can run SQL-like queries on computer vision datasets',
-    Icon: Dataset
+    id: "capability-2",
+    label: "Understands the schema of your dataset",
+    Icon: SchemaIcon,
   },
   {
-    id: 'capability-3',
+    id: "capability-3",
+    label: "Can automatically load views that contain the content you specify",
+    Icon: Dataset,
+  },
+  {
+    id: "capability-4",
     label:
-      'Knows how to use brain methods, evaluations, similarity indexes, and more',
-    Icon: Psychology
-  }
-]
+      "Knows how to use brain methods, evaluations, similarity indexes, and more",
+    Icon: Psychology,
+  },
+];
 
 export const Intro = () => {
-  const setInput = useSetRecoilState(atoms.input)
+  const setInput = useSetRecoilState(atoms.input);
   return (
     <Grid
       container
       item
       direction="row"
-      sx={{ margin: 'auto' }}
+      sx={{ margin: "auto" }}
       spacing={2}
       justifyContent="center"
       alignItems="start"
     >
       <Grid item xs={12}>
-        <Typography variant="h2" style={{ textAlign: 'center' }}>
+        <Typography variant="h2" style={{ textAlign: "center" }}>
           VoxelGPT
         </Typography>
       </Grid>
-      <Grid item sm={12} lg={4} sx={{alignSelf: 'stretch'}}>
-        <Paper elevation={3} sx={{height: '100%', padding: '20px', marginBottom: '16px' }}>
-          <Typography variant="h4" gutterBottom style={{ textAlign: 'center' }}>
+      <Grid item sm={12} lg={4} sx={{ alignSelf: "stretch" }}>
+        <Paper
+          elevation={3}
+          sx={{ height: "100%", padding: "20px", marginBottom: "16px" }}
+        >
+          <Typography variant="h4" gutterBottom style={{ textAlign: "center" }}>
             Examples
           </Typography>
           <List>
@@ -73,7 +89,7 @@ export const Intro = () => {
               <ListItemButton
                 key={id}
                 onClick={() => {
-                  setInput(label)
+                  setInput(label);
                 }}
               >
                 <ListItemAvatar>
@@ -87,9 +103,12 @@ export const Intro = () => {
           </List>
         </Paper>
       </Grid>
-      <Grid item sm={12} lg={4} sx={{alignSelf: 'stretch'}}>
-        <Paper elevation={3} sx={{ height: '100%', padding: '20px', marginBottom: '16px' }}>
-          <Typography variant="h4" gutterBottom style={{ textAlign: 'center' }}>
+      <Grid item sm={12} lg={4} sx={{ alignSelf: "stretch" }}>
+        <Paper
+          elevation={3}
+          sx={{ height: "100%", padding: "20px", marginBottom: "16px" }}
+        >
+          <Typography variant="h4" gutterBottom style={{ textAlign: "center" }}>
             Capabilities
           </Typography>
           <List>
@@ -107,5 +126,5 @@ export const Intro = () => {
         </Paper>
       </Grid>
     </Grid>
-  )
-}
+  );
+};
