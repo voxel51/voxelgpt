@@ -686,14 +686,21 @@ def _validate_label_fields(stage, sample_collection, label_classes):
     def _get_ground_truth_field():
         return label_fields[0]
 
+    def _check_non_none_field(field, sample_collection):
+
+        # return True if field (fully-qualified) exists and contains non-None value
+        v = sample_collection.limit(1).values(field)[0]
+        if isinstance(v, list):
+            v = v[0]
+        return v is not None
+
     def _get_predictions_field():
         if len(label_fields) == 1:
             return label_fields[0]
 
         for field in label_fields:
             conf_field = _get_confidence_subfield(field)
-
-            if sample_collection.first()[conf_field]:
+            if _check_non_none_field(conf_field, sample_collection):
                 return field
         return label_fields[0]
 
