@@ -18716,17 +18716,17 @@ Please use another name.`);
     })(createSvgIcon);
     return createSvgIcon;
   }
-  var _interopRequireDefault$6 = interopRequireDefault.exports;
+  var _interopRequireDefault$7 = interopRequireDefault.exports;
   Object.defineProperty(Send, "__esModule", {
     value: true
   });
-  var default_1$6 = Send.default = void 0;
-  var _createSvgIcon$6 = _interopRequireDefault$6(requireCreateSvgIcon());
-  var _jsxRuntime$6 = jsxRuntime.exports;
-  var _default$6 = (0, _createSvgIcon$6.default)(/* @__PURE__ */ (0, _jsxRuntime$6.jsx)("path", {
+  var default_1$7 = Send.default = void 0;
+  var _createSvgIcon$7 = _interopRequireDefault$7(requireCreateSvgIcon());
+  var _jsxRuntime$7 = jsxRuntime.exports;
+  var _default$7 = (0, _createSvgIcon$7.default)(/* @__PURE__ */ (0, _jsxRuntime$7.jsx)("path", {
     d: "M2.01 21 23 12 2.01 3 2 10l15 2-15 2z"
   }), "Send");
-  default_1$6 = Send.default = _default$6;
+  default_1$7 = Send.default = _default$7;
   const useRef = window["React"].useRef;
   const useEffect = window["React"].useEffect;
   const OutlinedInput = window["__mui__"].OutlinedInput;
@@ -18767,8 +18767,8 @@ Please use another name.`);
           variant: "outlined",
           disabled,
           size: "large",
-          placeholder: "Tell me what you'd like to view",
-          endAdornment: /* @__PURE__ */ jsxRuntime.exports.jsx(IconButton, { disabled: !showAdornment, onClick: sendMessage, children: /* @__PURE__ */ jsxRuntime.exports.jsx(default_1$6, { style: { opacity: showAdornment ? 1 : 0.2 } }) })
+          placeholder: "Send a message...",
+          endAdornment: /* @__PURE__ */ jsxRuntime.exports.jsx(IconButton, { disabled: !showAdornment, onClick: sendMessage, children: /* @__PURE__ */ jsxRuntime.exports.jsx(default_1$7, { style: { opacity: showAdornment ? 1 : 0.2 } }) })
         }
       ),
       /* @__PURE__ */ jsxRuntime.exports.jsx("div", { ref: bottomRef })
@@ -18882,29 +18882,29 @@ Please use another name.`);
     }
   }
   var Replay = {};
-  var _interopRequireDefault$5 = interopRequireDefault.exports;
+  var _interopRequireDefault$6 = interopRequireDefault.exports;
   Object.defineProperty(Replay, "__esModule", {
     value: true
   });
-  var default_1$5 = Replay.default = void 0;
-  var _createSvgIcon$5 = _interopRequireDefault$5(requireCreateSvgIcon());
-  var _jsxRuntime$5 = jsxRuntime.exports;
-  var _default$5 = (0, _createSvgIcon$5.default)(/* @__PURE__ */ (0, _jsxRuntime$5.jsx)("path", {
+  var default_1$6 = Replay.default = void 0;
+  var _createSvgIcon$6 = _interopRequireDefault$6(requireCreateSvgIcon());
+  var _jsxRuntime$6 = jsxRuntime.exports;
+  var _default$6 = (0, _createSvgIcon$6.default)(/* @__PURE__ */ (0, _jsxRuntime$6.jsx)("path", {
     d: "M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"
   }), "Replay");
-  default_1$5 = Replay.default = _default$5;
+  default_1$6 = Replay.default = _default$6;
   var StopCircle = {};
-  var _interopRequireDefault$4 = interopRequireDefault.exports;
+  var _interopRequireDefault$5 = interopRequireDefault.exports;
   Object.defineProperty(StopCircle, "__esModule", {
     value: true
   });
-  var default_1$4 = StopCircle.default = void 0;
-  var _createSvgIcon$4 = _interopRequireDefault$4(requireCreateSvgIcon());
-  var _jsxRuntime$4 = jsxRuntime.exports;
-  var _default$4 = (0, _createSvgIcon$4.default)(/* @__PURE__ */ (0, _jsxRuntime$4.jsx)("path", {
+  var default_1$5 = StopCircle.default = void 0;
+  var _createSvgIcon$5 = _interopRequireDefault$5(requireCreateSvgIcon());
+  var _jsxRuntime$5 = jsxRuntime.exports;
+  var _default$5 = (0, _createSvgIcon$5.default)(/* @__PURE__ */ (0, _jsxRuntime$5.jsx)("path", {
     d: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4 14H8V8h8v8z"
   }), "StopCircle");
-  default_1$4 = StopCircle.default = _default$4;
+  default_1$5 = StopCircle.default = _default$5;
   const Grid$2 = window["__mui__"].Grid;
   const Button = window["__mui__"].Button;
   const useRecoilValue$1 = window["recoil"].useRecoilValue;
@@ -18922,60 +18922,77 @@ Please use another name.`);
       abortOperationsByURI(ASK_VOXELGPT_URI);
     };
     return /* @__PURE__ */ jsxRuntime.exports.jsxs(Grid$2, { container: true, justifyContent: "center", children: [
+<<<<<<< HEAD
       messages.length > 0 && !receiving && !waiting && /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$2, { item: true, children: /* @__PURE__ */ jsxRuntime.exports.jsx(Button, { color: "secondary", variant: "contained", startIcon: /* @__PURE__ */ jsxRuntime.exports.jsx(default_1$5, {}), onClick: () => reset(), children: "Start Over" }) }),
       /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$2, { item: true, children: receiving && /* @__PURE__ */ jsxRuntime.exports.jsx(Button, { onClick: handleStop, color: "secondary", variant: "contained", startIcon: /* @__PURE__ */ jsxRuntime.exports.jsx(default_1$4, {}), children: "Stop" }) })
+=======
+      messages.length > 0 && !receiving && /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$2, { item: true, children: /* @__PURE__ */ jsxRuntime.exports.jsx(Button, { color: "secondary", variant: "contained", startIcon: /* @__PURE__ */ jsxRuntime.exports.jsx(default_1$6, {}), onClick: () => reset(), children: "Start Over" }) }),
+      /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$2, { item: true, children: receiving && /* @__PURE__ */ jsxRuntime.exports.jsx(Button, { color: "secondary", variant: "contained", startIcon: /* @__PURE__ */ jsxRuntime.exports.jsx(default_1$5, {}), children: "Stop" }) })
+>>>>>>> 09e000a (update intro view)
     ] });
   }
   var Dataset = {};
-  var _interopRequireDefault$3 = interopRequireDefault.exports;
+  var _interopRequireDefault$4 = interopRequireDefault.exports;
   Object.defineProperty(Dataset, "__esModule", {
     value: true
   });
-  var default_1$3 = Dataset.default = void 0;
-  var _createSvgIcon$3 = _interopRequireDefault$3(requireCreateSvgIcon());
-  var _jsxRuntime$3 = jsxRuntime.exports;
-  var _default$3 = (0, _createSvgIcon$3.default)(/* @__PURE__ */ (0, _jsxRuntime$3.jsx)("path", {
+  var default_1$4 = Dataset.default = void 0;
+  var _createSvgIcon$4 = _interopRequireDefault$4(requireCreateSvgIcon());
+  var _jsxRuntime$4 = jsxRuntime.exports;
+  var _default$4 = (0, _createSvgIcon$4.default)(/* @__PURE__ */ (0, _jsxRuntime$4.jsx)("path", {
     d: "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-8 14H7v-4h4v4zm0-6H7V7h4v4zm6 6h-4v-4h4v4zm0-6h-4V7h4v4z"
   }), "Dataset");
-  default_1$3 = Dataset.default = _default$3;
-  var EmojiObjects = {};
-  var _interopRequireDefault$2 = interopRequireDefault.exports;
-  Object.defineProperty(EmojiObjects, "__esModule", {
-    value: true
-  });
-  var default_1$2 = EmojiObjects.default = void 0;
-  var _createSvgIcon$2 = _interopRequireDefault$2(requireCreateSvgIcon());
-  var _jsxRuntime$2 = jsxRuntime.exports;
-  var _default$2 = (0, _createSvgIcon$2.default)(/* @__PURE__ */ (0, _jsxRuntime$2.jsx)("path", {
-    d: "M12 3c-.46 0-.93.04-1.4.14-2.76.53-4.96 2.76-5.48 5.52-.48 2.61.48 5.01 2.22 6.56.43.38.66.91.66 1.47V19c0 1.1.9 2 2 2h.28c.35.6.98 1 1.72 1s1.38-.4 1.72-1H14c1.1 0 2-.9 2-2v-2.31c0-.55.22-1.09.64-1.46C18.09 13.95 19 12.08 19 10c0-3.87-3.13-7-7-7zm2 16h-4v-1h4v1zm0-2h-4v-1h4v1zm-1.5-5.59V14h-1v-2.59L9.67 9.59l.71-.71L12 10.5l1.62-1.62.71.71-1.83 1.82z"
-  }), "EmojiObjects");
-  default_1$2 = EmojiObjects.default = _default$2;
+  default_1$4 = Dataset.default = _default$4;
   var Psychology = {};
-  var _interopRequireDefault$1 = interopRequireDefault.exports;
+  var _interopRequireDefault$3 = interopRequireDefault.exports;
   Object.defineProperty(Psychology, "__esModule", {
     value: true
   });
-  var default_1$1 = Psychology.default = void 0;
-  var _createSvgIcon$1 = _interopRequireDefault$1(requireCreateSvgIcon());
-  var _jsxRuntime$1 = jsxRuntime.exports;
-  var _default$1 = (0, _createSvgIcon$1.default)([/* @__PURE__ */ (0, _jsxRuntime$1.jsx)("path", {
+  var default_1$3 = Psychology.default = void 0;
+  var _createSvgIcon$3 = _interopRequireDefault$3(requireCreateSvgIcon());
+  var _jsxRuntime$3 = jsxRuntime.exports;
+  var _default$3 = (0, _createSvgIcon$3.default)([/* @__PURE__ */ (0, _jsxRuntime$3.jsx)("path", {
     d: "M13 8.57c-.79 0-1.43.64-1.43 1.43s.64 1.43 1.43 1.43 1.43-.64 1.43-1.43-.64-1.43-1.43-1.43z"
-  }, "0"), /* @__PURE__ */ (0, _jsxRuntime$1.jsx)("path", {
+  }, "0"), /* @__PURE__ */ (0, _jsxRuntime$3.jsx)("path", {
     d: "M13 3C9.25 3 6.2 5.94 6.02 9.64L4.1 12.2c-.25.33-.01.8.4.8H6v3c0 1.1.9 2 2 2h1v3h7v-4.68c2.36-1.12 4-3.53 4-6.32 0-3.87-3.13-7-7-7zm3 7c0 .13-.01.26-.02.39l.83.66c.08.06.1.16.05.25l-.8 1.39c-.05.09-.16.12-.24.09l-.99-.4c-.21.16-.43.29-.67.39L14 13.83c-.01.1-.1.17-.2.17h-1.6c-.1 0-.18-.07-.2-.17l-.15-1.06c-.25-.1-.47-.23-.68-.39l-.99.4c-.09.03-.2 0-.25-.09l-.8-1.39c-.05-.08-.03-.19.05-.25l.84-.66c-.01-.13-.02-.26-.02-.39s.02-.27.04-.39l-.85-.66c-.08-.06-.1-.16-.05-.26l.8-1.38c.05-.09.15-.12.24-.09l1 .4c.2-.15.43-.29.67-.39L12 6.17c.02-.1.1-.17.2-.17h1.6c.1 0 .18.07.2.17l.15 1.06c.24.1.46.23.67.39l1-.4c.09-.03.2 0 .24.09l.8 1.38c.05.09.03.2-.05.26l-.85.66c.03.12.04.25.04.39z"
   }, "1")], "Psychology");
-  default_1$1 = Psychology.default = _default$1;
+  default_1$3 = Psychology.default = _default$3;
   var QuestionAnswer = {};
-  var _interopRequireDefault = interopRequireDefault.exports;
+  var _interopRequireDefault$2 = interopRequireDefault.exports;
   Object.defineProperty(QuestionAnswer, "__esModule", {
     value: true
   });
-  var default_1 = QuestionAnswer.default = void 0;
+  var default_1$2 = QuestionAnswer.default = void 0;
+  var _createSvgIcon$2 = _interopRequireDefault$2(requireCreateSvgIcon());
+  var _jsxRuntime$2 = jsxRuntime.exports;
+  var _default$2 = (0, _createSvgIcon$2.default)(/* @__PURE__ */ (0, _jsxRuntime$2.jsx)("path", {
+    d: "M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"
+  }), "QuestionAnswer");
+  default_1$2 = QuestionAnswer.default = _default$2;
+  var Schema = {};
+  var _interopRequireDefault$1 = interopRequireDefault.exports;
+  Object.defineProperty(Schema, "__esModule", {
+    value: true
+  });
+  var default_1$1 = Schema.default = void 0;
+  var _createSvgIcon$1 = _interopRequireDefault$1(requireCreateSvgIcon());
+  var _jsxRuntime$1 = jsxRuntime.exports;
+  var _default$1 = (0, _createSvgIcon$1.default)(/* @__PURE__ */ (0, _jsxRuntime$1.jsx)("path", {
+    d: "M14 9v2h-3V9H8.5V7H11V1H4v6h2.5v2H4v6h2.5v2H4v6h7v-6H8.5v-2H11v-2h3v2h7V9h-7z"
+  }), "Schema");
+  default_1$1 = Schema.default = _default$1;
+  var ManageSearch = {};
+  var _interopRequireDefault = interopRequireDefault.exports;
+  Object.defineProperty(ManageSearch, "__esModule", {
+    value: true
+  });
+  var default_1 = ManageSearch.default = void 0;
   var _createSvgIcon = _interopRequireDefault(requireCreateSvgIcon());
   var _jsxRuntime = jsxRuntime.exports;
   var _default = (0, _createSvgIcon.default)(/* @__PURE__ */ (0, _jsxRuntime.jsx)("path", {
-    d: "M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"
-  }), "QuestionAnswer");
-  default_1 = QuestionAnswer.default = _default;
+    d: "M7 9H2V7h5v2zm0 3H2v2h5v-2zm13.59 7-3.83-3.83c-.8.52-1.74.83-2.76.83-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5c0 1.02-.31 1.96-.83 2.75L22 17.59 20.59 19zM17 11c0-1.65-1.35-3-3-3s-3 1.35-3 3 1.35 3 3 3 3-1.35 3-3zM2 19h10v-2H2v2z"
+  }), "ManageSearch");
+  default_1 = ManageSearch.default = _default;
   const Avatar = window["__mui__"].Avatar;
   const Grid$1 = window["__mui__"].Grid;
   const List = window["__mui__"].List;
@@ -18987,28 +19004,40 @@ Please use another name.`);
   const Typography$1 = window["__mui__"].Typography;
   const useSetRecoilState = window["recoil"].useSetRecoilState;
   const examples = [
-    { id: "example-1", label: "Show me the 25 images that are most likely to contain a road scene" },
+    { id: "example-1", label: "How do I export in COCO format?" },
     {
       id: "example-2",
-      label: "Display images with a high confidence prediction evaluated as a false positive"
+      label: "What does the match() stage do?"
     },
-    { id: "example-3", label: "Just the most unique images that have food and people in them" }
+    {
+      id: "example-3",
+      label: "Show me samples with a high confidence prediction evaluated as a false positive"
+    },
+    {
+      id: "example-4",
+      label: "Show me 10 images that contain dogs using text similarity"
+    }
   ];
   const capabilities = [
     {
       id: "capability-1",
-      label: "Understands the schema of your dataset",
-      Icon: default_1$2
+      label: "Can search the FiftyOne docs for answers and link to its sources",
+      Icon: default_1
     },
     {
       id: "capability-2",
-      label: "Can run SQL-like queries on computer vision datasets",
-      Icon: default_1$3
+      label: "Understands the schema of your dataset",
+      Icon: default_1$1
     },
     {
       id: "capability-3",
+      label: "Can automatically load views that contain the content you specify",
+      Icon: default_1$4
+    },
+    {
+      id: "capability-4",
       label: "Knows how to use brain methods, evaluations, similarity indexes, and more",
-      Icon: default_1$1
+      Icon: default_1$3
     }
   ];
   const Intro = () => {
@@ -19025,29 +19054,43 @@ Please use another name.`);
         alignItems: "start",
         children: [
           /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$1, { item: true, xs: 12, children: /* @__PURE__ */ jsxRuntime.exports.jsx(Typography$1, { variant: "h2", style: { textAlign: "center" }, children: "VoxelGPT" }) }),
-          /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$1, { item: true, sm: 12, lg: 4, sx: { alignSelf: "stretch" }, children: /* @__PURE__ */ jsxRuntime.exports.jsxs(Paper, { elevation: 3, sx: { height: "100%", padding: "20px", marginBottom: "16px" }, children: [
-            /* @__PURE__ */ jsxRuntime.exports.jsx(Typography$1, { variant: "h4", gutterBottom: true, style: { textAlign: "center" }, children: "Examples" }),
-            /* @__PURE__ */ jsxRuntime.exports.jsx(List, { children: examples.map(({ label, id }) => /* @__PURE__ */ jsxRuntime.exports.jsxs(
-              ListItemButton,
-              {
-                onClick: () => {
-                  setInput(label);
-                },
-                children: [
-                  /* @__PURE__ */ jsxRuntime.exports.jsx(ListItemAvatar, { children: /* @__PURE__ */ jsxRuntime.exports.jsx(Avatar, { children: /* @__PURE__ */ jsxRuntime.exports.jsx(default_1, {}) }) }),
+          /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$1, { item: true, sm: 12, lg: 4, sx: { alignSelf: "stretch" }, children: /* @__PURE__ */ jsxRuntime.exports.jsxs(
+            Paper,
+            {
+              elevation: 3,
+              sx: { height: "100%", padding: "20px", marginBottom: "16px" },
+              children: [
+                /* @__PURE__ */ jsxRuntime.exports.jsx(Typography$1, { variant: "h4", gutterBottom: true, style: { textAlign: "center" }, children: "Examples" }),
+                /* @__PURE__ */ jsxRuntime.exports.jsx(List, { children: examples.map(({ label, id }) => /* @__PURE__ */ jsxRuntime.exports.jsxs(
+                  ListItemButton,
+                  {
+                    onClick: () => {
+                      setInput(label);
+                    },
+                    children: [
+                      /* @__PURE__ */ jsxRuntime.exports.jsx(ListItemAvatar, { children: /* @__PURE__ */ jsxRuntime.exports.jsx(Avatar, { children: /* @__PURE__ */ jsxRuntime.exports.jsx(default_1$2, {}) }) }),
+                      /* @__PURE__ */ jsxRuntime.exports.jsx(ListItemText, { primary: label })
+                    ]
+                  },
+                  id
+                )) })
+              ]
+            }
+          ) }),
+          /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$1, { item: true, sm: 12, lg: 4, sx: { alignSelf: "stretch" }, children: /* @__PURE__ */ jsxRuntime.exports.jsxs(
+            Paper,
+            {
+              elevation: 3,
+              sx: { height: "100%", padding: "20px", marginBottom: "16px" },
+              children: [
+                /* @__PURE__ */ jsxRuntime.exports.jsx(Typography$1, { variant: "h4", gutterBottom: true, style: { textAlign: "center" }, children: "Capabilities" }),
+                /* @__PURE__ */ jsxRuntime.exports.jsx(List, { children: capabilities.map(({ id, label, Icon }) => /* @__PURE__ */ jsxRuntime.exports.jsxs(ListItem, { children: [
+                  /* @__PURE__ */ jsxRuntime.exports.jsx(ListItemAvatar, { children: /* @__PURE__ */ jsxRuntime.exports.jsx(Avatar, { children: /* @__PURE__ */ jsxRuntime.exports.jsx(Icon, {}) }) }),
                   /* @__PURE__ */ jsxRuntime.exports.jsx(ListItemText, { primary: label })
-                ]
-              },
-              id
-            )) })
-          ] }) }),
-          /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$1, { item: true, sm: 12, lg: 4, sx: { alignSelf: "stretch" }, children: /* @__PURE__ */ jsxRuntime.exports.jsxs(Paper, { elevation: 3, sx: { height: "100%", padding: "20px", marginBottom: "16px" }, children: [
-            /* @__PURE__ */ jsxRuntime.exports.jsx(Typography$1, { variant: "h4", gutterBottom: true, style: { textAlign: "center" }, children: "Capabilities" }),
-            /* @__PURE__ */ jsxRuntime.exports.jsx(List, { children: capabilities.map(({ id, label, Icon }) => /* @__PURE__ */ jsxRuntime.exports.jsxs(ListItem, { children: [
-              /* @__PURE__ */ jsxRuntime.exports.jsx(ListItemAvatar, { children: /* @__PURE__ */ jsxRuntime.exports.jsx(Avatar, { children: /* @__PURE__ */ jsxRuntime.exports.jsx(Icon, {}) }) }),
-              /* @__PURE__ */ jsxRuntime.exports.jsx(ListItemText, { primary: label })
-            ] }, id)) })
-          ] }) })
+                ] }, id)) })
+              ]
+            }
+          ) })
         ]
       }
     );
@@ -19106,7 +19149,7 @@ Please use another name.`);
                     children: [
                       "VoxelGPT is in beta and may not understand certain queries.",
                       " ",
-                      /* @__PURE__ */ jsxRuntime.exports.jsx(Link, { children: "Learn more" })
+                      /* @__PURE__ */ jsxRuntime.exports.jsx(Link, { href: "https://github.com/voxel51/voxelgpt", target: "_blank", children: "Learn more" })
                     ]
                   }
                 )
