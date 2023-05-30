@@ -65,7 +65,9 @@ const ChatPanel = () => {
             sx={{ marginTop: "8px", display: "block", textAlign: "center" }}
           >
             VoxelGPT is in beta and may not understand certain queries.{" "}
-            <Link>Learn more</Link>
+            <Link href="https://github.com/voxel51/voxelgpt" target="_blank">
+              Learn more
+            </Link>
           </Typography>
         </Grid>
       </Grid>

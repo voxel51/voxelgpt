@@ -1,41 +1,41 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect } from "react";
 import {
   TextField,
   InputAdornment,
   OutlinedInput,
-  IconButton
-} from '@mui/material'
-import SendIcon from '@mui/icons-material/Send'
-import { useRecoilState } from 'recoil'
-import { atoms } from './state'
+  IconButton,
+} from "@mui/material";
+import SendIcon from "@mui/icons-material/Send";
+import { useRecoilState } from "recoil";
+import { atoms } from "./state";
 
 const InputBar = ({ hasMessages, disabled, onMessageSend, bottomRef }) => {
-  const [message, setMessage] = useRecoilState(atoms.input)
-  const inputRef = useRef(null)
+  const [message, setMessage] = useRecoilState(atoms.input);
+  const inputRef = useRef(null);
 
   function sendMessage() {
     if (message.trim()) {
-      onMessageSend(message)
-      setMessage('')
+      onMessageSend(message);
+      setMessage("");
     }
   }
 
   const handleKeyPress = (event) => {
-    if (event.key === 'Enter') {
-      sendMessage()
+    if (event.key === "Enter") {
+      sendMessage();
     }
-  }
+  };
 
   useEffect(() => {
     if (!disabled && inputRef.current) {
-      inputRef.current.focus()
+      inputRef.current.focus();
     }
-  }, [disabled])
+  }, [disabled]);
 
-  const showAdornment = !disabled && message.trim().length > 0
+  const showAdornment = !disabled && message.trim().length > 0;
 
   return (
-    <div style={{ padding: '0.5rem' }}>
+    <div style={{ padding: "0.5rem" }}>
       <OutlinedInput
         ref={inputRef}
         autofocus
@@ -46,7 +46,7 @@ const InputBar = ({ hasMessages, disabled, onMessageSend, bottomRef }) => {
         variant="outlined"
         disabled={disabled}
         size="large"
-        placeholder="Tell me what you'd like to view"
+        placeholder="Send a message..."
         endAdornment={
           <IconButton disabled={!showAdornment} onClick={sendMessage}>
             <SendIcon style={{ opacity: showAdornment ? 1 : 0.2 }} />
@@ -55,7 +55,7 @@ const InputBar = ({ hasMessages, disabled, onMessageSend, bottomRef }) => {
       />
       <div ref={bottomRef} />
     </div>
-  )
-}
+  );
+};
 
-export default InputBar
+export default InputBar;
