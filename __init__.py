@@ -36,7 +36,7 @@ class AskVoxelGPT(foo.Operator):
         )
         return types.Property(inputs)
 
-    async def execute(self, ctx):
+    def execute(self, ctx):
         query = ctx.params["query"]
         sample_collection = ctx.view if ctx.view is not None else ctx.dataset
         messages = []
@@ -137,7 +137,7 @@ class AskVoxelGPTPanel(foo.Operator):
             unlisted=True,
         )
 
-    async def execute(self, ctx):
+    def execute(self, ctx):
         query = ctx.params["query"]
         history = ctx.params.get("history", [])
         chat_history, sample_collection, orig_view = self._parse_history(
