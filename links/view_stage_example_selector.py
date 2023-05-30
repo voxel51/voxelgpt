@@ -239,6 +239,8 @@ def get_similar_examples(sample_collection, query, runs, label_fields):
 
     model = get_embedding_function()
     query_embedding = np.array(model([query]))
+    if len(query_embedding.shape) == 2:
+        query_embedding = query_embedding[0]
 
     dists = np.array([cosine(query_embedding, emb) for emb in ex_embeddings])
 

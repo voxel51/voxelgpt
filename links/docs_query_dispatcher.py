@@ -170,6 +170,8 @@ class FiftyOneDocsRetriever(BaseRetriever):
 
     def get_relevant_documents(self, query):
         query_embedding = np.array(self.model(query))
+        if len(query_embedding.shape) == 2:
+            query_embedding = query_embedding[0]
         dists = np.array(
             [cosine(query_embedding, emb) for emb in self.embeddings]
         )
