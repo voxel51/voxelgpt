@@ -18509,7 +18509,6 @@ Please use another name.`);
   const OperatorIO = window["__foo__"].OperatorIO;
   const types$1 = window["__foo__"].types;
   const Message = ({ type, avatar, content = "", outputs, data }) => {
-    console.log("Message", { type, avatar, content, outputs, data });
     if (outputs) {
       const schema = types$1.Property.fromJSON(outputs);
       return /* @__PURE__ */ jsxRuntime.exports.jsx(
@@ -18537,10 +18536,11 @@ Please use another name.`);
       return /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { spacing: 2, container: true, children: /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { item: true, style: { paddingLeft: "1rem" }, children: /* @__PURE__ */ jsxRuntime.exports.jsx(Typography$2, { component: "p", my: 1.5, children: content }) }) });
     return null;
   };
-  function MessageWrapper({ type, messages, receiving, last }) {
+  function MessageWrapper({ type, messages, receiving, waiting, last }) {
     const theme = useTheme();
     const isIncoming = type === "incoming";
     const background = isIncoming ? theme.background.header : theme.background.level1;
+    const showLoading = waiting || receiving;
     return /* @__PURE__ */ jsxRuntime.exports.jsx(
       Grid$4,
       {
@@ -18558,7 +18558,7 @@ Please use another name.`);
               },
               index
             ) })),
-            receiving && /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { container: true, item: true, xs: 12, sx: { pl: 1 }, children: /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { item: true, children: /* @__PURE__ */ jsxRuntime.exports.jsx(Box, { my: 1.5, children: /* @__PURE__ */ jsxRuntime.exports.jsx(LoadingIndicator, {}) }) }) })
+            showLoading && /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { container: true, item: true, xs: 12, sx: { pl: 1 }, children: /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { item: true, children: /* @__PURE__ */ jsxRuntime.exports.jsx(Box, { my: 1.5, children: /* @__PURE__ */ jsxRuntime.exports.jsx(LoadingIndicator, {}) }) }) })
           ] })
         ] })
       }
@@ -18582,6 +18582,10 @@ Please use another name.`);
       key: "receiving",
       default: false
     }),
+    waiting: atom({
+      key: "waiting",
+      default: false
+    }),
     input: atom({
       key: "voxel-gpt-input",
       default: ""
@@ -18598,6 +18602,7 @@ Please use another name.`);
     const bottomRef = useRef$1(null);
     const messages = useRecoilValue$2(atoms.messages);
     const receiving = useRecoilValue$2(atoms.receiving);
+    const waiting = useRecoilValue$2(atoms.waiting);
     const scrollToBottom = useCallback(
       lodash.exports.throttle(() => {
         if (bottomRef.current && messages.length > 0) {
@@ -18619,13 +18624,13 @@ Please use another name.`);
         };
       }
     }, []);
-    const groupedMessages = groupConsecutiveMessages(messages, receiving);
+    const groupedMessages = groupConsecutiveMessages(messages, receiving, waiting);
     return /* @__PURE__ */ jsxRuntime.exports.jsxs("div", { style: { overflow: "auto" }, ref, children: [
       /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$3, { container: true, direction: "row", children: groupedMessages.map((group) => /* @__PURE__ */ jsxRuntime.exports.jsx(MessageWrapper, { ...group })) }),
       /* @__PURE__ */ jsxRuntime.exports.jsx("div", { ref: bottomRef })
     ] });
   };
-  function groupConsecutiveMessages(messages, receiving) {
+  function groupConsecutiveMessages(messages, receiving, waiting) {
     const groups = [];
     let currentGroup = [];
     for (const message of messages) {
@@ -18644,6 +18649,7 @@ Please use another name.`);
       lastGroup.last = true;
       if (lastGroup.type === "incoming") {
         lastGroup.receiving = receiving;
+        lastGroup.waiting = waiting;
       } else {
         groups.push({ type: "incoming", messages: [], receiving: true });
       }
@@ -18727,10 +18733,12 @@ Please use another name.`);
   const IconButton = window["__mui__"].IconButton;
   const useRecoilState$2 = window["recoil"].useRecoilState;
   const InputBar = ({ hasMessages, disabled, onMessageSend, bottomRef }) => {
+    const [waiting, setWaiting] = useRecoilState$2(atoms.waiting);
     const [message, setMessage] = useRecoilState$2(atoms.input);
     const inputRef = useRef(null);
     function sendMessage() {
       if (message.trim()) {
+        setWaiting(true);
         onMessageSend(message);
         setMessage("");
       }
@@ -18803,6 +18811,7 @@ Please use another name.`);
     async execute(ctx) {
       if (ctx.params.message || ctx.params.outputs) {
         ctx.state.set(atoms.receiving, true);
+        ctx.state.set(atoms.waiting, false);
         const { overwrite_last } = ctx.params.data || {};
         if (overwrite_last) {
           ctx.hooks.updateLastIncomingMessage(ctx.params);
@@ -18815,6 +18824,7 @@ Please use another name.`);
       }
       if (ctx.params.done) {
         ctx.state.set(atoms.receiving, false);
+        ctx.state.set(atoms.waiting, false);
       }
     }
   }
@@ -18899,13 +18909,21 @@ Please use another name.`);
   const Button = window["__mui__"].Button;
   const useRecoilValue$1 = window["recoil"].useRecoilValue;
   const useResetRecoilState = window["recoil"].useResetRecoilState;
+  const abortOperationsByURI = window["__foo__"].abortOperationsByURI;
+  const ASK_VOXELGPT_URI = "@voxel51/voxelgpt/ask_voxelgpt_panel";
   function Actions() {
     const receiving = useRecoilValue$1(atoms.receiving);
+    const waiting = useRecoilValue$1(atoms.waiting);
+    const resetReceiving = useResetRecoilState(atoms.receiving);
     const reset = useResetRecoilState(atoms.messages);
     const messages = useRecoilValue$1(atoms.messages);
+    const handleStop = () => {
+      resetReceiving();
+      abortOperationsByURI(ASK_VOXELGPT_URI);
+    };
     return /* @__PURE__ */ jsxRuntime.exports.jsxs(Grid$2, { container: true, justifyContent: "center", children: [
-      messages.length > 0 && !receiving && /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$2, { item: true, children: /* @__PURE__ */ jsxRuntime.exports.jsx(Button, { color: "secondary", variant: "contained", startIcon: /* @__PURE__ */ jsxRuntime.exports.jsx(default_1$5, {}), onClick: () => reset(), children: "Start Over" }) }),
-      /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$2, { item: true, children: receiving && /* @__PURE__ */ jsxRuntime.exports.jsx(Button, { color: "secondary", variant: "contained", startIcon: /* @__PURE__ */ jsxRuntime.exports.jsx(default_1$4, {}), children: "Stop" }) })
+      messages.length > 0 && !receiving && !waiting && /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$2, { item: true, children: /* @__PURE__ */ jsxRuntime.exports.jsx(Button, { color: "secondary", variant: "contained", startIcon: /* @__PURE__ */ jsxRuntime.exports.jsx(default_1$5, {}), onClick: () => reset(), children: "Start Over" }) }),
+      /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$2, { item: true, children: receiving && /* @__PURE__ */ jsxRuntime.exports.jsx(Button, { onClick: handleStop, color: "secondary", variant: "contained", startIcon: /* @__PURE__ */ jsxRuntime.exports.jsx(default_1$4, {}), children: "Stop" }) })
     ] });
   }
   var Dataset = {};
@@ -19050,6 +19068,7 @@ Please use another name.`);
       executor.execute({ message });
     };
     const receiving = useRecoilValue(atoms.receiving);
+    const waiting = useRecoilValue(atoms.waiting);
     const hasMessages = messages.length > 0;
     return /* @__PURE__ */ jsxRuntime.exports.jsxs(
       Grid,
@@ -19075,7 +19094,7 @@ Please use another name.`);
                   InputBar,
                   {
                     hasMessages,
-                    disabled: receiving,
+                    disabled: receiving || waiting,
                     onMessageSend: handleMessageSend
                   }
                 ),

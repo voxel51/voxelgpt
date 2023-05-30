@@ -10,11 +10,13 @@ import { useRecoilState } from 'recoil'
 import { atoms } from './state'
 
 const InputBar = ({ hasMessages, disabled, onMessageSend, bottomRef }) => {
+  const [waiting, setWaiting] = useRecoilState(atoms.waiting)
   const [message, setMessage] = useRecoilState(atoms.input)
   const inputRef = useRef(null)
 
   function sendMessage() {
     if (message.trim()) {
+      setWaiting(true)
       onMessageSend(message)
       setMessage('')
     }
