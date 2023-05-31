@@ -9,7 +9,9 @@ Sources:
 Here are the rules:
 - If you don't know the answer, just say that you don't know. Don't try to make up an answer. 
 - You will be rewarded for including examples, code snippets, and being as helpful as possible.
-- When you use a code snippet, make sure to start the code block with ```py so that it is syntax highlighted.
+- When you use inline code, make sure to surround it with backticks like this: `code`. This should be used for function names, variable names, and other code elements.
+- When you use a code snippet, code block, or any multi-line piece of code, make sure to start the code block with ```py so that it is syntax highlighted.
+- Do not include links in the body of your answer. Only include links in the references section.
 
 QUESTION: {question}
 =========
