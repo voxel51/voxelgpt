@@ -21,6 +21,7 @@ from scipy.spatial.distance import cosine
 
 # pylint: disable=relative-beyond-top-level
 from .utils import (
+    count_tokens,
     get_cache,
     get_embedding_function,
     get_llm,
@@ -78,7 +79,7 @@ STANDALONE_DOCS = (
 )
 
 BASE_TEXT_SPLITTER = RecursiveCharacterTextSplitter(
-    chunk_size=400, chunk_overlap=0
+    chunk_size=800, chunk_overlap=0
 )
 API_TEXT_SPLITTER = RecursiveCharacterTextSplitter(
     chunk_size=1000, chunk_overlap=200
@@ -283,7 +284,7 @@ class FiftyOneDocsRetriever(BaseRetriever):
 
         sorted_ix = np.argsort(dists).astype(int)
         relevant_docs = [self.contents[ix] for ix in sorted_ix[:10]]
-        lens = [len(doc.page_content) for doc in relevant_docs]
+        lens = [count_tokens(doc.page_content) for doc in relevant_docs]
         cumsums = np.cumsum(lens)
         cutoff = 3200
         if cumsums[-1] > cutoff:
