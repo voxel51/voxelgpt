@@ -76,7 +76,7 @@ export const Intro = () => {
           VoxelGPT
         </Typography>
       </Grid>
-      <Grid item sm={12} lg={4} sx={{ alignSelf: "stretch" }}>
+      <Grid item sm={12} lg={4} sx={{ alignSelf: "stretch", minWidth: 300 }}>
         <Paper
           elevation={3}
           sx={{ height: "100%", padding: "20px", marginBottom: "16px" }}
@@ -103,7 +103,7 @@ export const Intro = () => {
           </List>
         </Paper>
       </Grid>
-      <Grid item sm={12} lg={4} sx={{ alignSelf: "stretch" }}>
+      <Grid item sm={12} lg={4} sx={{ alignSelf: "stretch", minWidth: 300 }}>
         <Paper
           elevation={3}
           sx={{ height: "100%", padding: "20px", marginBottom: "16px" }}
