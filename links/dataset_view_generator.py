@@ -112,7 +112,7 @@ CLASSIFICATION_KEYWORDS = ("False", "True")
 TEXT_SIM_KEYWORDS = (
     "show",
     "display",
-    "find" "me",
+    "find me",
     "images",
     "pictures",
     "photos",
