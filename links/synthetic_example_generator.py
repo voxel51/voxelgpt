@@ -1,6 +1,7 @@
-from datetime import date, datetime
+from copy import copy
 import fiftyone as fo
-from random import randint, choice, random
+import random
+import re
 
 
 def get_date_fields(dataset):
@@ -154,6 +155,7 @@ class FieldExampleGenerator(object):
     def __init__(self, dataset, field_name):
         self.dataset = dataset
         self.field_name = field_name
+        self.field_values = self.get_field_values()
         self.filters = {
             "geo": False,
             "text_sim": False,
@@ -162,21 +164,71 @@ class FieldExampleGenerator(object):
             "metadata": False,
             "label_types": ["all"],
         }
+        self.patterns = {"FIELD": self.generate_field_value}
+        self.example_templates = BASE_FIELD_PATTERNS
+
+    def generate_field_value(self):
+        return self.field_name
+
+    def select_example_template(self):
+        return copy(random.choice(self.example_templates))
+
+    def generate_custom_example(self):
+        template = self.select_example_template()
+        return self.fill_template(template)
+
+    def get_patterns_to_replace(self, template):
+        return list(set(re.findall(r"\{.*?\}", template["query"])))
+
+    def generate_pattern_replacement(self, pattern):
+        replacement_func = self.patterns[pattern[1:-1]]
+        return replacement_func()
+
+    def generate_replacements(self, patterns_to_replace):
+        replacements = {}
+        for pattern in patterns_to_replace:
+            replacement = self.generate_pattern_replacement(pattern)
+            replacements[pattern] = replacement
+        return replacements
+
+    def fill_template(self, template):
+        patterns_to_replace = self.get_patterns_to_replace(template)
+        replacements = self.generate_replacements(patterns_to_replace)
+
+        query = template["query"]
+        stages = template["stages"]
+        for pattern, replacement in replacements.items():
+            query = query.replace(pattern, replacement)
+            stages = stages.replace(pattern, replacement)
+        template["query"] = query
+        template["stages"] = stages
+        return template
 
     def get_field_values(self):
         raise NotImplementedError()
 
-    def generate_example(self):
-        raise NotImplementedError()
+    def generate_examples(self, num_examples):
+        examples = [
+            self.generate_custom_example() for _ in range(num_examples)
+        ]
+        return examples
 
 
 class StringFieldExampleGenerator(FieldExampleGenerator):
     def __init__(self, dataset, field_name):
         super().__init__(dataset, field_name)
-        self.field_values = self.get_field_values()
+        self.example_templates = BASE_FIELD_PATTERNS + STRING_PATTERNS
+        self.patterns["VALUE_LIST"] = self.generate_value_list
+        self.patterns["VALUE"] = self.generate_value
+        self.patterns["VALUE1"] = self.generate_value
+        self.patterns["VALUE2"] = self.generate_value
 
     def get_field_values(self):
         return self.dataset.distinct(self.field_name)
 
-    def generate_example(self):
-        return self.field_values[0]
+    def generate_value(self):
+        return random.choice(self.field_values)
+
+    def generate_value_list(self):
+        num_values = random.randint(2, 6)
+        return str(random.sample(self.field_values, num_values))
