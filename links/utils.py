@@ -8,6 +8,7 @@ Link utils.
 import hashlib
 import os
 import re
+import tiktoken
 import threading
 import queue
 
@@ -43,6 +44,22 @@ def unprotect_text(text):
 def hash_query(query):
     hash_object = hashlib.md5(query.encode())
     return hash_object.hexdigest()
+
+
+def get_tokenizer():
+    encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
+
+    def tokenizer(text):
+        return encoding.encode(text)
+
+    return tokenizer
+
+
+def count_tokens(text):
+    tokenizer = get_tokenizer()
+    tokens = tokenizer(text)
+    num_tokens = len(tokens)
+    return num_tokens
 
 
 def get_cache():

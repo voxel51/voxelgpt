@@ -94,6 +94,10 @@ TEXT_SIMILARITY_PROMPT = PromptTemplate(
     template=TEXT_SIMILARITY_PROMPT_TEMPLATE,
 )
 
+SIMILARITY_QUERY_PROMPT_PATH = os.path.join(
+    PROMPTS_DIR, "similarity_query_extractor_prompt.txt"
+)
+
 DETECTION_KEYWORDS = (
     "_fp",
     "_fn",
@@ -104,6 +108,17 @@ DETECTION_KEYWORDS = (
 )
 
 CLASSIFICATION_KEYWORDS = ("False", "True")
+
+TEXT_SIM_KEYWORDS = (
+    "show",
+    "display",
+    "find me",
+    "images",
+    "pictures",
+    "photos",
+    "videos",
+    "samples",
+)
 
 
 def generate_evaluation_prompt(sample_collection, eval_key):
@@ -743,6 +758,8 @@ def _validate_match_labels(stage, label_classes):
             classes_str = f'F("label").is_in({class_strs})'
 
         contents = f"filter = {classes_str}{field_names_str}"
+        if ".label" in contents:
+            contents = contents.replace(".label", "")
         return f"match_labels({contents})"
     elif "is_in" in contents:
         is_in = contents.split("is_in([")[1].split("])")[0]
@@ -752,8 +769,12 @@ def _validate_match_labels(stage, label_classes):
         class_strs = [f"{class_name}" for class_name in elems]
         classes_str = f'F("label").is_in({class_strs})'
         contents = f"filter = {classes_str}{field_names_str}"
+        if ".label" in contents:
+            contents = contents.replace(".label", "")
         return f"match_labels({contents})"
     elif "filter=" in contents:
+        if ".label" in contents:
+            contents = contents.replace(".label", "")
         for field in label_classes.keys():
             if f'F("{field}")' in contents:
                 contents = contents.replace(f'F("{field}")', f'F("label")')
@@ -801,8 +822,26 @@ def _validate_filter_labels(stage, label_classes):
         if label_field not in label_classes.keys():
             for field in label_classes.keys():
                 if field in label_field and field != label_field:
-                    contents = contents.replace(label_field, field)
+                    contents = contents.replace(args[0], f'"{field}"')
                     break
+
+    ##### correct three-argument hallucination of form 'filter_labels("label_field", "==", "class_name")'
+    eq_pattern = r'"([^"]+)",\s*"==",\s*"([^"]+)"'
+    eq_matches = re.findall(eq_pattern, contents)
+    if eq_matches:
+        match = eq_matches[0]
+        label_field = match[0]
+        class_name = match[1]
+        return f'filter_labels("{label_field}", F("label") == "{class_name}")'
+
+    ##### correct three-argument hallucination of form 'filter_labels("label_field", "!=", "class_name")'
+    neq_pattern = r'"([^"]+)",\s*"!=",\s*"([^"]+)"'
+    neq_matches = re.findall(neq_pattern, contents)
+    if neq_matches:
+        match = neq_matches[0]
+        label_field = match[0]
+        class_name = match[2]
+        return f'filter_labels("{label_field}", F("label") != "{class_name}")'
 
     ##### correct second argument if needed
     if len(args) == 2:
@@ -900,6 +939,65 @@ def _validate_negation_operator(stage):
     return stage
 
 
+def _get_false_patterns(stage):
+    false_patterns = [
+        r",\s*False",
+        r",\s*invert\s*=\s*True",
+    ]
+
+    if stage.startswith("match_labels"):
+        return false_patterns
+    elif stage.startswith("match_tags"):
+        return false_patterns
+    elif stage.startswith("exists"):
+        return false_patterns
+    else:
+        return false_patterns + [r",\s*bool\s*=\s*False"]
+
+
+def _validate_bool_condition(stage):
+    false_patterns = _get_false_patterns(stage)
+
+    for pattern in false_patterns:
+        false_matches = re.findall(pattern, stage)
+        if false_matches:
+            stage = re.sub(pattern, "", stage)
+            opening_paren_index = stage.index("(")
+            # Extract the function name
+            stage_name = stage[:opening_paren_index]
+
+            # Extract the contents
+            contents = stage[opening_paren_index + 1 : -1]
+            return f"{stage_name}(~({contents}))"
+    return stage
+
+
+def load_similarity_query_prompt():
+    cache = get_cache()
+    key = "similarity_query_prefix"
+    if key not in cache:
+        with open(SIMILARITY_QUERY_PROMPT_PATH, "r") as f:
+            cache[key] = f.read()
+    return cache[key]
+
+
+def extract_similarity_query(stage):
+    pattern = r'sort_by_similarity\("([^"]+)"'
+    query = re.search(pattern, stage).group(1)
+    sim_query_prompt = load_similarity_query_prompt().replace("QUERY", query)
+    new_query = get_llm().call_as_llm(sim_query_prompt).strip()
+    return stage.replace(query, new_query)
+
+
+def _validate_text_similarity(stage):
+    if "sort_by_similarity" not in stage:
+        return stage
+    if any(keyword in stage for keyword in TEXT_SIM_KEYWORDS):
+        return extract_similarity_query(stage)
+    else:
+        return stage
+
+
 def _postprocess_stages(
     stages,
     sample_collection,
@@ -926,8 +1024,10 @@ def _postprocess_stages(
             _stage = _validate_filter_labels(_stage, label_classes)
         if "match_labels" in _stage:
             _stage = _validate_match_labels(_stage, label_classes)
-        _stage = _validate_negation_operator(_stage)
 
+        _stage = _validate_negation_operator(_stage)
+        _stage = _validate_bool_condition(_stage)
+        _stage = _validate_text_similarity(_stage)
         new_stages.append(_stage)
 
     return new_stages
