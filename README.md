@@ -358,6 +358,27 @@ You can manually lint a file if necessary like so:
 pre-commit run --files <file>
 ```
 
+**Developing and Building the Plugin JS Bundle**
+
+To build the Fiftyone plugin you must:
+
+ - install `fiftyone` from source (including the app dependencies installed). [See here](https://github.com/voxel51/fiftyone/blob/develop/CONTRIBUTING.md) for details.
+ - the environment variable `FIFTYONE_DIR` set to the source directory of `fiftyone`
+ - `yarn@3.5.x` installed.
+ - installed the `voxelgpt` dependencies by running `yarn install` in the `voxelgpt` directory
+
+To create a build, run:
+
+```sh
+# for a production build of the plugin js bundle
+yarn build
+
+# for rebuilding the bundle automatically during development
+yarn dev
+```
+
+> NOTE: when developing locally you must set `FIFTYONE_PLUGINS_DIR` to a directory containing the `voxelgpt` directory.
+
 ## How does it work?
 
 VoxelGPT uses:
@@ -393,6 +414,10 @@ The current implementation supports most FiftyOne
 [view stages](https://docs.voxel51.com/user_guide/using_views.html), but
 certain stages like `concat()`, `mongo()`, and `geo_within()` are not yet
 supported. We're working on it!
+
+### Deploying on FiftyOne Teams
+
+Instructions for deploying the plugin to FiftyOne Teams are [here](DEPLOY.md).
 
 ## About FiftyOne
 
