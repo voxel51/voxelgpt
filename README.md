@@ -9,6 +9,7 @@ power of [GPT-3.5](https://platform.openai.com/docs/models/gpt-3-5) with
 language, enabling you to filter, sort, and semantically slice your data with
 natural language.
 
+Uploading voxelgpt_hero.mp4…
 
 
 ## Live demo
@@ -149,7 +150,11 @@ and then either:
 -   Clicking on the OpenAI icon above the grid
 -   Pressing the `+` icon next to the Samples tab and choosing VoxelGPT
 
-> TODO: GIF HERE!
+
+
+https://github.com/voxel51/voxelgpt/assets/12500356/af8a75d0-c17d-45c9-b745-323ce3fec1b2
+
+
 
 For example, try asking the following questions:
 
