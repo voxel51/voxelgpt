@@ -24,7 +24,6 @@ from .utils import (
     count_tokens,
     get_cache,
     get_embedding_function,
-    get_llm,
     stream_retriever,
     query_retriever,
 )
