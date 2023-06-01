@@ -9,7 +9,7 @@ power of [GPT-3.5](https://platform.openai.com/docs/models/gpt-3-5) with
 language, enabling you to filter, sort, and semantically slice your data with
 natural language.
 
-> INSERT HERO MP4 HERE
+https://github.com/voxel51/voxelgpt/assets/12500356/15830497-a53e-4858-8420-283c621d62f1
 
 
 ## Live demo
