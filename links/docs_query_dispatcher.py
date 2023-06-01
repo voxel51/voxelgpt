@@ -11,11 +11,7 @@ import os
 import pickle
 import uuid
 
-from langchain.document_loaders import (
-    UnstructuredHTMLLoader,
-)
 from langchain.schema import Document, BaseRetriever
-from langchain.text_splitter import RecursiveCharacterTextSplitter
 import numpy as np
 from scipy.spatial.distance import cosine
 
@@ -26,6 +22,10 @@ from .utils import (
     get_embedding_function,
     stream_retriever,
     query_retriever,
+)
+
+from .markdown_utils import (
+    get_markdown_documents,
 )
 
 
@@ -60,6 +60,7 @@ API_DOC_PATHS = (
     "core.aggregations",
     "core.annotation",
     "core.brain",
+    "core.collections",
     "core.evaluation",
     "core.expressions",
     "core.frame",
@@ -77,11 +78,13 @@ STANDALONE_DOCS = (
     "release-notes.html",
 )
 
-BASE_TEXT_SPLITTER = RecursiveCharacterTextSplitter(
-    chunk_size=800, chunk_overlap=0
-)
-API_TEXT_SPLITTER = RecursiveCharacterTextSplitter(
-    chunk_size=1000, chunk_overlap=200
+BAD_PATTERNS = (
+    "ts-api",
+    "detection_mistakenness",
+    "model_inference",
+    "label_mistakes",
+    "dataset_creation/zoo",
+    "dataset_creation/common_datasets",
 )
 
 
@@ -106,90 +109,21 @@ def _get_url(path, anchor):
         return page_url
 
 
-def _remove_markdown_footer(page_md):
-    return page_md.split("[Next ![]")[0]
-
-
-def _remove_markdown_header(page_md):
-    md_lines = page_md.split("\n")
-
-    body_lines = []
-    in_body = False
-    for mdl in md_lines:
-        if len(mdl) > 0 and mdl[0] == "#":
-            in_body = True
-        if in_body:
-            body_lines.append(mdl)
-    page_md = "\n".join(body_lines)
-    return page_md
-
-
-def _get_markdown_sections(filepath):
-    from markdownify import markdownify
-
-    with open(filepath, "r") as f:
-        page_html = f.read()
-    page_md = markdownify(page_html, heading_style="ATX")
-    page_md = _remove_markdown_footer(page_md)
-    page_md = _remove_markdown_header(page_md)
-
-    md_lines = page_md.split("\n")
-    md_sections = {}
-    curr_anchor = None
-    curr_section = []
-    for line in md_lines:
-        if "Permalink" in line:
-            if curr_anchor is not None:
-                md_sections[curr_anchor] = "\n".join(curr_section)
-            curr_section = []
-            curr_anchor = line.split('"Permalink')[0].split("#")[-1].strip()
-        curr_section.append(line)
-    md_sections[curr_anchor] = "\n".join(curr_section)
-    return md_sections
-
-
-def jaccard_similarity(x, y):
-    """returns the jaccard similarity between two lists"""
-    intersection_cardinality = len(set.intersection(*[set(x), set(y)]))
-    union_cardinality = len(set.union(*[set(x), set(y)]))
-    return intersection_cardinality / float(union_cardinality)
-
-
-def _get_best_match(doc, md_sections):
-    best_match = None
-    best_score = 0
-    for anchor, section in md_sections.items():
-        score = jaccard_similarity(doc, section)
-        if score > best_score:
-            best_score = score
-            best_match = anchor
-    return best_match
-
-
-def _attach_anchors(documents, md_sections):
-    for doc in documents:
-        anchor = _get_best_match(doc.page_content, md_sections)
-        doc.metadata["source"] = _get_url(doc.metadata["source"], anchor)
-    return documents
-
-
 def _generate_file_embeddings(filepath):
-    if "api" in filepath:
-        text_splitter = API_TEXT_SPLITTER
-    else:
-        text_splitter = BASE_TEXT_SPLITTER
     model = get_embedding_function()
-    loader = UnstructuredHTMLLoader(filepath)
-    text = loader.load()
-    documents = text_splitter.split_documents(text)
+    md_docs_dict = get_markdown_documents(filepath)
 
-    markdown_sections = _get_markdown_sections(filepath)
-    documents = _attach_anchors(documents, markdown_sections)
-    ids = [str(uuid.uuid1()) for _ in documents]
-    contents = [doc.page_content for doc in documents]
-    sources = [doc.metadata["source"] for doc in documents]
+    ids = []
+    contents = []
+    sources = []
+    for anchor, section in md_docs_dict.items():
+        ids.append(str(uuid.uuid1()))
+        source = _get_url(filepath, anchor)
+        for chunk in section:
+            contents.append(chunk.page_content)
+            sources.append(source)
+
     embeddings = model(contents)
-
     curr_embeddings_dict = {
         id: {"content": content, "embedding": embedding, "source": source}
         for id, content, embedding, source in zip(
@@ -221,6 +155,13 @@ def _get_docs_path_list():
             glob(os.path.join(doc_type_dir, "*/*.html"), recursive=True)
         )
 
+    good_doc_paths = []
+    for doc_path in doc_paths:
+        if any([bad_patt in doc_path for bad_patt in BAD_PATTERNS]):
+            continue
+        else:
+            good_doc_paths.append(doc_path)
+
     ### add api docs
     api_paths = [
         _make_api_doc_path(api_doc_path, docs_dir)
@@ -228,7 +169,7 @@ def _get_docs_path_list():
     ]
     # doc_paths.extend(api_paths)
 
-    return api_paths, doc_paths
+    return api_paths, good_doc_paths
 
 
 def _generate_docs_embeddings():
