@@ -11,7 +11,7 @@ Bump the version of the plugin by running:
 yarn bump
 
 # sets the version
-yarn bump -- 1.2.3
+yarn bump 1.2.3
 ```
 
 **Commit all Files**
