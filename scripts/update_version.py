@@ -39,7 +39,7 @@ def update_version(fiftyone_yml_file, package_json_file, new_version):
     with open(package_json_file, 'w') as f:
         json.dump(package_json_data, f, indent=4)
 
-    print('Versions updated successfully.')
+    print('Versions updated successfully.', fiftyone_version)
 
 
 def bump_version(version):
@@ -60,4 +60,9 @@ def bump_version(version):
 fiftyone_yml_file = 'fiftyone.yml'
 package_json_file = 'package.json'
 new_version = sys.argv[1]  # Pass the new version as a command-line argument
-update_version(fiftyone_yml_file, package_json_file, new_version)
+explicit_version = None
+try:
+    explicit_version = sys.argv[2]
+except:
+    pass
+update_version(fiftyone_yml_file, package_json_file, explicit_version or new_version)
