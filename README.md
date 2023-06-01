@@ -9,7 +9,7 @@ power of [GPT-3.5](https://platform.openai.com/docs/models/gpt-3-5) with
 language, enabling you to filter, sort, and semantically slice your data with
 natural language.
 
-> TODO: GIF HERE!
+
 
 ## Live demo
 
@@ -28,6 +28,10 @@ which type of query you are asking. If VoxelGPT is unsure, it will ask you to
 clarify.
 
 ### Querying your dataset
+
+
+https://github.com/voxel51/voxelgpt/assets/12500356/46913222-fee5-4cbb-9bb3-301c544de886
+
 
 You can ask VoxelGPT to search your datasets for you. Here's some examples of
 things you can ask:
@@ -48,6 +52,10 @@ retrieve specific entities.
 
 ### Querying the FiftyOne docs
 
+
+https://github.com/voxel51/voxelgpt/assets/12500356/ca8e306b-b592-46e2-9b88-5c4f6af9a454
+
+
 VoxelGPT is not only a pair programmer; it is also an educational tool.
 VoxelGPT has access to the entire [FiftyOne docs](https://docs.voxel51.com),
 which it can use to answer FiftyOne-related questions.
@@ -59,6 +67,9 @@ Here's some examples of documentation queries you can ask VoxelGPT:
 -   Can I export my dataset in COCO format?
 
 ### Computer vision queries
+
+https://github.com/voxel51/voxelgpt/assets/12500356/919bfcca-fe24-46d5-b69f-9ba3579f3200
+
 
 Finally, VoxelGPT can answer general questions about computer vision, machine
 learning, and data science. It can help you to understand basic concepts and
