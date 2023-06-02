@@ -181,7 +181,7 @@ def run_schema_query(sample_collection):
 
 
 def run_voxelgpt_query(sample_collection):
-    message = "Hi! I'm VoxelGPT, is your AI assistant for computer vision. \n\nI can help you with the following tasks:\n\n1.Create a filtered view into your dataset.\n2.Understand the FiftyOne documentation.\n3.Become a better computer vision practitioner.\n\n\nFor more details, type `help`."
+    message = "Hi!  \nI'm VoxelGPT, is your AI assistant for computer vision.  \n\nI can help you with the following tasks:  \n\n1.Create a filtered view into your dataset.  \n2.Understand the FiftyOne documentation.  \n3.Become a better computer vision practitioner.  \n\n\nFor more details, type `help`."
     return message
 
 
