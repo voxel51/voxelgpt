@@ -251,6 +251,10 @@ def ask_voxelgpt_generator(
 
     _log_chat_history("User", query, chat_history)
 
+    if "help" in query.lower():
+        yield _respond(_help_message())
+        return
+
     # Generate a new query that incorporates the chat history
     if chat_history:
         query = generate_effective_query(chat_history)
@@ -576,6 +580,41 @@ def _label_classes_message(label_classes):
     return {
         "string": prefix + str(label_classes),
         "markdown": prefix + markdown,
+    }
+
+
+def _help_message():
+    md_message = """
+    Hi there! I'm VoxelGPT, your AI assistant for computer vision. Because your 
+    query included `help`, I'm going to share some information to help you get 
+    started. 
+    
+    I can help you with the following tasks:
+    - **Query Your Dataset**: I can help you filter, match, sort, and more - all without writing a single line of code!
+    - **Become a FiftyOne Pro**: I can help you learn how to use FiftyOne. I have access to the FiftyOne documentation, and I can help you find what you're looking for.
+    - **Troubleshoot Data Quality Issues**: I can help you build better datasets and higher quality models.
+
+
+    **Here are a few tips:**
+    - *Be as specific as possible*. The more specific you are, the better I can help you. I am still learning, so sometimes I need a little help understanding what you're asking.
+    - If you want to query your dataset, but your input is being interpreted as a documentation or general computer vision query, try using the `show` keyword. For example, `show me all images with a label of dog`.
+    - If you want to query the FiftyOne documentation, try using either `docs` or `fiftyone` in your query. For example, `how do I load a dataset in fiftyone?`
+    - If you want me to infer what you're asking based on our conversation history, try using the `now` keyword. For example, if you just asked "show me high confidence predictions of cats, dogs, and rabbits", you can ask "now the low confidence predictions".
+    - To clear our chat history, you can use the `reset` keyword.
+    - To exit our chat, you can use the `exit` keyword.
+
+    **Learn more**
+    - You can learn more about me and my capabilities by visiting my [GitHub page](https://github.com/voxel51/voxelgpt), and while you're at it, please give me a star! VoxelGPT is an open-source project, and it is constantly improving. If you'd like to contribute, check out the [Contributing](https://github.com/voxel51/voxelgpt#contributing) section of the README.
+    - Learn more about [FiftyOne](https://github.com/voxel51/fiftyone), and give the project a ⭐! FiftyOne is open-source too!
+    - Join the [FiftyOne Community Slack](https://slack.voxel51.com/), where thousands of computer vision enthusiasts and professionals are discussing the latest in computer vision and machine learning.
+    
+    I'm still learning, so I appreciate your patience!
+    """
+
+    str_message = md_message.replace("**", "")
+    return {
+        "string": str_message,
+        "markdown": md_message,
     }
 
 
