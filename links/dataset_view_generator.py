@@ -12,6 +12,7 @@ from langchain.prompts import PromptTemplate
 
 # pylint: disable=relative-beyond-top-level
 from .utils import get_llm, get_cache
+from .tag_selector import select_tags
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -720,6 +721,55 @@ def _validate_label_fields(stage, sample_collection, label_classes):
         return new_stage
 
 
+def _split_match_tags_contents(contents):
+    if "[" in contents:
+        tags_arg = contents.split("[")[1].split("]")[0]
+        tags = tags_arg.split(",")
+        other = "".join(contents.split("]")[1])
+    else:
+        tags = [contents.split(",")[0]]
+        other = "," + ",".join(contents.split(",")[1:])
+        if set(other).issubset(set(", ")):
+            other = ""
+
+    tags = [t.strip()[1:-1] for t in tags]
+    return tags, other
+
+
+def _validate_match_tags(stage, sample_collection):
+    """
+    Ensure that match_tags expression is sensible.
+    """
+    collection_tags = sample_collection.distinct("tags")
+
+    contents = stage[11:-1]
+    tags, other_args = _split_match_tags_contents(contents)
+    selected_tags = select_tags(tags, collection_tags)
+    if len(selected_tags) == 0:
+        return "_MORE_"
+    elif len(selected_tags) == 1:
+        return f'match_tags("{selected_tags[0]}"{other_args})'
+    else:
+        selected_tags = [f'"{t}"' for t in selected_tags]
+        return f'match_tags([{",".join(selected_tags)}]{other_args})'
+
+
+# def _validate_match_tags(stage, sample_collection):
+#     """
+#     Ensure that match_tags expression is sensible.
+#     """
+#     collection_tags = sample_collection.distinct("tags")
+
+#     contents = stage[11:-1]
+#     if '[' in contents:
+#         tags_arg = contents.split('[')[1].split(']')[0]
+#         tags = tags_arg.split(',')
+#         other_args = contents.split(']')[1]
+#     else:
+#         tags = [contents.split(',')[0]]
+#         other_args = contents.split(',')[1:]
+
+
 def _validate_match_labels(stage, label_classes):
     """
     Correct a few common errors in match_labels stage.
@@ -1031,6 +1081,8 @@ def _postprocess_stages(
             _stage = _validate_filter_labels(_stage, label_classes)
         if "match_labels" in _stage:
             _stage = _validate_match_labels(_stage, label_classes)
+        if "match_tags" in _stage:
+            _stage = _validate_match_tags(_stage, sample_collection)
 
         _stage = _validate_negation_operator(_stage)
         _stage = _validate_bool_condition(_stage)
