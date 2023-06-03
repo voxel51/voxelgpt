@@ -688,12 +688,13 @@ def _validate_label_fields(stage, sample_collection, label_classes):
         return label_fields[0]
 
     def _check_non_none_field(field, sample_collection):
-
         # return True if field (fully-qualified) exists and contains non-None value
-        v = sample_collection.limit(1).values(field)[0]
-        if isinstance(v, list):
-            v = v[0]
-        return v is not None
+        schema_fields = list(
+            sample_collection.get_field_schema(flat=True).keys()
+        )
+        if field not in schema_fields:
+            return False
+        return sample_collection.bounds(field) != (None, None)
 
     def _get_predictions_field():
         if len(label_fields) == 1:
@@ -710,11 +711,17 @@ def _validate_label_fields(stage, sample_collection, label_classes):
     else:
         new_stage = stage
         if "ground_truth" in stage and "ground_truth" not in label_fields:
-            gt_field = _get_ground_truth_field()
-            new_stage = new_stage.replace("ground_truth", gt_field)
-        if '"gt' in stage and "gt" not in label_fields:
-            gt_field = _get_ground_truth_field()
-            new_stage = new_stage.replace('"gt', f'"{gt_field}')
+            if "confidence" in stage:
+                field = _get_predictions_field()
+            else:
+                field = _get_ground_truth_field()
+            new_stage = new_stage.replace("ground_truth", field)
+        if '"gt' in stage and '"gt' not in label_fields:
+            if "confidence" in stage:
+                field = _get_predictions_field()
+            else:
+                field = _get_ground_truth_field()
+            new_stage = new_stage.replace('"gt', f'"{field}')
         if "predictions" in stage and "predictions" not in label_fields:
             pred_field = _get_predictions_field()
             new_stage = new_stage.replace("predictions", pred_field)
