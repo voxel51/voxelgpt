@@ -775,6 +775,8 @@ def _validate_match_labels(stage, label_classes):
         ### if no label field names or class names are found, return None
         return None
 
+    stage = stage.replace("in_classes", "is_in")
+
     contents = stage[13:-1]
     if "labels" in contents and "{" in contents:
         unique_classes = get_unique_class_list(label_classes)
