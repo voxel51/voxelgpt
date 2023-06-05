@@ -48,7 +48,7 @@ const InputBar = ({ hasMessages, disabled, onMessageSend, bottomRef }) => {
         variant="outlined"
         disabled={disabled}
         size="large"
-        placeholder="Send a message..."
+        placeholder='Send a message or type "help"'
         endAdornment={
           <IconButton disabled={!showAdornment} onClick={sendMessage}>
             <SendIcon style={{ opacity: showAdornment ? 1 : 0.2 }} />
