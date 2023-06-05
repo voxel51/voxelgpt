@@ -372,3 +372,18 @@ samples with 2 or more Cats,"[match(F(""gt.detections"").filter(F(""label"") == 
 all images with at least 6 plates,"[match(F(""detections.detections"").filter(F(""label"") == ""plate"").length() >= 6)]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,detection
 images with no more than four lamps or lanterns,"[match(F(""ground_truth.detections"").filter(F(""label"").is_in([""lamp"", ""lantern""])).length() <= 4)",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,detection
 samples with exactly one prediction of a bed,"[match(F(""model.detections"").filter(F(""label"") == ""bed"").length() == 1)]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,detection
+sort by width size,"[sort_by(""metadata.width"")]",Jacob,image,FALSE,FALSE,FALSE,FALSE,TRUE,all
+show me images of zebras,"[match_labels(filter = F(""label"") == ""zebra"")]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,all
+I want images of cats,"[match_labels(filter = F(""label"") == ""Cat"")]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,all
+find all samples with 3 false positive detections,"[match(F(""EVAL_KEY"") == 3)]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,detection
+show me toothbrushes,"[filter_labels(""ground_truth"", F(""label"") == ""toothbrush"")]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,all
+show me images that have both zebras and bears,"[match(F(""ground_truth.detections.label"").contains([""dog"", ""person""], all=True))]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,detection
+show me annotation mistakes,"[match(F(""mistakenness"") > 0.8)]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,all
+Show me 5 different motorcycles,"[match_labels(filter = F(""label"") == ""motorcycle""), limit(5)]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,all
+show me possible duplicates,"[match(F(""uniqueness"") < 0.2)]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,all
+"show me images with cats and laptops, sorted by confidence","[match(F(""ground_truth.detections.label"").contains([""dog"", ""person""])), sort_by(""predictions.detections.confidence"")]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,detection
+group by label,"[group_by(""classification.label"")]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,classification
+show me pictures of groups of cars and bikes,"[filter_labels(""ground_truth"", F(""label"").is_in([""car"", ""bicycle""])), match(F(""ground_truth.detections"").length() > 3)]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,detection
+Can you show me a view of patches of predictions?,"[to_patches(field=""predictions"")]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,detection
+Can you show me the toPatches view?,"[to_patches(field=""ground_truth"")]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,detection
+show me samples whose images are JPG       ,"[match(F(""filepath"").ends_with(""jpg""))]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,all
