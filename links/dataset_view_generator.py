@@ -742,32 +742,17 @@ def _validate_match_tags(stage, sample_collection):
     """
     collection_tags = sample_collection.distinct("tags")
 
-    contents = stage[11:-1]
+    contents = stage[len("match_tags(") : -1]
     tags, other_args = _split_match_tags_contents(contents)
     selected_tags = select_tags(tags, collection_tags)
     if len(selected_tags) == 0:
         return "_MORE_"
-    elif len(selected_tags) == 1:
+
+    if len(selected_tags) == 1:
         return f'match_tags("{selected_tags[0]}"{other_args})'
-    else:
-        selected_tags = [f'"{t}"' for t in selected_tags]
-        return f'match_tags([{",".join(selected_tags)}]{other_args})'
 
-
-# def _validate_match_tags(stage, sample_collection):
-#     """
-#     Ensure that match_tags expression is sensible.
-#     """
-#     collection_tags = sample_collection.distinct("tags")
-
-#     contents = stage[11:-1]
-#     if '[' in contents:
-#         tags_arg = contents.split('[')[1].split(']')[0]
-#         tags = tags_arg.split(',')
-#         other_args = contents.split(']')[1]
-#     else:
-#         tags = [contents.split(',')[0]]
-#         other_args = contents.split(',')[1:]
+    selected_tags = [f'"{t}"' for t in selected_tags]
+    return f'match_tags([{",".join(selected_tags)}]{other_args})'
 
 
 def _validate_match_labels(stage, label_classes):

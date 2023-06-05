@@ -1,5 +1,5 @@
 """
-Label class selector.
+Tags selector.
 
 | Copyright 2017-2023, Voxel51, Inc.
 | `voxel51.com <https://voxel51.com/>`_
@@ -19,7 +19,6 @@ EXAMPLES_DIR = os.path.join(ROOT_DIR, "examples")
 PROMPTS_DIR = os.path.join(ROOT_DIR, "prompts")
 
 TAG_SELECTOR_PREFIX_PATH = os.path.join(PROMPTS_DIR, "tag_selector_prefix.txt")
-
 TAG_EXAMPLES_PATH = os.path.join(EXAMPLES_DIR, "tag_selection_examples.csv")
 
 
@@ -87,30 +86,28 @@ def identify_semantic_matches(candidate_tags, allowed_tags):
     res = get_llm().call_as_llm(tag_selector_prompt).strip()
     if res[0] == "[" and res[-1] == "]":
         res = res[1:-1]
+
     semantic_matches = [t.strip().replace("'", "") for t in res.split(",")]
-    semantic_matches = [
-        t for t in semantic_matches if t != "" and t in allowed_tags
-    ]
-    return semantic_matches
+    return [t for t in semantic_matches if t != "" and t in allowed_tags]
 
 
 def validate_tag(candidate_tag, allowed_tags):
     if candidate_tag in allowed_tags:
         return candidate_tag
-    else:
-        ## try matching with case-insensitive
-        for tag in allowed_tags:
-            if candidate_tag.lower() == tag.lower():
-                return tag
 
-        ## try matching with prefix
-        for tag in allowed_tags:
-            if tag.lower().startswith(candidate_tag.lower()):
-                return tag
-            elif candidate_tag.lower().startswith(tag.lower()):
-                return tag
+    # try matching with case-insensitive
+    for tag in allowed_tags:
+        if candidate_tag.lower() == tag.lower():
+            return tag
 
-        return None
+    # try matching with prefix
+    for tag in allowed_tags:
+        if tag.lower().startswith(candidate_tag.lower()):
+            return tag
+        elif candidate_tag.lower().startswith(tag.lower()):
+            return tag
+
+    return None
 
 
 def select_tags(candidate_tags, allowed_tags):
