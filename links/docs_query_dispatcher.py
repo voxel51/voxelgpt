@@ -24,9 +24,7 @@ from .utils import (
     query_retriever,
 )
 
-from .markdown_utils import (
-    get_markdown_documents,
-)
+from .markdown_utils import get_markdown_documents
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

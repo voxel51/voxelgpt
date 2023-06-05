@@ -1102,7 +1102,6 @@ def _postprocess_stages(
     new_stages = []
 
     for stage in stages:
-        print(stage)
         _stage = stage
         _stage = _convert_matches_to_text_similarities(
             _stage, sample_collection, required_brain_runs, unmatched_classes

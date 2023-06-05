@@ -261,6 +261,7 @@ def ask_voxelgpt_generator(
     if chat_history:
         query = generate_effective_query(chat_history)
 
+    # Handle schema queries first
     schema_response = query_schema(query, sample_collection)
     if schema_response:
         yield _respond(schema_response)
