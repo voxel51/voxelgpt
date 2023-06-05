@@ -632,7 +632,6 @@ def _correct_image_sim_run(stage, sample_collection, runs):
 
 
 def _validate_runs(stage, sample_collection, required_brain_runs):
-
     if "EVAL_KEY" in stage:
         new_stage = _correct_eval_run(
             stage,
@@ -663,62 +662,65 @@ def _validate_runs(stage, sample_collection, required_brain_runs):
     return new_stage
 
 
-def _get_field_type(sample_collection, field_name):
-    sample = sample_collection.first()
-    field = sample.get_field(field_name)
-    field_type = type(field).__name__
-    return field_type
+def _has_confidences(sample_collection, field):
+    _, path = sample_collection._get_label_field_path(field, "confidence")
+
+    # Expensive
+    # return sample_collection.bounds(path) != (None, None)
+
+    # Faster
+    confs = sample_collection.exists(field).limit(1).values(path, unwind=True)
+    return confs and confs[0] is not None
 
 
 def _validate_label_fields(stage, sample_collection, label_classes):
     """
     Ensure that label fields are correct.
     """
+    if "map_labels" in stage:
+        return stage
 
     label_fields = list(label_classes.keys())
 
-    def _get_confidence_subfield(field):
-        field_type = _get_field_type(sample_collection, field)
-        if field_type == "Classification":
-            return f"{field}.confidence"
-        else:
-            return f"{field}.detections.confidence"
-
     def _get_ground_truth_field():
         return label_fields[0]
-
-    def _check_non_none_field(field, sample_collection):
-
-        # return True if field (fully-qualified) exists and contains non-None value
-        v = sample_collection.limit(1).values(field)[0]
-        if isinstance(v, list):
-            v = v[0]
-        return v is not None
 
     def _get_predictions_field():
         if len(label_fields) == 1:
             return label_fields[0]
 
         for field in label_fields:
-            conf_field = _get_confidence_subfield(field)
-            if _check_non_none_field(conf_field, sample_collection):
-                return field
+            try:
+                if _has_confidences(sample_collection, field):
+                    return field
+            except:
+                pass
+
         return label_fields[0]
 
-    if "map_labels" in stage:
-        return stage
-    else:
-        new_stage = stage
-        if "ground_truth" in stage and "ground_truth" not in label_fields:
-            gt_field = _get_ground_truth_field()
-            new_stage = new_stage.replace("ground_truth", gt_field)
-        if '"gt' in stage and "gt" not in label_fields:
-            gt_field = _get_ground_truth_field()
-            new_stage = new_stage.replace('"gt', f'"{gt_field}')
-        if "predictions" in stage and "predictions" not in label_fields:
-            pred_field = _get_predictions_field()
-            new_stage = new_stage.replace("predictions", pred_field)
-        return new_stage
+    new_stage = stage
+
+    if "ground_truth" in stage and "ground_truth" not in label_fields:
+        if "confidence" in stage:
+            field = _get_predictions_field()
+        else:
+            field = _get_ground_truth_field()
+
+        new_stage = new_stage.replace("ground_truth", field)
+
+    if '"gt' in stage and '"gt' not in label_fields:
+        if "confidence" in stage:
+            field = _get_predictions_field()
+        else:
+            field = _get_ground_truth_field()
+
+        new_stage = new_stage.replace('"gt', f'"{field}')
+
+    if "predictions" in stage and "predictions" not in label_fields:
+        pred_field = _get_predictions_field()
+        new_stage = new_stage.replace("predictions", pred_field)
+
+    return new_stage
 
 
 def _split_match_tags_contents(contents):
@@ -774,6 +776,8 @@ def _validate_match_labels(stage, label_classes):
 
         ### if no label field names or class names are found, return None
         return None
+
+    stage = stage.replace("in_classes", "is_in")
 
     contents = stage[13:-1]
     if "labels" in contents and "{" in contents:
@@ -1068,7 +1072,6 @@ def _postprocess_stages(
             _stage = _validate_match_labels(_stage, label_classes)
         if "match_tags" in _stage:
             _stage = _validate_match_tags(_stage, sample_collection)
-
         _stage = _validate_negation_operator(_stage)
         _stage = _validate_bool_condition(_stage)
         _stage = _validate_text_similarity(_stage)
@@ -1110,15 +1113,15 @@ def get_gpt_view_stage_strings(
 
     if "more" in response.lower():
         return "_MORE_"
-    elif "confused" in response.lower():
+
+    if "confused" in response.lower():
         return "_CONFUSED_"
-    else:
-        stages = split_into_stages(response)
-        stages = _postprocess_stages(
-            stages,
-            sample_collection,
-            required_brain_runs,
-            label_classes,
-            unmatched_classes,
-        )
-        return stages
+
+    stages = split_into_stages(response)
+    return _postprocess_stages(
+        stages,
+        sample_collection,
+        required_brain_runs,
+        label_classes,
+        unmatched_classes,
+    )
