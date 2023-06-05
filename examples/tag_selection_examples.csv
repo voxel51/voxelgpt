@@ -1,0 +1,5 @@
+candidate_tag,allowed_tags,selected_tags
+validations,"[train, test, val]",[val]
+testing,"[train, test, val]",[test]
+mistake,"[duplicate, reannotate, edge case]",[reannotate]
+colors,"[red, blue, green, low_res, out_of_scope]","[red, blue, green]"

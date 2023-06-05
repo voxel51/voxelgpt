@@ -1,0 +1,1 @@
+Given a candidate tag and a list of allowed tags, your task is to find all likely semantic matches for the candidate tag in the list of allowed tags. Return a list of matches. This list can be empty. If it is not empty, all elements in the list should be strings and should be in the list of allowed tags.
