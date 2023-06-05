@@ -45,7 +45,6 @@ def get_history_relevance_examples():
             }
             examples.append(example)
         cache[key] = examples
-
     return cache[key]
 
 
@@ -104,11 +103,6 @@ def generate_dataset_view_prompt(chat_history):
     return prompt
 
 
-# def _keyword_is_present(chat_history):
-#     query = chat_history[-1].lower()
-#     return "now " in query
-
-
 def _keyword_is_present(query):
     return "now " in query.lower()
 
@@ -116,10 +110,10 @@ def _keyword_is_present(query):
 def _history_is_relevant(query):
     if _keyword_is_present(query):
         return True
-    else:
-        prompt = generate_history_relevance_prompt(query)
-        response = get_llm().call_as_llm(prompt)
-        return "yes" in response.strip().lower()
+
+    prompt = generate_history_relevance_prompt(query)
+    response = get_llm().call_as_llm(prompt)
+    return "yes" in response.strip().lower()
 
 
 def _process_query(query):
@@ -130,8 +124,9 @@ def _process_query(query):
 
 def generate_effective_query(chat_history):
     query = _process_query(chat_history[-1])
-    if _history_is_relevant(query):
-        prompt = generate_dataset_view_prompt(chat_history)
-        response = get_llm().call_as_llm(prompt)
-        query = response.strip()
-    return query
+    if not _history_is_relevant(query):
+        return query
+
+    prompt = generate_dataset_view_prompt(chat_history)
+    response = get_llm().call_as_llm(prompt)
+    return response.strip()
