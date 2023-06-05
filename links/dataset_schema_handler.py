@@ -29,9 +29,7 @@ THRESHOLD = 0.075
 SAMPLE_COLLECTION_MESSAGE = "You must provide a sample collection in order for me to respond to this query"
 
 VOXELGPT_MESSAGE = """
-Hi! I'm VoxelGPT, your AI assistant for computer vision.
-
-I can help you with the following tasks:
+Hi! I'm VoxelGPT, your AI assistant for computer vision. I can help you with the following tasks:
 
 1. Create views into your dataset
 2. Search the FiftyOne documentation for answers/links
@@ -152,7 +150,7 @@ def run_field_query(sample_collection):
 
     message = "Your dataset has the following fields:"
     for field_name, field in schema.items():
-        message += f"`\n- {field_name}`: `{type(field).__name__}`"
+        message += f"\n- `{field_name}`: `{type(field).__name__}`"
 
     return message
 
@@ -255,11 +253,18 @@ def run_schema_query(sample_collection):
     dataset = get_dataset(sample_collection)
     schema = dataset.get_field_schema()
 
+    # Use this once a verison of FO with `remark-gfm` enabled is shipped
+    # https://remarkjs.github.io/react-markdown
+    """
     table_str = tabulate(
         list(schema.items()),
         headers=["name", "type"],
         tablefmt="github",
     )
+    """
+
+    schema_str = fo.pformat({k: str(v) for k, v in schema.items()})
+    table_str = f"```text\n{schema_str}\n```"
 
     return f"Your dataset has the following schema:\n\n{table_str}"
 
