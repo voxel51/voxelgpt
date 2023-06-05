@@ -205,7 +205,7 @@ def run_classifications_query(sample_collection):
     classification_field_names = "\n".join(
         [f"- `{fn}`" for fn in classification_field_names]
     )
-    return f"Your dataset has the following classification fields:\n`{classification_field_names}`"
+    return f"Your dataset has the following classification fields:\n{classification_field_names}"
 
 
 def _get_classification_field_names(sample_collection):
@@ -231,7 +231,7 @@ def run_detections_query(sample_collection):
     detection_field_names = "\n".join(
         [f"- `{fn}`" for fn in detection_field_names]
     )
-    return f"Your dataset has the following detection fields:\n`{detection_field_names}`"
+    return f"Your dataset has the following detection fields:\n{detection_field_names}"
 
 
 def _get_detection_field_names(sample_collection):
