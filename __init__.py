@@ -153,6 +153,7 @@ class AskVoxelGPTPanel(foo.Operator):
                 # persist all user queries
                 table = db.table(db.UserQueryTable)
                 query_id = table.insert_query(query)
+                print(f"Inserted query {query_id}")
                 ctx.params["query_id"] = query_id
                 streaming_message = None
 
@@ -227,6 +228,8 @@ class AskVoxelGPTPanel(foo.Operator):
         message = str(exception)
         trace = traceback.format_exc()
         view = types.Error(label=message, description=trace)
+        print("----------VoxelGPT Error-----------")
+        print(message)
         return self.show_message(ctx, message, view)
 
     def done(self, ctx):
@@ -241,7 +244,7 @@ class AskVoxelGPTPanel(foo.Operator):
         return ctx.trigger(
             f"{self.plugin_name}/show_message",
             params=dict(
-                query_id=ctx.params["query_id"],
+                query_id=ctx.params.get("query_id"),
                 outputs=types.Property(outputs).to_json(),
                 data=dict(message=message, **kwargs),
             ),
