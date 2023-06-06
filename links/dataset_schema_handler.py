@@ -148,11 +148,11 @@ def run_field_query(sample_collection):
     dataset = get_dataset(sample_collection)
     schema = dataset.get_field_schema()
 
-    message = "Your dataset has the following fields:"
-    for field_name, field in schema.items():
-        message += f"\n- `{field_name}`: `{type(field).__name__}`"
-
-    return message
+    fields = "\n".join(
+        f"- `{field_name}`: `{type(field).__name__}`"
+        for field_name, field in schema.items()
+    )
+    return f"Your dataset has the following fields:\n{fields}"
 
 
 def run_tags_query(sample_collection):
