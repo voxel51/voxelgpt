@@ -808,6 +808,36 @@ def _validate_sort_by(stage, sample_collection, required_brain_runs):
     return f'sort_by_similarity("{field}", brain_key="{sim_key}", k = 100)'
 
 
+def _remove_match_labels_field_name(stage):
+    contents = stage[13:-1]
+    F_expr = contents.split(",")[0]
+    F_contents = F_expr.split("(")[1].split(")")[0]
+    if "." not in F_contents:
+        return stage
+
+    field = F_contents.split(".")[0].replace('"', "").replace("'", "")
+    stage = stage.replace(F_contents, '"label"')
+    if "fields" not in stage:
+        contents = stage[13:-1]
+        stage = f'match_labels({contents}, fields="{field}")'
+        return stage
+    else:
+        return stage
+
+
+def _remove_match_labels_contains(stage):
+    if "contains" not in stage:
+        return stage
+
+    return stage.replace("contains", "is_in")
+
+
+def _postprocess_match_labels(stage):
+    stage = _remove_match_labels_field_name(stage)
+    stage = _remove_match_labels_contains(stage)
+    return stage
+
+
 def _validate_match_labels(stage, label_classes):
     """
     Correct a few common errors in match_labels stage.
@@ -1266,6 +1296,7 @@ def _postprocess_stages(
 
     for stage in stages:
         _stage = stage
+        print(f"Processing stage: {_stage}")
         _stage = _convert_matches_to_text_similarities(
             _stage, sample_collection, required_brain_runs, unmatched_classes
         )
@@ -1281,6 +1312,7 @@ def _postprocess_stages(
             _stage = _validate_filter_labels(_stage, label_classes)
         if "match_labels" in _stage:
             _stage = _validate_match_labels(_stage, label_classes)
+            _stage = _postprocess_match_labels(_stage)
         if "match_tags" in _stage:
             _stage = _validate_match_tags(_stage, sample_collection)
         if "sort_by(" in _stage:
