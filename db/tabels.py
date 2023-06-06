@@ -1,9 +1,9 @@
 from google.cloud import bigquery
 import uuid
-
+import os
 class UserQueryTable:
-    def __init__(self, project_id, dataset_id, table_id):
-        self.client = bigquery.Client(project=project_id)
+    def __init__(self, client, Table, dataset_id):
+        table_id = os.environ.get('USER_QUERY_TABLE_ID', 'user_queries')
         self.table_id = f"{project_id}.{dataset_id}.{table_id}"
 
         # Define the schema of the fields you want to insert
@@ -18,7 +18,7 @@ class UserQueryTable:
         try:
             self.client.get_table(self.table_id)
         except Exception as e:
-            table = bigquery.Table(self.table_id, self.schema)
+            table = Table(self.table_id, self.schema)
             self.client.create_table(table)
 
     def insert_query(self, user_query):

@@ -148,6 +148,11 @@ class AskVoxelGPTPanel(foo.Operator):
             with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
                 # pylint: disable=no-name-in-module
                 from voxelgpt import ask_voxelgpt_generator
+                from db.tables import UserQueryTable
+                
+                # persist all user queries
+                table = UserQueryTable()
+                table.insert_query(query)
 
                 streaming_message = None
 
@@ -324,6 +329,45 @@ class OpenVoxelGPTPanelOnStartup(foo.Operator):
                 ),
             )
 
+class VoteForQuery(foo.Operator):
+    @property
+    def config(self):
+        return foo.OperatorConfig(
+            name="vote_for_query",
+            label="Vote For Query",
+            unlisted=True,
+        )
+
+    def resolve_input(self, ctx):
+        inputs = types.Object()
+        inputs.str(
+            "query_id",
+            label="query_id",
+            required=True,
+            description="User Query to Vote For",
+        )
+        inputs.enum(
+            "vote",
+            ["upvote", "downvote"],
+            label="Vote",
+            required=True,
+        )
+        return types.Property(inputs)
+    
+    def execute(self, ctx):
+        query_id = ctx.params["query_id"]
+        vote = ctx.params["vote"]
+        with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
+            import db
+            table = db.table(db.UserQueryTable)
+            if vote == "upvote":
+                table.upvote_query(query_id)
+            elif vote == "downvote":
+                table.downvote_query(query_id)
+            else:
+                raise Exception("Invalid vote type")
+            
+                
 
 class add_sys_path(object):
     def __init__(self, path, index=0):
