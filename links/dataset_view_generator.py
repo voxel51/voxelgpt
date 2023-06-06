@@ -351,6 +351,7 @@ def _convert_matches_to_text_similarities(
     if model picks a non-existent class and you have text similarity run,
     convert the match to a text similarity stage
     """
+
     if "text_similarity" not in required_brain_runs:
         text_sim_key = _get_first_image_text_similarity_key(sample_collection)
         if not text_sim_key:
@@ -367,11 +368,17 @@ def _convert_matches_to_text_similarities(
         )
         return new_stage
 
+    def _insensitive_match(entity, stage):
+        el = entity.lower()
+        st = stage.lower()
+        if el in st or el[:-1] in st:
+            return True
+
     def _loop_over_unmatched_classes(stage):
         if "sort_by_similarity" in stage:
             return stage
         for entity in unmatched_classes:
-            if entity in stage:
+            if _insensitive_match(entity, stage):
                 return _replace_stage(entity)
         return stage
 
