@@ -1128,6 +1128,29 @@ def _validate_text_similarity(stage):
         return stage
 
 
+def _get_sort_by_similarity_stage(stages):
+    for stage in stages:
+        if "sort_by_similarity(" in stage:
+            return stage
+    return None
+
+
+def _handle_duplicate_stages(stages):
+    sim_sort_stage = _get_sort_by_similarity_stage(stages)
+    if not sim_sort_stage:
+        return stages
+
+    sim_query = sim_sort_stage.split("(")[1].split(",")[0]
+
+    verified_stages = []
+    for stage in stages:
+        if "sort_by_similarity" in stage:
+            verified_stages.append(stage)
+        elif sim_query not in stage:
+            verified_stages.append(stage)
+    return verified_stages
+
+
 def _postprocess_stages(
     stages,
     sample_collection,
@@ -1164,6 +1187,8 @@ def _postprocess_stages(
         _stage = _validate_bool_condition(_stage)
         _stage = _validate_text_similarity(_stage)
         new_stages.append(_stage)
+
+    new_stages = _handle_duplicate_stages(new_stages)
 
     return new_stages
 
