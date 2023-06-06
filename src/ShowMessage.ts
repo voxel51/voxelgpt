@@ -41,9 +41,13 @@ export class ShowMessage extends Operator {
       ctx.state.set(state.atoms.waiting, false)
       const {overwrite_last} = ctx.params.data || {}
       if (overwrite_last) {
-        ctx.hooks.updateLastIncomingMessage(ctx.params)
+        ctx.hooks.updateLastIncomingMessage({
+          response_to: ctx.params.query_id,
+          ...ctx.params
+        })
       } else {
         ctx.hooks.addMessage({
+          response_to: ctx.params.query_id,
           type: 'incoming',
           ...ctx.params
         })

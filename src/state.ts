@@ -1,4 +1,4 @@
-import { atom, selector } from "recoil";
+import { atom, atomFamily, selector } from "recoil";
 import { getBrowserStorageEffectForKey } from "@fiftyone/state";
 
 const PLUGIN_NAME = "@voxel51/voxelgpt";
@@ -26,5 +26,12 @@ export const atoms = {
     key: "voxel-gpt-input",
     default: "",
   }),
+  votes: atomFamily({
+    key: "voxel-gpt-votes",
+    default: {},
+  })
 };
+
+
+
 export const selectors = {};
