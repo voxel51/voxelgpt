@@ -3,3 +3,4 @@ openai
 pandas
 scipy
 tiktoken
+google-cloud-bigquery

@@ -9,4 +9,5 @@ operators:
 - ask_voxelgpt_panel
 - open_voxelgpt_panel
 - open_voxelgpt_panel_on_startup
+- vote_for_query
 version: 1.0.0-rc2

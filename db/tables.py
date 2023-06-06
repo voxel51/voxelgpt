@@ -31,7 +31,7 @@ class UserQueryTable:
         errors = self.client.insert_rows(self.client.get_table(self.table_id), rows_to_insert)
 
         if errors == []:
-            print("New rows have been added.")
+            return query_id
         else:
             msg = "Encountered errors while inserting rows: {}".format(errors)
             raise InsertExpection(msg)

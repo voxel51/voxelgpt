@@ -1,13 +1,14 @@
+import re
 
 class Client:
     def __init__(self):
         self.tables = {}
 
     def get_table(self, table_id):
-        table = self.tables.get(table_id)
-        if not table:
-            raise Exception(f"Table {table_id} does not exist")
-        return table
+        table = self.tables.get(table_id, None)
+        if table:
+            return table
+        raise Exception(f"Table {table_id} does not exist")
 
     def create_table(self, table):
         self.tables[table.table_id] = table

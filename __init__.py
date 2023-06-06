@@ -152,8 +152,8 @@ class AskVoxelGPTPanel(foo.Operator):
                 
                 # persist all user queries
                 table = db.table(db.UserQueryTable)
-                table.insert_query(query)
-
+                query_id = table.insert_query(query)
+                ctx.params["query_id"] = query_id
                 streaming_message = None
 
                 for response in ask_voxelgpt_generator(
@@ -241,6 +241,7 @@ class AskVoxelGPTPanel(foo.Operator):
         return ctx.trigger(
             f"{self.plugin_name}/show_message",
             params=dict(
+                query_id=ctx.params["query_id"],
                 outputs=types.Property(outputs).to_json(),
                 data=dict(message=message, **kwargs),
             ),
@@ -365,7 +366,17 @@ class VoteForQuery(foo.Operator):
             elif vote == "downvote":
                 table.downvote_query(query_id)
             else:
-                raise Exception("Invalid vote type")
+                raise Exception("Invalid vote type")    
+            outputs = types.Object()
+            outputs.str("msg", view=types.Notice(label="Thank you for your feedback!"))
+            ctx.trigger(
+                "show_output",
+                {
+                    "outputs": types.Property(outputs, view=types.View(space=4)).to_json(),
+                }
+            )
+
+            
             
                 
 
@@ -409,3 +420,4 @@ def register(p):
     p.register(AskVoxelGPTPanel)
     p.register(OpenVoxelGPTPanel)
     p.register(OpenVoxelGPTPanelOnStartup)
+    p.register(VoteForQuery)
