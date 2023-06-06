@@ -775,8 +775,12 @@ def _validate_match_tags(stage, sample_collection):
 def _validate_sort_by(stage, sample_collection, required_brain_runs):
     contents = stage[8:-1]
 
-    if "F" in contents or "." in contents:
+    if "." in contents:
         return stage
+    elif "F" in contents:
+        F_expr = contents.split(",")[0]
+        if F_expr[-2:] != '")':
+            return stage
 
     num_commas = contents.count(",")
 
@@ -788,6 +792,9 @@ def _validate_sort_by(stage, sample_collection, required_brain_runs):
         field, order = contents.split(",")
 
     field = field.replace('"', "").replace("'", "")
+    if "F(" in field:
+        field = field.split("F(")[1].split(")")[0]
+
     if field in sample_collection.first().field_names:
         return stage
     else:
