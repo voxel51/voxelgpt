@@ -13,7 +13,7 @@ https://github.com/voxel51/voxelgpt/assets/12500356/15830497-a53e-4858-8420-283c
 
 ## Live demo
 
-🚀🚀🚀 You can try VoxelGPT live at [try.fiftyone.ai](https://try.fiftyone.ai)!
+🚀🚀🚀 You can try VoxelGPT live at [gpt.fiftyone.ai](https://gpt.fiftyone.ai)!
 
 ## Capabilities
 
