@@ -387,3 +387,15 @@ show me pictures of groups of cars and bikes,"[filter_labels(""ground_truth"", F
 Can you show me a view of patches of predictions?,"[to_patches(field=""predictions"")]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,detection
 Can you show me the toPatches view?,"[to_patches(field=""ground_truth"")]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,detection
 show me samples whose images are JPG       ,"[match(F(""filepath"").ends_with(""jpg""))]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,all
+display images that resemble a rainforest,"[sort_by_similarity(""rainforest"", brain_key = ""TEXT_SIM_KEY"", k = 100)]",Jacob,image,FALSE,TRUE,FALSE,FALSE,FALSE,all
+just show me images taken at night,"[match_labels(filter = F(""label"") == ""night"", fields = ""timeofday"")]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,classification
+Only images from dawn or dusk,"[match_labels(filter = F(""label"") == ""dawn/dusk"", fields = ""timeofday"")]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,classification
+Display samples from the day or dawn,"[match_labels(filter = F(""label"").is_in([""daytime"", ""dawn/dusk""]), fields = ""timeofday"")]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,classification
+Give me all of the images with snow,"[match_labels(filter = F(""label"") == ""snowy"", fields = ""weather"")]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,classification
+"Show me any samples that are rainy, cloudy, or overcast","[match_labels(filter = F(""label"").is_in([""rainy"", ""partly cloudy"", ""overcast""]), fields = ""weather"")]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,classification
+give me 20 random daytime images where the weather is clear,"[match(F(""timeofday.label"") == ""daytime""), match(F(""weather.label"") == ""clear""), take(20)]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,classification
+I want all of the images with trucks in a parking lot,"[match(F(""scene.label"") == ""parking lot""), match_labels(filter = F(""label"") == (""truck""))]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,all
+show me scenes with a traffic light or a traffic sign,"[match(F(""detections.detections.label"").contains([""traffic light"", ""traffic sign""]))]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,detection
+show me the first 10 images with a bus or a train in a tunnel,"[match(F(""detections.detections.label"").contains([""bus"", ""train""])), match(F(""scene.label"") == ""tunnel"")]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,all
+scenes with detections of a person AND a car at night,"[match(F(""detections.detections.label"").contains([""person"", ""car""], all=True)), match(F(""timeofday.label"") == ""night"")]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,all
+images in the dataset with any type of road,"[match(F(""scene.label"").is_in([""city street"", ""highway"", ""tunnel""]))]",Jacob,image,FALSE,FALSE,FALSE,FALSE,FALSE,classification
