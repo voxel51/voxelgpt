@@ -335,45 +335,8 @@ intent:
 
 ## Contributing
 
-Contributions are welcome! If you plan to contribute a PR, please install the
-pre-commit hooks before commiting:
-
-```shell
-pre-commit install
-```
-
-You can manually lint a file if necessary like so:
-
-```shell
-# Manually run linting configured in the pre-commit hook
-pre-commit run --files <file>
-```
-
-**Developing and Building the Plugin JS Bundle**
-
-To build the Fiftyone plugin you must:
-
--   install `fiftyone` from source (including the app dependencies installed).
-    [See here](https://github.com/voxel51/fiftyone/blob/develop/CONTRIBUTING.md)
-    for details.
--   the environment variable `FIFTYONE_DIR` set to the source directory of
-    `fiftyone`
--   `yarn@3.5.x` installed.
--   installed the `voxelgpt` dependencies by running `yarn install` in the
-    `voxelgpt` directory
-
-To create a build, run:
-
-```sh
-# for a production build of the plugin js bundle
-yarn build
-
-# for rebuilding the bundle automatically during development
-yarn dev
-```
-
-> NOTE: when developing locally you must set `FIFTYONE_PLUGINS_DIR` to a
-> directory containing the `voxelgpt` directory.
+Contributions are welcome! Check out the [contributions guide](CONTRIBUTING.md)
+for instructions.
 
 ## How does it work?
 
