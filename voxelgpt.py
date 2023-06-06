@@ -12,6 +12,7 @@ import sys
 import fiftyone as fo
 
 from links.query_moderator import moderate_query
+from links.dataset_schema_handler import query_schema
 from links.query_intent_classifier import classify_query_intent
 from links.docs_query_dispatcher import run_docs_query, stream_docs_query
 from links.computer_vision_query_dispatcher import (
@@ -259,6 +260,12 @@ def ask_voxelgpt_generator(
     # Generate a new query that incorporates the chat history
     if chat_history:
         query = generate_effective_query(chat_history)
+
+    # Handle schema queries first
+    schema_response = query_schema(query, sample_collection)
+    if schema_response:
+        yield _respond(schema_response)
+        return
 
     # Intent classification
     intent = classify_query_intent(query)

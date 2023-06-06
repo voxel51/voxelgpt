@@ -93,7 +93,8 @@ def load_effective_prompt_prefix_template():
 
 
 def format_chat_history(chat_history):
-    return "\n".join(chat_history) + "\n"
+    user_history = [ch[6:] for ch in chat_history if ch[:6] == "User: "]
+    return "\n".join(user_history) + "\n"
 
 
 def generate_dataset_view_prompt(chat_history):
@@ -122,11 +123,31 @@ def _process_query(query):
     return query
 
 
+_NO_HISTORY_KEYS = [
+    "no",
+    "original",
+    '"',
+    "sorry",
+    "clarify",
+    "don't",
+    "understand",
+    "asking",
+]
+
+
+def _process_response(response, query):
+    _response = response.lower()
+    if any(key in _response for key in _NO_HISTORY_KEYS):
+        return query
+
+    return response
+
+
 def generate_effective_query(chat_history):
     query = _process_query(chat_history[-1])
     if not _history_is_relevant(query):
         return query
 
     prompt = generate_dataset_view_prompt(chat_history)
-    response = get_llm().call_as_llm(prompt)
-    return response.strip()
+    response = get_llm().call_as_llm(prompt).strip()
+    return _process_response(response, query)

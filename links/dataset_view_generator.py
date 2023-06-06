@@ -830,6 +830,54 @@ def _validate_match_labels(stage, label_classes):
 
                 return f"match_labels({contents})"
         return stage
+    elif "==" in contents and "label" not in contents:
+        unique_classes = get_unique_class_list(label_classes)
+        present_classes = [
+            class_name
+            for class_name in unique_classes
+            if class_name in contents
+        ]
+
+        if len(present_classes) == 1:
+            present_class = present_classes[0]
+            field = get_label_field(contents, present_classes)
+            if not field:
+                return stage
+            contents = (
+                f"fields = '{field}', filter = F('label') == '{present_class}'"
+            )
+            return f"match_labels({contents})"
+        else:
+            return stage
+    elif not any(
+        [
+            patt in contents
+            for patt in ["F", "label", "filter", "id", "bool", "tags"]
+        ]
+    ):
+        unique_classes = get_unique_class_list(label_classes)
+        present_classes = [
+            class_name
+            for class_name in unique_classes
+            if class_name in contents
+        ]
+
+        if len(present_classes) == 1:
+            present_class = present_classes[0]
+            fields = [fn for fn in label_classes.keys() if fn in contents]
+            if len(fields) == 0:
+                field_str = ""
+            if len(fields) == 1:
+                field_str = f", fields = '{fields[0]}'"
+            else:
+                field_str = f", fields = {fields}"
+
+            filter_str = f"filter = F('label') == '{present_class}'"
+            contents = f"{filter_str}{field_str}"
+            return f"match_labels({contents})"
+        else:
+            return stage
+
     else:
         return stage
 

@@ -1,9 +1,19 @@
-from markdownify import markdownify
+"""
+Markdown utils.
+
+| Copyright 2017-2023, Voxel51, Inc.
+| `voxel51.com <https://voxel51.com/>`_
+|
+"""
 import re
+
 from langchain.schema import Document
 from langchain.text_splitter import MarkdownTextSplitter
 
-SPLITTER = MarkdownTextSplitter(chunk_size=1000)
+import fiftyone.core.utils as fou
+
+md = fou.lazy_import("markdownify")
+
 
 ATTR_API_DOCS = (
     "session",
@@ -25,6 +35,8 @@ METHOD_API_DOCS = (
     "collection",
 )
 
+splitter = MarkdownTextSplitter(chunk_size=1000)
+
 
 def remove_footer(page_md):
     return page_md.split("[Next ![]")[0]
@@ -38,18 +50,18 @@ def remove_header(page_md):
     for mdl in md_lines:
         if len(mdl) > 0 and mdl[0] == "#":
             in_body = True
+
         if in_body:
             body_lines.append(mdl)
-    page_md = "\n".join(body_lines)
-    return page_md
+
+    return "\n".join(body_lines)
 
 
 def remove_extra_newlines(page_md):
     lines = page_md.split("\n")
     lines = [line for line in lines if line.strip() != "!"]
     page_md = "\n".join(lines)
-    page_md = re.sub(r"\n{3,}", "\n\n", page_md)
-    return page_md
+    return re.sub(r"\n{3,}", "\n\n", page_md)
 
 
 def remove_empty_code_blocks(page_md):
@@ -65,9 +77,9 @@ def remove_empty_code_blocks(page_md):
     page_md = ""
     for tb, cb in zip(text_blocks, code_blocks):
         page_md += tb + "```" + cb + "```"
+
     page_md += text_and_code[-1]
-    page_md = re.sub(r"```py\s*```", "", page_md, flags=re.MULTILINE)
-    return page_md
+    return re.sub(r"```py\s*```", "", page_md, flags=re.MULTILINE)
 
 
 def remove_jupyter_widgets(page_md):
@@ -101,6 +113,7 @@ def remove_line_numbers(page_md):
     page_md = ""
     for tb, cb in zip(text_blocks, code_blocks):
         page_md += tb + "```" + cb + "```"
+
     page_md += text_and_code[-1]
     return page_md
 
@@ -112,8 +125,7 @@ def remove_table_rows(page_md):
         for line in lines
         if len(line) == 0 or not set(line).issubset(set("| -"))
     ]
-    page_md = "\n".join(lines)
-    return page_md
+    return "\n".join(lines)
 
 
 def remove_links(page_md):
@@ -126,6 +138,7 @@ def remove_links(page_md):
             return page_md[:start] + link_text + remove_links(page_md[end:])
         else:
             return page_md[:end] + link + remove_links(page_md[end:])
+
     return page_md
 
 
@@ -136,8 +149,7 @@ def remove_images(page_md):
 
 
 def remove_code_cell_vestiges(page_md):
-    page_md = re.sub(r"^\[\s*\d*\]:$", "", page_md, flags=re.MULTILINE)
-    return page_md
+    return re.sub(r"^\[\s*\d*\]:$", "", page_md, flags=re.MULTILINE)
 
 
 def add_syntax_highlight_to_code_blocks(page_md):
@@ -153,6 +165,7 @@ def add_syntax_highlight_to_code_blocks(page_md):
     page_md = ""
     for tb, cb in zip(text_blocks, code_blocks):
         page_md += tb + "```py" + cb + "```"
+
     page_md += text_and_code[-1]
     return page_md
 
@@ -160,8 +173,7 @@ def add_syntax_highlight_to_code_blocks(page_md):
 def merge_adjacent_code_blocks(page_md):
     pattern = r"```\n```py"
     page_md = re.sub(pattern, "", page_md)
-    page_md = re.sub(r"```py\n```py", r"```py", page_md)
-    return page_md
+    return re.sub(r"```py\n```py", r"```py", page_md)
 
 
 def remove_bad_elements(page_md):
@@ -187,8 +199,7 @@ def remove_bad_elements(page_md):
         if "}" in line and not flag:
             flag = True
 
-    page_md = "\n".join(good_lines)
-    return page_md
+    return "\n".join(good_lines)
 
 
 def reformat_markdown(page_md):
@@ -269,10 +280,12 @@ def preprocess_api_markdown(page_md, filepath):
 def get_page_markdown(filepath):
     with open(filepath) as f:
         page_html = f.read()
-    page_md = markdownify(page_html, heading_style="ATX")
+
+    page_md = md.markdownify(page_html, heading_style="ATX")
     page_md = parse_page_markdown(page_md)
     if "api" in filepath:
         page_md = preprocess_api_markdown(page_md, filepath)
+
     return page_md
 
 
@@ -289,14 +302,14 @@ def split_at_anchors(page_md):
             curr_anchor = line.split('"Permalink')[0].split("#")[-1].strip()
         else:
             curr_section.append(line)
+
     md_sections[curr_anchor] = "\n".join(curr_section)
     return md_sections
 
 
 def split_section_into_chunks(text):
     document = Document(page_content=text)
-    chunks = SPLITTER.split_documents([document])
-    return chunks
+    return splitter.split_documents([document])
 
 
 def split_page_into_chunks(page_md):
@@ -304,10 +317,10 @@ def split_page_into_chunks(page_md):
     chunks = {}
     for anchor, section in md_sections.items():
         chunks[anchor] = split_section_into_chunks(section)
+
     return chunks
 
 
 def get_markdown_documents(filepath):
     page_md = get_page_markdown(filepath)
-    chunks = split_page_into_chunks(page_md)
-    return chunks
+    return split_page_into_chunks(page_md)
