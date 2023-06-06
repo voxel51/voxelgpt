@@ -50,10 +50,11 @@ def ask_voxelgpt_interactive(
     If you provide a chat history, your query and VoxelGPT's responses will be
     added to it.
 
-    .. note::
+    Special keywords:
 
-        Type `exit` or `^c` to end your session, or type `reset` to clear your
-        chat history.
+    -   Type `help` to see a help message
+    -   Type `reset` to clear your chat history
+    -   Type `exit` or `^c` to end your session
 
     Args:
         sample_collection (None): a
@@ -69,7 +70,7 @@ def ask_voxelgpt_interactive(
 
     while True:
         if empty >= 5:
-            query = input("How can I help you? ('exit' to quit) ")
+            query = input("How can I help you? (try 'help' or 'exit') ")
         else:
             query = input("How can I help you? ")
 
@@ -77,10 +78,10 @@ def ask_voxelgpt_interactive(
             empty += 1
             continue
 
-        if query.lower() == "exit":
+        if query.strip().lower() == "exit":
             break
 
-        if query.lower() == "reset":
+        if query.strip().lower() == "reset":
             chat_history.clear()
             continue
 
@@ -247,6 +248,10 @@ def ask_voxelgpt_generator(
 
     if not moderate_query(query):
         yield _respond(_moderation_fail_message())
+        return
+
+    if query.strip().lower() == "help":
+        yield _respond(_help_message())
         return
 
     _log_chat_history("User", query, chat_history)
@@ -576,6 +581,99 @@ def _label_classes_message(label_classes):
     return {
         "string": prefix + str(label_classes),
         "markdown": prefix + markdown,
+    }
+
+
+_HELP_MESSAGE_MARKDOWN = """
+Hi! I'm VoxelGPT, your AI assistant for computer vision.
+
+I can help you with the following tasks:
+- **Querying your data** 🔎 &nbsp; I can help you filter, match, sort, and more - without writing a line of code. Tell me what you'd like to see and I'll load the corresponding view
+- **Becoming a FiftyOne pro** 💪 &nbsp; I have access to the FiftyOne documentation, so I can help you learn how to use FiftyOne and find the information you're looking for
+- **Troubleshooting data quality** 📈 &nbsp; I can help you build better datasets and higher quality models by answering general knowledge questions about computer vision and machine learning
+
+**Tips**
+- Be as specific as possible. The more specific you are, the better I can help you. I am still learning, so sometimes I need a little help understanding what you're asking
+- If you want to query your dataset, but your input is being interpreted as a documentation or general computer vision query, try using the `show` keyword. For example: *"show me all images with a label of dog"*
+- If you want to query the FiftyOne documentation, try using either `docs` or `fiftyone` in your query. For example: *"how do I load a dataset in FiftyOne?"*
+- If you want me to use our conversation history to infer what you're asking, try using the `now` keyword. For example: if you just asked *"show me high confidence predictions of cats, dogs, and rabbits"*, you can ask *"now the low confidence predictions"*
+
+**Learn more**
+- You can learn more about me on my [GitHub page](https://github.com/voxel51/voxelgpt). While you're at it, please give me a star ⭐! VoxelGPT is open source and it is constantly improving. Contributions are welcome!
+- Learn more about [FiftyOne](https://github.com/voxel51/fiftyone) and give the project a star ⭐! FiftyOne is open source too!
+- Join the [FiftyOne Slack community](https://slack.voxel51.com) where thousands of enthusiasts and professionals are discussing the latest in computer vision and machine learning
+
+I'm still learning, so I appreciate your patience 😊
+"""
+
+_HELP_MESSAGE_STRING = """
+Hi! I'm VoxelGPT, your AI assistant for computer vision.
+
+I can help you with the following tasks
+===============================================================================
+
+🔎  ~~Querying your data~~
+    I can help you filter, match, sort, and more - without writing a line of
+    code. Tell me what you'd like to see and I'll load the corresponding view
+
+💪  ~~Becoming a FiftyOne pro~~
+    I have access to the FiftyOne documentation, so I can help you learn how to
+    use FiftyOne and find the information you're looking for
+
+📈  ~~Troubleshooting data quality~~
+    I can help you build better datasets and higher quality models by answering
+    general knowledge questions about computer vision and machine learning
+
+Tips
+===============================================================================
+
+1.  ~~Be as specific as possible~~
+    The more specific you are, the better I can help you. I am still learning,
+    so sometimes I need a little help understanding what you're asking
+
+2.  If you want to query your dataset, but your input is being interpreted as a
+    documentation or general computer vision query, try using the 'show'
+    keyword. For example:
+
+        show me all images with a label of dog
+
+3.  If you want to query the FiftyOne documentation, try using either 'docs' or
+   'fiftyone' in your query. For example:
+
+        how do I load a dataset in FiftyOne?
+
+4.  If you want me to use our conversation history to infer what you're asking,
+    try using the 'now' keyword. For example:
+
+        show me high confidence predictions of cats, dogs, and rabbits
+        now the low confidence predictions
+
+5.  Type 'reset' to clear our chat history
+
+6.  Type 'exit' to exit our chat
+
+Learn more
+===============================================================================
+
+-   You can learn more about me on GitHub: https://github.com/voxel51/voxelgpt
+    While you're at it, please give me a star ⭐! VoxelGPT is an open source
+    project and it is constantly improving. Contributions are welcome!
+
+-   Learn more about FiftyOne at https://github.com/voxel51/fiftyone
+    Please give the project a star ⭐! FiftyOne is open source too!
+
+-   Join the FiftyOne Slack community at https://slack.voxel51.com
+    Thousands of enthusiasts and professionals are discussing the latest in
+    computer vision and machine learning
+
+I'm still learning, so I appreciate your patience 😊
+"""
+
+
+def _help_message():
+    return {
+        "string": _HELP_MESSAGE_STRING.strip(),
+        "markdown": _HELP_MESSAGE_MARKDOWN.strip(),
     }
 
 

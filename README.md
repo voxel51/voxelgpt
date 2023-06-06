@@ -11,7 +11,6 @@ natural language.
 
 https://github.com/voxel51/voxelgpt/assets/12500356/15830497-a53e-4858-8420-283c621d62f1
 
-
 ## Live demo
 
 🚀🚀🚀 You can try VoxelGPT live at [try.fiftyone.ai](https://try.fiftyone.ai)!
@@ -30,9 +29,7 @@ clarify.
 
 ### Querying your dataset
 
-
 https://github.com/voxel51/voxelgpt/assets/12500356/46913222-fee5-4cbb-9bb3-301c544de886
-
 
 You can ask VoxelGPT to search your datasets for you. Here's some examples of
 things you can ask:
@@ -53,9 +50,7 @@ retrieve specific entities.
 
 ### Querying the FiftyOne docs
 
-
 https://github.com/voxel51/voxelgpt/assets/12500356/ca8e306b-b592-46e2-9b88-5c4f6af9a454
-
 
 VoxelGPT is not only a pair programmer; it is also an educational tool.
 VoxelGPT has access to the entire [FiftyOne docs](https://docs.voxel51.com),
@@ -70,7 +65,6 @@ Here's some examples of documentation queries you can ask VoxelGPT:
 ### Computer vision queries
 
 https://github.com/voxel51/voxelgpt/assets/12500356/919bfcca-fe24-46d5-b69f-9ba3579f3200
-
 
 Finally, VoxelGPT can answer general questions about computer vision, machine
 learning, and data science. It can help you to understand basic concepts and
@@ -150,11 +144,7 @@ and then either:
 -   Clicking on the OpenAI icon above the grid
 -   Pressing the `+` icon next to the Samples tab and choosing VoxelGPT
 
-
-
 https://github.com/voxel51/voxelgpt/assets/12500356/af8a75d0-c17d-45c9-b745-323ce3fec1b2
-
-
 
 For example, try asking the following questions:
 
@@ -292,18 +282,18 @@ ask_voxelgpt("Does FiftyOne integrate with CVAT?")
 
 ```
 
-Yes, FiftyOne integrates with CVAT, which is an open-source image and video 
-annotation tool. You can upload your data directly from FiftyOne to CVAT to add or 
-edit labels. You can use CVAT either through the hosted server at app.cvat.ai or 
-through a self-hosted server. In either case, FiftyOne provides simple setup 
-instructions that you can use to specify the necessary account credentials and 
-server endpoint to use. The tight integration between FiftyOne and CVAT allows 
-you to curate and explore datasets in FiftyOne and then send off samples or 
-existing labels for annotation in CVAT with just one line of code. To use CVAT, 
-you must create an account on a CVAT server. By default, FiftyOne uses app.cvat.ai. 
-If you haven’t already, go to app.cvat.ai and create an account now. Another option 
-is to set up CVAT locally and then configure FiftyOne to use your self-hosted server. 
-A primary benefit of setting up CVAT locally is that you are limited to 10 tasks and 
+Yes, FiftyOne integrates with CVAT, which is an open-source image and video
+annotation tool. You can upload your data directly from FiftyOne to CVAT to add or
+edit labels. You can use CVAT either through the hosted server at app.cvat.ai or
+through a self-hosted server. In either case, FiftyOne provides simple setup
+instructions that you can use to specify the necessary account credentials and
+server endpoint to use. The tight integration between FiftyOne and CVAT allows
+you to curate and explore datasets in FiftyOne and then send off samples or
+existing labels for annotation in CVAT with just one line of code. To use CVAT,
+you must create an account on a CVAT server. By default, FiftyOne uses app.cvat.ai.
+If you haven’t already, go to app.cvat.ai and create an account now. Another option
+is to set up CVAT locally and then configure FiftyOne to use your self-hosted server.
+A primary benefit of setting up CVAT locally is that you are limited to 10 tasks and
 500MB of data with app.cvat.ai.
 
 Sources:
@@ -339,6 +329,7 @@ intent:
 | `show`/`display`        | Tells VoxelGPT that you want it to query your dataset and display the results                                                                                                                                                                                |
 | `docs`/`how`/`FiftyOne` | Tells VoxelGPT that you want it to query the FiftyOne docs.                                                                                                                                                                                                  |
 | `now`                   | Use your chat history as context to interpret your next query. For example, if you ask "show me images with people" and then ask "now show me the 10 most unique ones", VoxelGPT will understand that you want to show the 10 most unique images with people |
+| `help`                  | Prints a help message with usage instructions                                                                                                                                                                                                                |
 | `reset`                 | Resets the conversation history                                                                                                                                                                                                                              |
 | `exit`                  | Exits interactive Python sessions                                                                                                                                                                                                                            |
 
@@ -362,10 +353,14 @@ pre-commit run --files <file>
 
 To build the Fiftyone plugin you must:
 
- - install `fiftyone` from source (including the app dependencies installed). [See here](https://github.com/voxel51/fiftyone/blob/develop/CONTRIBUTING.md) for details.
- - the environment variable `FIFTYONE_DIR` set to the source directory of `fiftyone`
- - `yarn@3.5.x` installed.
- - installed the `voxelgpt` dependencies by running `yarn install` in the `voxelgpt` directory
+-   install `fiftyone` from source (including the app dependencies installed).
+    [See here](https://github.com/voxel51/fiftyone/blob/develop/CONTRIBUTING.md)
+    for details.
+-   the environment variable `FIFTYONE_DIR` set to the source directory of
+    `fiftyone`
+-   `yarn@3.5.x` installed.
+-   installed the `voxelgpt` dependencies by running `yarn install` in the
+    `voxelgpt` directory
 
 To create a build, run:
 
@@ -377,7 +372,8 @@ yarn build
 yarn dev
 ```
 
-> NOTE: when developing locally you must set `FIFTYONE_PLUGINS_DIR` to a directory containing the `voxelgpt` directory.
+> NOTE: when developing locally you must set `FIFTYONE_PLUGINS_DIR` to a
+> directory containing the `voxelgpt` directory.
 
 ## How does it work?
 
