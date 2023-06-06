@@ -1141,6 +1141,7 @@ def _handle_duplicate_stages(stages):
         return stages
 
     sim_query = sim_sort_stage.split("(")[1].split(",")[0]
+    sim_query = sim_query.replace('"', "").replace("'", "")
 
     verified_stages = []
     for stage in stages:
