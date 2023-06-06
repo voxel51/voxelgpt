@@ -1,6 +1,6 @@
 {
     "name": "@voxel51/voxelgpt",
-    "version": "1.0.0-rc2",
+    "version": "1.0.0-pq",
     "main": "src/VoxelGPT.tsx",
     "license": "MIT",
     "fiftyone": {
