@@ -123,20 +123,22 @@ def _process_query(query):
     return query
 
 
+_NO_HISTORY_KEYS = [
+    "no",
+    "original",
+    '"',
+    "sorry",
+    "clarify",
+    "don't",
+    "understand",
+    "asking",
+]
+
+
 def _process_response(response, query):
-    indicators = [
-        "no",
-        "original",
-        '"',
-        "sorry",
-        "clarify",
-        "don't",
-        "understand",
-        "asking",
-    ]
-    for indicator in indicators:
-        if indicator in response.lower():
-            return query
+    _response = response.lower()
+    if any(key in _response for key in _NO_HISTORY_KEYS):
+        return query
 
     return response
 
@@ -148,5 +150,4 @@ def generate_effective_query(chat_history):
 
     prompt = generate_dataset_view_prompt(chat_history)
     response = get_llm().call_as_llm(prompt).strip()
-    response = _process_response(response, query)
-    return response
+    return _process_response(response, query)
