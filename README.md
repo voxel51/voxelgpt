@@ -21,7 +21,7 @@ VoxelGPT is capable of handling any of the following types of queries:
 
 -   [Dataset queries](#querying-your-dataset)
 -   [FiftyOne docs queries](#querying-the-fiftyone-docs)
--   [Computer vision queries](#computer-vision-queries)
+-   [General computer vision queries](#general-computer-vision-queries)
 
 When you ask VoxelGPT a question, it will interpret your intent and determine
 which type of query you are asking. If VoxelGPT is unsure, it will ask you to
@@ -62,7 +62,7 @@ Here's some examples of documentation queries you can ask VoxelGPT:
 -   What does the match() stage do?
 -   Can I export my dataset in COCO format?
 
-### Computer vision queries
+### General computer vision queries
 
 https://github.com/voxel51/voxelgpt/assets/12500356/919bfcca-fe24-46d5-b69f-9ba3579f3200
 
