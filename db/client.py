@@ -1,15 +1,16 @@
-from google.cloud import bigquery
 import os
 
 def get_client():
     project_id = os.environ.get('PROJECT_ID')
     if project_id:
+       from google.cloud import bigquery
        return bigquery.Client(project=project_id)
     return MemoryClient()
 
 def get_table():
     project_id = os.environ.get('PROJECT_ID')
     if project_id:
+       from google.cloud import bigquery
        return bigquery.Table
     return MemoryTable
 
