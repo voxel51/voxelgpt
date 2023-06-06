@@ -810,7 +810,13 @@ def _validate_sort_by(stage, sample_collection, required_brain_runs):
 
 def _remove_match_labels_field_name(stage):
     contents = stage[13:-1]
-    F_expr = contents.split(",")[0]
+    if "," in contents:
+        F_expr, fields_expr = contents.split(",")
+        if "F(" in fields_expr:
+            F_expr, fields_expr = fields_expr, F_expr
+    else:
+        F_expr = contents
+
     F_contents = F_expr.split("(")[1].split(")")[0]
     if "." not in F_contents:
         return stage
@@ -832,9 +838,29 @@ def _remove_match_labels_contains(stage):
     return stage.replace("contains", "is_in")
 
 
-def _postprocess_match_labels(stage):
+def _replace_match_labels_label(stage, label_classes):
+    contents = stage[13:-1]
+    if "," in contents:
+        F_expr, fields_expr = contents.split(",")
+        if "F(" in fields_expr:
+            F_expr, fields_expr = fields_expr, F_expr
+    else:
+        F_expr = contents
+    F_contents = F_expr.split("(")[1].split(")")[0]
+    for field_name in label_classes.keys():
+        if field_name in F_contents:
+            stage.replace(field_name, "label")
+            if "fields" not in stage:
+                contents = stage[13:-1]
+                stage = f'match_labels({contents}, fields="{field_name}")'
+            return stage
+    return stage
+
+
+def _postprocess_match_labels(stage, label_classes):
     stage = _remove_match_labels_field_name(stage)
     stage = _remove_match_labels_contains(stage)
+    stage = _replace_match_labels_label(stage, label_classes)
     return stage
 
 
@@ -1296,7 +1322,6 @@ def _postprocess_stages(
 
     for stage in stages:
         _stage = stage
-        print(f"Processing stage: {_stage}")
         _stage = _convert_matches_to_text_similarities(
             _stage, sample_collection, required_brain_runs, unmatched_classes
         )
@@ -1312,7 +1337,7 @@ def _postprocess_stages(
             _stage = _validate_filter_labels(_stage, label_classes)
         if "match_labels" in _stage:
             _stage = _validate_match_labels(_stage, label_classes)
-            _stage = _postprocess_match_labels(_stage)
+            _stage = _postprocess_match_labels(_stage, label_classes)
         if "match_tags" in _stage:
             _stage = _validate_match_tags(_stage, sample_collection)
         if "sort_by(" in _stage:
