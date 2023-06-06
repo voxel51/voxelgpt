@@ -148,10 +148,10 @@ class AskVoxelGPTPanel(foo.Operator):
             with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
                 # pylint: disable=no-name-in-module
                 from voxelgpt import ask_voxelgpt_generator
-                from db.tables import UserQueryTable
+                import db
                 
                 # persist all user queries
-                table = UserQueryTable()
+                table = db.table(db.UserQueryTable)
                 table.insert_query(query)
 
                 streaming_message = None
