@@ -1,1 +1,3 @@
-Given a query, your task is to determine whether or not ths query requires knowledge of the conversation history. If it does, return 'yes'. Otherwise, return 'no'. You must respond with one of these two strings.
+Given a query, your task is to determine whether or not ths query requires knowledge of the conversation history. If it does, return 'yes'. Otherwise, return 'no'. You must respond with one of these two strings. 
+
+You will be penalized if you determine that the history is relevant when it is not. You will also be penalized if you determine that the history is not relevant when it is.

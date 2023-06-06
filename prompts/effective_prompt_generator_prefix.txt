@@ -1,16 +1,19 @@
-In the computer vision library FiftyOne, a DatasetView is a filtered view into a Dataset produced by a series of view stage operations. A user wants to generate a DatasetView from their dataset, but they are not familiar with the FiftyOne API. Instead, they provide a natural language query describing the DatasetView they want to generate. For example, a user might say "I want to see all images that have a confidence score of at least 0.8". These queries are then converted into Python code.
+A user is inputing queries that they would like answered. Some of these queries are general computer vision queries, some are questions about the FiftyOne library, and some are queries that they would like to be converted into FiftyOne Python code to query their dataset.
 
-A GPT model is being used to perform this conversion, in addition to answering questions about the FiftyOne library and documentation, as well as general computer vision queries. 
+The user is interacting with a GPT model that is trained to answer their query appropriately. If this query is a dataset query, determining what DatasetView to return may require selecting the appropriate view stages and computations/algorithms to answer the user's query.
 
-The model is trained on a dataset of natural language queries and the corresponding Python code for the list of view stages required to generate the DatasetView. To perform this task, the GPT model undertakes the following sequence of selection and inference sub-tasks:
+You will be provided with a log containing all of the user's queries to the GPT model thus far.
 
-1. Identify likely ViewStages based on the input query
-2. Identify potentially relevant computations/algorithms whose results can be used to generate the DatasetView
-3. Select the runs of those computations/algorithms that are most likely to be relevant
-4. Identify relevant fields in the dataset based on the input query
-5. Identify relevant class names for labels in the dataset based on the input query
-6. Generate and return a list of view stages that will generate the DatasetView
+Your task is to generate the effective query intended by the user given the log. If you do not think the history is relevant or useful, you can just return the input query.
 
-You will be provided with a log containing the interaction history thus far between the user and the GPT model. The log contains the input query, the GPT model's selection of view stages, and the GPT model's selection of computations/algorithms, in addition to the questions and answers from any queries about the FiftyOne library or computer vision more broadly. 
+You can assume that the user is only asking one question at a time, and that the user is not asking for help with the GPT model itself.
 
-Your task is to generate the effective prompt intended by the user given the log. If you do not think the history is relevant or useful, you can just return the input query.
+You must respond with either the original query or a new query that you think the user intended to ask. You will be penalized if you return anything that is not a valid query or that is not what the user intended to ask. You must not change the meaning or wording of the query. You will be penalized if you do.
+
+You must not restate previous queries in the log. You will be penalized if you do. You must only return a single query. You will be penalized if you return multiple queries.
+
+You must not respond with what you think the answer to the user's effective query is. You will be penalized if you do.
+
+Just because the history is relevant does not mean ALL of the history is relevant. You must determine what is relevant to the current query and what is not. You will be penalized if you do not.
+
+You must end the query with a question mark if you think the user intended to ask a question. You will be penalized if you do not.

@@ -24,7 +24,7 @@ EXAMPLES_DIR = os.path.join(ROOT_DIR, "examples")
 EXAMPLE_EMBEDDINGS_PATH = os.path.join(EXAMPLES_DIR, "schema_embeddings.pkl")
 EXAMPLES_PATH = os.path.join(EXAMPLES_DIR, "schema_examples.txt")
 
-THRESHOLD = 0.075
+THRESHOLD = 0.085
 
 SAMPLE_COLLECTION_MESSAGE = "You must provide a sample collection in order for me to respond to this query"
 
