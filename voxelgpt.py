@@ -50,10 +50,11 @@ def ask_voxelgpt_interactive(
     If you provide a chat history, your query and VoxelGPT's responses will be
     added to it.
 
-    .. note::
+    Special keywords:
 
-        Type `exit` or `^c` to end your session, or type `reset` to clear your
-        chat history.
+    -   Type `help` to see a help message
+    -   Type `reset` to clear your chat history
+    -   Type `exit` or `^c` to end your session
 
     Args:
         sample_collection (None): a
@@ -69,7 +70,7 @@ def ask_voxelgpt_interactive(
 
     while True:
         if empty >= 5:
-            query = input("How can I help you? ('exit' to quit) ")
+            query = input("How can I help you? (try 'help' or 'exit') ")
         else:
             query = input("How can I help you? ")
 
@@ -77,10 +78,10 @@ def ask_voxelgpt_interactive(
             empty += 1
             continue
 
-        if query.lower() == "exit":
+        if query.strip().lower() == "exit":
             break
 
-        if query.lower() == "reset":
+        if query.strip().lower() == "reset":
             chat_history.clear()
             continue
 
@@ -249,11 +250,11 @@ def ask_voxelgpt_generator(
         yield _respond(_moderation_fail_message())
         return
 
-    _log_chat_history("User", query, chat_history)
-
-    if "help" in query.lower():
+    if query.strip().lower() == "help":
         yield _respond(_help_message())
         return
+
+    _log_chat_history("User", query, chat_history)
 
     # Generate a new query that incorporates the chat history
     if chat_history:
@@ -583,38 +584,96 @@ def _label_classes_message(label_classes):
     }
 
 
+_HELP_MESSAGE_MARKDOWN = """
+Hi! I'm VoxelGPT, your AI assistant for computer vision.
+
+I can help you with the following tasks:
+- **Querying your data** 🔎 &nbsp; I can help you filter, match, sort, and more - without writing a line of code. Tell me what you'd like to see and I'll load the corresponding view
+- **Becoming a FiftyOne pro** 💪 &nbsp; I have access to the FiftyOne documentation, so I can help you learn how to use FiftyOne and find the information you're looking for
+- **Troubleshooting data quality** 📈 &nbsp; I can help you build better datasets and higher quality models by answering general knowledge questions about computer vision and machine learning
+
+**Tips**
+- Be as specific as possible. The more specific you are, the better I can help you. I am still learning, so sometimes I need a little help understanding what you're asking
+- If you want to query your dataset, but your input is being interpreted as a documentation or general computer vision query, try using the `show` keyword. For example: *"show me all images with a label of dog"*
+- If you want to query the FiftyOne documentation, try using either `docs` or `fiftyone` in your query. For example: *"how do I load a dataset in FiftyOne?"*
+- If you want me to use our conversation history to infer what you're asking, try using the `now` keyword. For example: if you just asked *"show me high confidence predictions of cats, dogs, and rabbits"*, you can ask *"now the low confidence predictions"*
+
+**Learn more**
+- You can learn more about me on my [GitHub page](https://github.com/voxel51/voxelgpt). While you're at it, please give me a star ⭐! VoxelGPT is open source and it is constantly improving. Contributions are welcome!
+- Learn more about [FiftyOne](https://github.com/voxel51/fiftyone) and give the project a star ⭐! FiftyOne is open source too!
+- Join the [FiftyOne Slack community](https://slack.voxel51.com) where thousands of enthusiasts and professionals are discussing the latest in computer vision and machine learning
+
+I'm still learning, so I appreciate your patience 😊
+"""
+
+_HELP_MESSAGE_STRING = """
+Hi! I'm VoxelGPT, your AI assistant for computer vision.
+
+I can help you with the following tasks
+===============================================================================
+
+🔎  ~~Querying your data~~
+    I can help you filter, match, sort, and more - without writing a line of
+    code. Tell me what you'd like to see and I'll load the corresponding view
+
+💪  ~~Becoming a FiftyOne pro~~
+    I have access to the FiftyOne documentation, so I can help you learn how to
+    use FiftyOne and find the information you're looking for
+
+📈  ~~Troubleshooting data quality~~
+    I can help you build better datasets and higher quality models by answering
+    general knowledge questions about computer vision and machine learning
+
+Tips
+===============================================================================
+
+1.  ~~Be as specific as possible~~
+    The more specific you are, the better I can help you. I am still learning,
+    so sometimes I need a little help understanding what you're asking
+
+2.  If you want to query your dataset, but your input is being interpreted as a
+    documentation or general computer vision query, try using the 'show'
+    keyword. For example:
+
+        show me all images with a label of dog
+
+3.  If you want to query the FiftyOne documentation, try using either 'docs' or
+   'fiftyone' in your query. For example:
+
+        how do I load a dataset in FiftyOne?
+
+4.  If you want me to use our conversation history to infer what you're asking,
+    try using the 'now' keyword. For example:
+
+        show me high confidence predictions of cats, dogs, and rabbits
+        now the low confidence predictions
+
+5.  Type 'reset' to clear our chat history
+
+6.  Type 'exit' to exit our chat
+
+Learn more
+===============================================================================
+
+-   You can learn more about me on GitHub: https://github.com/voxel51/voxelgpt
+    While you're at it, please give me a star ⭐! VoxelGPT is an open source
+    project and it is constantly improving. Contributions are welcome!
+
+-   Learn more about FiftyOne at https://github.com/voxel51/fiftyone
+    Please give the project a star ⭐! FiftyOne is open source too!
+
+-   Join the FiftyOne Slack community at https://slack.voxel51.com
+    Thousands of enthusiasts and professionals are discussing the latest in
+    computer vision and machine learning
+
+I'm still learning, so I appreciate your patience 😊
+"""
+
+
 def _help_message():
-    md_message = """
-    Hi there! I'm VoxelGPT, your AI assistant for computer vision. Because your 
-    query included `help`, I'm going to share some information to help you get 
-    started. 
-    
-    I can help you with the following tasks:
-    - **Query Your Dataset**: I can help you filter, match, sort, and more - all without writing a single line of code!
-    - **Become a FiftyOne Pro**: I can help you learn how to use FiftyOne. I have access to the FiftyOne documentation, and I can help you find what you're looking for.
-    - **Troubleshoot Data Quality Issues**: I can help you build better datasets and higher quality models.
-
-
-    **Here are a few tips:**
-    - *Be as specific as possible*. The more specific you are, the better I can help you. I am still learning, so sometimes I need a little help understanding what you're asking.
-    - If you want to query your dataset, but your input is being interpreted as a documentation or general computer vision query, try using the `show` keyword. For example, `show me all images with a label of dog`.
-    - If you want to query the FiftyOne documentation, try using either `docs` or `fiftyone` in your query. For example, `how do I load a dataset in fiftyone?`
-    - If you want me to infer what you're asking based on our conversation history, try using the `now` keyword. For example, if you just asked "show me high confidence predictions of cats, dogs, and rabbits", you can ask "now the low confidence predictions".
-    - To clear our chat history, you can use the `reset` keyword.
-    - To exit our chat, you can use the `exit` keyword.
-
-    **Learn more**
-    - You can learn more about me and my capabilities by visiting my [GitHub page](https://github.com/voxel51/voxelgpt), and while you're at it, please give me a star! VoxelGPT is an open-source project, and it is constantly improving. If you'd like to contribute, check out the [Contributing](https://github.com/voxel51/voxelgpt#contributing) section of the README.
-    - Learn more about [FiftyOne](https://github.com/voxel51/fiftyone), and give the project a ⭐! FiftyOne is open-source too!
-    - Join the [FiftyOne Community Slack](https://slack.voxel51.com/), where thousands of computer vision enthusiasts and professionals are discussing the latest in computer vision and machine learning.
-    
-    I'm still learning, so I appreciate your patience!
-    """
-
-    str_message = md_message.replace("**", "")
     return {
-        "string": str_message,
-        "markdown": md_message,
+        "string": _HELP_MESSAGE_STRING.strip(),
+        "markdown": _HELP_MESSAGE_MARKDOWN.strip(),
     }
 
 
