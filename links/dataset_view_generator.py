@@ -680,7 +680,9 @@ def _has_confidences(sample_collection, field):
     return confs and confs[0] is not None
 
 
-def _validate_label_fields(stage, sample_collection, label_classes):
+def _validate_label_fields(
+    stage, sample_collection, label_classes, required_brain_runs
+):
     """
     Ensure that label fields are correct.
     """
@@ -703,7 +705,12 @@ def _validate_label_fields(stage, sample_collection, label_classes):
             except:
                 pass
 
-        return label_fields[0]
+        if len(label_fields) > 0:
+            return label_fields[0]
+        else:
+            if "evaluation" in required_brain_runs:
+                return required_brain_runs["evaluation"]["pred_field"]
+            return None
 
     new_stage = stage
 
@@ -725,7 +732,8 @@ def _validate_label_fields(stage, sample_collection, label_classes):
 
     if "predictions" in stage and "predictions" not in label_fields:
         pred_field = _get_predictions_field()
-        new_stage = new_stage.replace("predictions", pred_field)
+        if pred_field:
+            new_stage = new_stage.replace("predictions", pred_field)
 
     return new_stage
 
@@ -915,6 +923,14 @@ def _validate_match_labels(stage, label_classes):
             if f'F("{field}")' in contents:
                 contents = contents.replace(f'F("{field}")', f'F("label")')
 
+                if "fields" not in contents:
+                    contents = f'{contents}, fields = "{field}"'
+
+                return f"match_labels({contents})"
+            elif f'F("{field}.confidence")' in contents:
+                contents = contents.replace(
+                    f'F("{field}.confidence")', f'F("confidence")'
+                )
                 if "fields" not in contents:
                     contents = f'{contents}, fields = "{field}"'
 
@@ -1206,6 +1222,32 @@ def _handle_duplicate_stages(stages):
     return verified_stages
 
 
+def _get_label_type(label_field, sample_collection):
+    return (
+        sample_collection.exists(label_field)
+        .first()[label_field]
+        .__class__.__name__
+    )
+
+
+def _validate_eval_result(stage, sample_collection, required_brain_runs):
+    if "match_labels" not in stage or "eval" not in stage:
+        return stage
+    elif "evaluation" not in required_brain_runs:
+        return stage
+
+    pred_field = required_brain_runs["evaluation"]["pred_field"]
+    eval_key = required_brain_runs["evaluation"]["key"]
+
+    label_type = _get_label_type(pred_field, sample_collection)
+    if label_type in ["Detections", "Polylines"]:
+        for patt in ["fp", "tp", "fn"]:
+            if f"{eval_key}_{patt}" in stage:
+                return f'match_labels(filter=F("{eval_key}") == "{patt}", fields="{pred_field}")'
+
+    return stage
+
+
 def _postprocess_stages(
     stages,
     sample_collection,
@@ -1221,7 +1263,7 @@ def _postprocess_stages(
             _stage, sample_collection, required_brain_runs, unmatched_classes
         )
         _stage = _validate_label_fields(
-            _stage, sample_collection, label_classes
+            _stage, sample_collection, label_classes, required_brain_runs
         )
         _stage = _validate_label_class_case(_stage, label_classes)
         _stage = _validate_stages_ner(_stage, label_classes)
@@ -1241,6 +1283,9 @@ def _postprocess_stages(
         _stage = _validate_negation_operator(_stage)
         _stage = _validate_bool_condition(_stage)
         _stage = _validate_text_similarity(_stage)
+        _stage = _validate_eval_result(
+            _stage, sample_collection, required_brain_runs
+        )
         new_stages.append(_stage)
 
     new_stages = _handle_duplicate_stages(new_stages)
