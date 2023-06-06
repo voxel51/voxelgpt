@@ -95,13 +95,11 @@ def load_effective_prompt_prefix_template():
 def format_chat_history(chat_history):
     user_history = [ch[6:] for ch in chat_history if ch[:6] == "User: "]
     return "\n".join(user_history) + "\n"
-    # return "\n".join(chat_history) + "\n"
 
 
 def generate_dataset_view_prompt(chat_history):
     prompt = load_effective_prompt_prefix_template()
     prompt += format_chat_history(chat_history)
-    print(format_chat_history(chat_history))
     prompt += "Effective prompt: "
     return prompt
 
@@ -142,30 +140,13 @@ def _process_response(response, query):
 
     return response
 
-    # if "no" in response.lower() and "no" not in query.lower():
-    #     return query
-    # if "?" not in response:
-    #     return query
-    # if "original" in response.lower():
-    #     return query
-    # if "\"" in response:
-    #     return query
-    # if "sorry" in response:
-    # else:
-    #     return response
-
 
 def generate_effective_query(chat_history):
     query = _process_query(chat_history[-1])
-    print("query: ", query)
     if not _history_is_relevant(query):
-        print("history is not relevant")
         return query
 
-    print("history is relevant")
     prompt = generate_dataset_view_prompt(chat_history)
     response = get_llm().call_as_llm(prompt).strip()
-    print("response: ", response)
     response = _process_response(response, query)
-    print("response: ", response)
     return response
