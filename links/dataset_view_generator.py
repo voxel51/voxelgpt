@@ -757,6 +757,35 @@ def _validate_match_tags(stage, sample_collection):
     return f'match_tags([{",".join(selected_tags)}]{other_args})'
 
 
+def _validate_sort_by(stage, sample_collection, required_brain_runs):
+    contents = stage[8:-1]
+
+    if "F" in contents or "." in contents:
+        return stage
+
+    num_commas = contents.count(",")
+
+    if num_commas > 1:
+        return stage
+    elif num_commas == 0:
+        field = contents
+    else:
+        field, order = contents.split(",")
+
+    field = field.replace('"', "").replace("'", "")
+    if field in sample_collection.first().field_names:
+        return stage
+    else:
+        if "text_similarity" not in required_brain_runs:
+            sim_key = _get_first_image_text_similarity_key(sample_collection)
+            if not sim_key:
+                return "_MORE_"
+        else:
+            sim_key = required_brain_runs["text_similarity"]["key"]
+
+    return f'sort_by_similarity("{field}", brain_key="{sim_key}", k = 100)'
+
+
 def _validate_match_labels(stage, label_classes):
     """
     Correct a few common errors in match_labels stage.
@@ -1120,6 +1149,10 @@ def _postprocess_stages(
             _stage = _validate_match_labels(_stage, label_classes)
         if "match_tags" in _stage:
             _stage = _validate_match_tags(_stage, sample_collection)
+        if "sort_by(" in _stage:
+            _stage = _validate_sort_by(
+                _stage, sample_collection, required_brain_runs
+            )
         _stage = _validate_negation_operator(_stage)
         _stage = _validate_bool_condition(_stage)
         _stage = _validate_text_similarity(_stage)
