@@ -813,7 +813,61 @@ def _validate_match_labels(stage, label_classes):
         ### if no label field names or class names are found, return None
         return None
 
+    def _convert_count_match_labels_to_match(stage):
+        contents = stage[13:-1]
+        class_name = contents.split("count(")[1].split(")")[0]
+        class_name = class_name.replace('"', "").replace("'", "")
+        field = get_label_field(contents, [class_name])
+        length_expr = contents.split("count(")[1].split(")")[1].split(",")[0]
+        filter_expr = f'F("label") == "{class_name}"'
+        return f'match(F("{field}.detections").filter({filter_expr}).length(){length_expr})'
+
+    def _convert_length_match_labels_to_match(stage):
+        contents = stage[13:-1]
+        length_expr = contents.split("length()")[1].split(",")[0]
+        if "filter=" in contents:
+            filter_expr = contents.split("filter=")[1].split(".length()")[0]
+        elif "filter" in contents:
+            filter_expr = contents.split("filter")[1].split(".length()")[0]
+        else:
+            filter_expr = contents.split(".length()")[0]
+
+        unique_classes = get_unique_class_list(label_classes)
+        present_classes = [
+            class_name
+            for class_name in unique_classes
+            if class_name in contents
+        ]
+        field = get_label_field(contents, present_classes)
+
+        if len(present_classes) == 1 and (
+            "!=" in filter_expr or "~" in filter_expr
+        ):
+            filter_expr = f'F("label") != "{present_classes[0]}"'
+        elif len(present_classes) == 1 and (
+            "==" in filter_expr
+            or "contains" in filter_expr
+            or "in" in filter_expr
+        ):
+            filter_expr = f'F("label") == "{present_classes[0]}"'
+        elif len(present_classes) > 1 and "!=" or "~" in filter_expr:
+            filter_expr = f'~ (F("label").is_in({present_classes}))'
+        else:
+            filter_expr = f'F("label").is_in({present_classes})'
+
+        if field is None:
+            return "_MORE_"
+
+        return f'match(F("{field}.detections").filter({filter_expr}).length(){length_expr})'
+
     stage = stage.replace("in_classes", "is_in")
+    stage = stage.replace("contains_labels", "contains")
+
+    if "length()" in stage:
+        return _convert_length_match_labels_to_match(stage)
+
+    if "count" in stage:
+        return _convert_count_match_labels_to_match(stage)
 
     contents = stage[13:-1]
     if "labels" in contents and "{" in contents:
