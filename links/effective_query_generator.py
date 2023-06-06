@@ -160,6 +160,7 @@ def _process_response(response, query):
 
     if any(key in _response for key in _QUERY_TYPE_KEYS):
         return query
+
     return response
 
 
