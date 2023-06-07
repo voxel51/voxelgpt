@@ -875,18 +875,62 @@ def _replace_match_labels_label(stage, label_classes):
 
 
 def _remove_double_match_labels_labels(stage):
-    if 'F("label").label' in stage:
-        return stage.replace('F("label").label', 'F("label")')
+    if ".label" in stage:
+        return stage.replace(".label", "")
+    return stage
+
+
+def _replace_match_labels_logical_operators(stage):
+    contents = stage[13:-1]
+    if "," in contents:
+        if len(contents.split(",")) > 2:
+            return stage
+        filter_expr, fields_expr = contents.split(",")
+        if "F(" in fields_expr:
+            filter_expr, fields_expr = fields_expr, filter_expr
+    else:
+        filter_expr = contents
+        fields_expr = None
+
+    filter_expr = filter_expr.split("filter")[1].strip()[1:]
+
+    logical_ops = [" and ", " or ", " &", " |"]
+    if not any([op in filter_expr for op in logical_ops]):
+        return stage
+
+    if " and " in filter_expr or " & " in filter_expr:
+        filter_expr = filter_expr.replace(" and ", " & ")
+        filter_expr_parts = filter_expr.split(" & ")
+        print(filter_expr_parts)
+        filter_expr_parts = [f"({f})" for f in filter_expr_parts]
+        filter_expr = " & ".join(filter_expr_parts)
+    if " or " in filter_expr or " | " in filter_expr:
+        filter_expr = filter_expr.replace(" or ", " | ")
+        filter_expr_parts = filter_expr.split(" | ")
+        filter_expr_parts = [f"({f})" for f in filter_expr_parts]
+        filter_expr = " | ".join(filter_expr_parts)
+
+    if fields_expr:
+        contents = f"filter={filter_expr}, {fields_expr}"
+    else:
+        contents = f"filter={filter_expr}"
+    stage = f"match_labels({contents})"
     return stage
 
 
 def _postprocess_match_labels(stage, label_classes):
+    print("stage: ", stage)
     if "match_labels" not in stage:
         return stage
     stage = _remove_match_labels_field_name(stage)
     stage = _remove_match_labels_contains(stage)
     stage = _replace_match_labels_label(stage, label_classes)
     stage = _remove_double_match_labels_labels(stage)
+    stage = _replace_match_labels_logical_operators(stage)
+
+    pattern = r'F\("label\..*?"\)'
+    replacement = 'F("label")'
+    stage = re.sub(pattern, replacement, stage)
     return stage
 
 
@@ -1350,6 +1394,14 @@ def _validate_eval_result(stage, sample_collection, required_brain_runs):
     return stage
 
 
+def _validate_logical_operators(_stage):
+    if " or " in _stage:
+        _stage = _stage.replace(" or ", " | ")
+    if " and " in _stage:
+        _stage = _stage.replace(" and ", " & ")
+    return _stage
+
+
 def _postprocess_stages(
     stages,
     sample_collection,
@@ -1389,6 +1441,7 @@ def _postprocess_stages(
         _stage = _validate_eval_result(
             _stage, sample_collection, required_brain_runs
         )
+        _stage = _validate_logical_operators(_stage)
         new_stages.append(_stage)
 
     new_stages = _handle_duplicate_stages(new_stages)
