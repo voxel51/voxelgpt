@@ -124,7 +124,6 @@ TEXT_SIM_KEYWORDS = (
 
 def generate_evaluation_prompt(sample_collection, eval_key):
     schema = sample_collection.get_field_schema()
-
     prompt = EVALUATION_PROMPT_TEMPLATE.format(eval_key=eval_key)
 
     if f"{eval_key}_tp" in schema:
@@ -341,6 +340,7 @@ def _get_first_image_text_similarity_key(sample_collection):
             and not info.config.patches_field
         ):
             return run
+
     return None
 
 
@@ -367,20 +367,27 @@ def _convert_matches_to_text_similarities(
         )
         return new_stage
 
+    def _insensitive_match(entity, stage):
+        el = entity.lower()
+        st = stage.lower()
+        if el in st or el[:-1] in st:
+            return True
+
     def _loop_over_unmatched_classes(stage):
         if "sort_by_similarity" in stage:
             return stage
         for entity in unmatched_classes:
-            if entity in stage:
+            if _insensitive_match(entity, stage):
                 return _replace_stage(entity)
         return stage
 
     if "match" in stage and "label" in stage:
         return _loop_over_unmatched_classes(stage)
-    elif "filter_labels" in stage:
+
+    if "filter_labels" in stage:
         return _loop_over_unmatched_classes(stage)
-    else:
-        return stage
+
+    return stage
 
 
 def _validate_match(
@@ -474,15 +481,14 @@ def _validate_stages_ner(stage, label_classes):
 
     if "sort_by_similarity" in stage or "map_labels" in stage:
         return stage
-    else:
-        new_stage = stage
-        unique_label_classes_dict = _get_unique_label_classes_dict(
-            label_classes
-        )
-        for ner_class, label_class in unique_label_classes_dict.items():
-            if ner_class in stage and type(label_class) == str:
-                new_stage = new_stage.replace(ner_class, label_class)
-        return new_stage
+
+    new_stage = stage
+    unique_label_classes_dict = _get_unique_label_classes_dict(label_classes)
+    for ner_class, label_class in unique_label_classes_dict.items():
+        if ner_class in stage and type(label_class) == str:
+            new_stage = new_stage.replace(ner_class, label_class)
+
+    return new_stage
 
 
 def get_unique_class_list(label_classes):
@@ -491,6 +497,7 @@ def get_unique_class_list(label_classes):
         for class_name in class_list:
             if class_name not in unique_classes:
                 unique_classes.append(class_name)
+
     return unique_classes
 
 
@@ -503,22 +510,24 @@ def _validate_label_class_case(stage, label_classes):
 
     if "sort_by_similarity" in stage or "map_labels" in stage:
         return stage
-    else:
-        new_stage = stage
-        for class_name in unique_classes:
-            new_stage = re.sub(
-                class_name, class_name, new_stage, flags=re.IGNORECASE
-            )
-        return new_stage
+
+    new_stage = stage
+    for class_name in unique_classes:
+        new_stage = re.sub(
+            class_name, class_name, new_stage, flags=re.IGNORECASE
+        )
+
+    return new_stage
 
 
 def _infer_stage_evaluation_type(stage):
     if any(keyword in stage for keyword in DETECTION_KEYWORDS):
         return "detection"
-    elif any(keyword in stage for keyword in CLASSIFICATION_KEYWORDS):
+
+    if any(keyword in stage for keyword in CLASSIFICATION_KEYWORDS):
         return "classification"
-    else:
-        return None
+
+    return None
 
 
 def _get_first_detection_eval_key(sample_collection):
@@ -527,10 +536,13 @@ def _get_first_detection_eval_key(sample_collection):
         eval_cls = sample_collection.get_evaluation_info(ek).config.cls
         if "openimages" in eval_cls:
             return ek
-        elif "coco" in eval_cls:
+
+        if "coco" in eval_cls:
             return ek
-        elif "activitynet" in eval_cls:
+
+        if "activitynet" in eval_cls:
             return ek
+
     return None
 
 
@@ -540,16 +552,18 @@ def _get_first_classification_eval_key(sample_collection):
         eval_cls = sample_collection.get_evaluation_info(ek).config.cls
         if "classification" in eval_cls:
             return ek
+
     return None
 
 
 def _get_first_valid_eval_key(sample_collection, eval_type):
     if eval_type == "detection":
         return _get_first_detection_eval_key(sample_collection)
-    elif eval_type == "classification":
+
+    if eval_type == "classification":
         return _get_first_classification_eval_key(sample_collection)
-    else:
-        return None
+
+    return None
 
 
 def _correct_eval_run(stage, sample_collection, runs):
@@ -564,8 +578,8 @@ def _correct_eval_run(stage, sample_collection, runs):
 
     if eval_key:
         return stage.replace("EVAL_KEY", eval_key)
-    else:
-        return "_MORE_"
+
+    return "_MORE_"
 
 
 def _correct_uniqueness_run(stage, sample_collection, runs):
@@ -585,8 +599,8 @@ def _correct_uniqueness_run(stage, sample_collection, runs):
 
     if uniqueness_field:
         return stage.replace("UNIQUENESS_FIELD", uniqueness_field)
-    else:
-        return "_MORE_"
+
+    return "_MORE_"
 
 
 def _correct_text_sim_run(stage, sample_collection, runs):
@@ -606,8 +620,8 @@ def _correct_text_sim_run(stage, sample_collection, runs):
 
     if text_sim_key:
         return stage.replace("TEXT_SIM_KEY", text_sim_key)
-    else:
-        return "_MORE_"
+
+    return "_MORE_"
 
 
 def _correct_image_sim_run(stage, sample_collection, runs):
@@ -673,7 +687,9 @@ def _has_confidences(sample_collection, field):
     return confs and confs[0] is not None
 
 
-def _validate_label_fields(stage, sample_collection, label_classes):
+def _validate_label_fields(
+    stage, sample_collection, label_classes, required_brain_runs
+):
     """
     Ensure that label fields are correct.
     """
@@ -696,7 +712,13 @@ def _validate_label_fields(stage, sample_collection, label_classes):
             except:
                 pass
 
-        return label_fields[0]
+        if len(label_fields) > 0:
+            return label_fields[0]
+
+        if "evaluation" in required_brain_runs:
+            return required_brain_runs["evaluation"]["pred_field"]
+
+        return None
 
     new_stage = stage
 
@@ -718,7 +740,8 @@ def _validate_label_fields(stage, sample_collection, label_classes):
 
     if "predictions" in stage and "predictions" not in label_fields:
         pred_field = _get_predictions_field()
-        new_stage = new_stage.replace("predictions", pred_field)
+        if pred_field:
+            new_stage = new_stage.replace("predictions", pred_field)
 
     return new_stage
 
@@ -757,6 +780,194 @@ def _validate_match_tags(stage, sample_collection):
     return f'match_tags([{",".join(selected_tags)}]{other_args})'
 
 
+def _validate_sort_by(stage, sample_collection, required_brain_runs):
+    contents = stage[8:-1]
+
+    if "." in contents:
+        return stage
+    elif "F" in contents:
+        F_expr = contents.split(",")[0]
+        if F_expr[-2:] != '")':
+            return stage
+
+    num_commas = contents.count(",")
+
+    if num_commas > 1:
+        return stage
+    elif num_commas == 0:
+        field = contents
+    else:
+        field, order = contents.split(",")
+
+    field = field.replace('"', "").replace("'", "")
+    if "F(" in field:
+        field = field.split("F(")[1].split(")")[0]
+
+    if field in sample_collection.first().field_names:
+        return stage
+    else:
+        if "text_similarity" not in required_brain_runs:
+            sim_key = _get_first_image_text_similarity_key(sample_collection)
+            if not sim_key:
+                return "_MORE_"
+        else:
+            sim_key = required_brain_runs["text_similarity"]["key"]
+
+    return f'sort_by_similarity("{field}", brain_key="{sim_key}", k = 100)'
+
+
+def _remove_match_labels_field_name(stage):
+    contents = stage[13:-1]
+    if "," in contents:
+        if len(contents.split(",")) > 2:
+            return stage
+        F_expr, fields_expr = contents.split(",")
+        if "F(" in fields_expr:
+            F_expr, fields_expr = fields_expr, F_expr
+    else:
+        F_expr = contents
+
+    F_contents = F_expr.split("(")[1].split(")")[0]
+    if "." not in F_contents:
+        return stage
+
+    field = F_contents.split(".")[0].replace('"', "").replace("'", "")
+    stage = stage.replace(F_contents, '"label"')
+
+    if "," in contents:
+        if len(contents.split(",")) > 2:
+            return stage
+        filter_arg, fields_arg = contents.split(",")
+        if "F(" in fields_arg:
+            filter_arg, fields_arg = fields_arg, filter_arg
+        filter_arg = filter_arg.replace(field, "label")
+        contents = f"{filter_arg}, {fields_arg}"
+    else:
+        contents = contents.replace(field, "label")
+
+    stage = f"match_labels({contents})"
+
+    if "fields" not in stage:
+        contents = stage[13:-1]
+        stage = f'match_labels({contents}, fields="{field}")'
+
+    return stage
+
+
+def _remove_match_labels_contains(stage):
+    if "contains" not in stage:
+        return stage
+
+    return stage.replace("contains", "is_in")
+
+
+def _replace_match_labels_label(stage, label_classes):
+    contents = stage[13:-1]
+    if "," in contents:
+        if len(contents.split(",")) > 2:
+            return stage
+        F_expr, fields_expr = contents.split(",")
+        if "F(" in fields_expr:
+            F_expr, fields_expr = fields_expr, F_expr
+    else:
+        F_expr = contents
+
+    F_contents = F_expr.split("(")[1].split(")")[0]
+    for field_name in label_classes.keys():
+        if field_name in F_contents:
+            stage = stage.replace(field_name, "label")
+            if "fields" not in stage:
+                contents = stage[13:-1]
+                stage = f'match_labels({contents}, fields="{field_name}")'
+
+            return stage
+
+    return stage
+
+
+def _remove_double_match_labels_labels(stage):
+    if ".label" in stage:
+        return stage.replace(".label", "")
+
+    return stage
+
+
+def _replace_match_labels_logical_operators(stage):
+    contents = stage[13:-1]
+    if "," in contents:
+        if len(contents.split(",")) > 2:
+            return stage
+        filter_expr, fields_expr = contents.split(",")
+        if "F(" in fields_expr:
+            filter_expr, fields_expr = fields_expr, filter_expr
+    else:
+        filter_expr = contents
+        fields_expr = None
+
+    filter_expr = filter_expr.split("filter")[1].strip()[1:]
+
+    logical_ops = [" and ", " or ", " &", " |"]
+    if not any([op in filter_expr for op in logical_ops]):
+        return stage
+
+    if " and " in filter_expr or " & " in filter_expr:
+        filter_expr = filter_expr.replace(" and ", " & ")
+        filter_expr_parts = filter_expr.split(" & ")
+        filter_expr_parts = [f"({f})" for f in filter_expr_parts]
+        filter_expr = " & ".join(filter_expr_parts)
+    if " or " in filter_expr or " | " in filter_expr:
+        filter_expr = filter_expr.replace(" or ", " | ")
+        filter_expr_parts = filter_expr.split(" | ")
+        filter_expr_parts = [f"({f})" for f in filter_expr_parts]
+        filter_expr = " | ".join(filter_expr_parts)
+
+    if fields_expr:
+        contents = f"filter={filter_expr}, {fields_expr}"
+    else:
+        contents = f"filter={filter_expr}"
+
+    return f"match_labels({contents})"
+
+
+def _clean_match_labels_F_expr(stage):
+    pattern = r'F\("label\..*?"\)'
+    replacement = 'F("label")'
+    return re.sub(pattern, replacement, stage)
+
+
+def _add_match_labels_fields_expr(stage, label_classes):
+    if "fields=" in stage or stage.count(",") != 1:
+        return stage
+
+    contents = stage[13:-1]
+
+    filter_expr, fields_expr = contents.split(",")
+    if "filter" in fields_expr:
+        filter_expr, fields_expr = fields_expr, filter_expr
+
+    for field_name in label_classes.keys():
+        if field_name in fields_expr:
+            fields_expr = f'fields="{field_name}"'
+            contents = f"{filter_expr}, {fields_expr}"
+            stage = f"match_labels({contents})"
+
+    return stage
+
+
+def _postprocess_match_labels(stage, label_classes):
+    if "match_labels" not in stage:
+        return stage
+
+    stage = _remove_match_labels_field_name(stage)
+    stage = _remove_match_labels_contains(stage)
+    stage = _replace_match_labels_label(stage, label_classes)
+    stage = _remove_double_match_labels_labels(stage)
+    stage = _replace_match_labels_logical_operators(stage)
+    stage = _clean_match_labels_F_expr(stage)
+    stage = _add_match_labels_fields_expr(stage, label_classes)
+    return stage
+
+
 def _validate_match_labels(stage, label_classes):
     """
     Correct a few common errors in match_labels stage.
@@ -777,7 +988,74 @@ def _validate_match_labels(stage, label_classes):
         ### if no label field names or class names are found, return None
         return None
 
+    def _convert_count_match_labels_to_match(stage):
+        contents = stage[13:-1]
+        class_name = contents.split("count(")[1].split(")")[0]
+        class_name = class_name.replace('"', "").replace("'", "")
+        field = get_label_field(contents, [class_name])
+        length_expr = contents.split("count(")[1].split(")")[1].split(",")[0]
+        filter_expr = f'F("label") == "{class_name}"'
+        return f'match(F("{field}.detections").filter({filter_expr}).length(){length_expr})'
+
+    def _convert_length_match_labels_to_match(stage):
+        contents = stage[13:-1]
+        length_expr = contents.split("length()")[1].split(",")[0]
+        if "filter=" in contents:
+            filter_expr = contents.split("filter=")[1].split(".length()")[0]
+        elif "filter" in contents:
+            filter_expr = contents.split("filter")[1].split(".length()")[0]
+        else:
+            filter_expr = contents.split(".length()")[0]
+
+        unique_classes = get_unique_class_list(label_classes)
+        present_classes = [
+            class_name
+            for class_name in unique_classes
+            if class_name in contents
+        ]
+        field = get_label_field(contents, present_classes)
+
+        if len(present_classes) == 1 and (
+            "!=" in filter_expr or "~" in filter_expr
+        ):
+            filter_expr = f'F("label") != "{present_classes[0]}"'
+        elif len(present_classes) == 1 and (
+            "==" in filter_expr
+            or "contains" in filter_expr
+            or "in" in filter_expr
+        ):
+            filter_expr = f'F("label") == "{present_classes[0]}"'
+        elif len(present_classes) > 1 and "!=" or "~" in filter_expr:
+            filter_expr = f'~ (F("label").is_in({present_classes}))'
+        else:
+            filter_expr = f'F("label").is_in({present_classes})'
+
+        if field is None:
+            return "_MORE_"
+
+        return f'match(F("{field}.detections").filter({filter_expr}).length(){length_expr})'
+
+    def _convert_all_match_labels_to_match(stage):
+        contents = stage[13:-1]
+        all_contents = contents.split(".all(")[1].split(")")[0]
+        if "fields" in contents:
+            field = contents.split("fields=")[1].split('"')[1]
+        else:
+            field = "ground_truth"
+
+        return f'match(F("{field}.detections.label").contains({all_contents}, all=True))'
+
     stage = stage.replace("in_classes", "is_in")
+    stage = stage.replace("contains_labels", "contains")
+
+    if "length()" in stage:
+        return _convert_length_match_labels_to_match(stage)
+
+    if "count" in stage:
+        return _convert_count_match_labels_to_match(stage)
+
+    if ".all(" in stage:
+        return _convert_all_match_labels_to_match(stage)
 
     contents = stage[13:-1]
     if "labels" in contents and "{" in contents:
@@ -806,6 +1084,7 @@ def _validate_match_labels(stage, label_classes):
         contents = f"filter = {classes_str}{field_names_str}"
         if ".label" in contents:
             contents = contents.replace(".label", "")
+
         return f"match_labels({contents})"
     elif "is_in" in contents:
         is_in = contents.split("is_in([")[1].split("])")[0]
@@ -817,6 +1096,7 @@ def _validate_match_labels(stage, label_classes):
         contents = f"filter = {classes_str}{field_names_str}"
         if ".label" in contents:
             contents = contents.replace(".label", "")
+
         return f"match_labels({contents})"
     elif "filter=" in contents:
         if ".label" in contents:
@@ -829,6 +1109,15 @@ def _validate_match_labels(stage, label_classes):
                     contents = f'{contents}, fields = "{field}"'
 
                 return f"match_labels({contents})"
+            elif f'F("{field}.confidence")' in contents:
+                contents = contents.replace(
+                    f'F("{field}.confidence")', f'F("confidence")'
+                )
+                if "fields" not in contents:
+                    contents = f'{contents}, fields = "{field}"'
+
+                return f"match_labels({contents})"
+
         return stage
     elif "==" in contents and "label" not in contents:
         unique_classes = get_unique_class_list(label_classes)
@@ -843,6 +1132,7 @@ def _validate_match_labels(stage, label_classes):
             field = get_label_field(contents, present_classes)
             if not field:
                 return stage
+
             contents = (
                 f"fields = '{field}', filter = F('label') == '{present_class}'"
             )
@@ -877,7 +1167,6 @@ def _validate_match_labels(stage, label_classes):
             return f"match_labels({contents})"
         else:
             return stage
-
     else:
         return stage
 
@@ -1063,6 +1352,7 @@ def _validate_bool_condition(stage):
             # Extract the contents
             contents = stage[opening_paren_index + 1 : -1]
             return f"{stage_name}(~({contents}))"
+
     return stage
 
 
@@ -1072,6 +1362,7 @@ def load_similarity_query_prompt():
     if key not in cache:
         with open(SIMILARITY_QUERY_PROMPT_PATH, "r") as f:
             cache[key] = f.read()
+
     return cache[key]
 
 
@@ -1086,10 +1377,112 @@ def extract_similarity_query(stage):
 def _validate_text_similarity(stage):
     if "sort_by_similarity" not in stage:
         return stage
+
     if any(keyword in stage for keyword in TEXT_SIM_KEYWORDS):
         return extract_similarity_query(stage)
-    else:
+
+    return stage
+
+
+def _get_sort_by_similarity_stage(stages):
+    for stage in stages:
+        if "sort_by_similarity(" in stage:
+            return stage
+
+    return None
+
+
+def _handle_duplicate_stages(stages):
+    sim_sort_stage = _get_sort_by_similarity_stage(stages)
+    if not sim_sort_stage:
+        return stages
+
+    sim_query = sim_sort_stage.split("(")[1].split(",")[0]
+    sim_query = sim_query.replace('"', "").replace("'", "")
+
+    verified_stages = []
+    for stage in stages:
+        if "sort_by_similarity" in stage:
+            verified_stages.append(stage)
+        elif sim_query not in stage:
+            verified_stages.append(stage)
+
+    return verified_stages
+
+
+def _get_label_type(label_field, sample_collection):
+    return (
+        sample_collection.exists(label_field)
+        .first()[label_field]
+        .__class__.__name__
+    )
+
+
+def _validate_eval_result(stage, sample_collection, required_brain_runs):
+    if "match_labels" not in stage or "eval" not in stage:
         return stage
+
+    if "evaluation" not in required_brain_runs:
+        return stage
+
+    pred_field = required_brain_runs["evaluation"]["pred_field"]
+    eval_key = required_brain_runs["evaluation"]["key"]
+
+    label_type = _get_label_type(pred_field, sample_collection)
+
+    contents = "(".join(stage.split("(")[1:])[:-1]
+    if "fields" in contents and contents.startswith("filter"):
+        filter_expr = contents.split("fields")[0]
+    else:
+        filter_expr = contents
+
+    filter_expr = filter_expr.replace("filter", "").strip()[1:]
+
+    if label_type in ["Detections", "Polylines"]:
+        if "|" in filter_expr or "&" in filter_expr:
+            conds = (
+                filter_expr.split("|")
+                if "|" in filter_expr
+                else filter_expr.split("&")
+            )
+        else:
+            conds = [filter_expr]
+
+        new_conds = []
+        for cond in conds:
+            if not any(patt in cond for patt in ["fp", "tp", "fn"]):
+                new_conds.append(cond)
+                continue
+            else:
+                for patt in ["fp", "tp", "fn"]:
+                    if patt in cond:
+                        if f"{eval_key}_{patt}" in cond:
+                            new_conds.append(f'(F("{eval_key}") == "{patt}")')
+                            continue
+                        else:
+                            new_conds.append(cond)
+                            continue
+                    else:
+                        continue
+
+        filter_expr = (
+            " | ".join(new_conds)
+            if "|" in filter_expr
+            else " & ".join(new_conds)
+        )
+        return f'match_labels(filter={filter_expr}, fields="{pred_field}")'
+
+    return stage
+
+
+def _validate_logical_operators(_stage):
+    if " or " in _stage:
+        _stage = _stage.replace(" or ", " | ")
+
+    if " and " in _stage:
+        _stage = _stage.replace(" and ", " & ")
+
+    return _stage
 
 
 def _postprocess_stages(
@@ -1107,7 +1500,7 @@ def _postprocess_stages(
             _stage, sample_collection, required_brain_runs, unmatched_classes
         )
         _stage = _validate_label_fields(
-            _stage, sample_collection, label_classes
+            _stage, sample_collection, label_classes, required_brain_runs
         )
         _stage = _validate_label_class_case(_stage, label_classes)
         _stage = _validate_stages_ner(_stage, label_classes)
@@ -1118,12 +1511,23 @@ def _postprocess_stages(
             _stage = _validate_filter_labels(_stage, label_classes)
         if "match_labels" in _stage:
             _stage = _validate_match_labels(_stage, label_classes)
+            _stage = _postprocess_match_labels(_stage, label_classes)
         if "match_tags" in _stage:
             _stage = _validate_match_tags(_stage, sample_collection)
+        if "sort_by(" in _stage:
+            _stage = _validate_sort_by(
+                _stage, sample_collection, required_brain_runs
+            )
         _stage = _validate_negation_operator(_stage)
         _stage = _validate_bool_condition(_stage)
         _stage = _validate_text_similarity(_stage)
+        _stage = _validate_eval_result(
+            _stage, sample_collection, required_brain_runs
+        )
+        _stage = _validate_logical_operators(_stage)
         new_stages.append(_stage)
+
+    new_stages = _handle_duplicate_stages(new_stages)
 
     return new_stages
 

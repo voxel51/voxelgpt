@@ -108,9 +108,25 @@ def _keyword_is_present(query):
     return "now " in query.lower()
 
 
+def _show_keyword_is_present(query):
+    if "show" in query.lower() or "display" in query.lower():
+        return True
+
+
+def _docs_keyword_is_present(query):
+    if "docs" in query.lower() or "fiftyone" in query.lower():
+        return True
+
+
 def _history_is_relevant(query):
     if _keyword_is_present(query):
         return True
+
+    if _show_keyword_is_present(query):
+        return False
+
+    if _docs_keyword_is_present(query):
+        return False
 
     prompt = generate_history_relevance_prompt(query)
     response = get_llm().call_as_llm(prompt)
@@ -134,10 +150,15 @@ _NO_HISTORY_KEYS = [
     "asking",
 ]
 
+_QUERY_TYPE_KEYS = ["show", "display", "docs", "fiftyone", "documentation"]
+
 
 def _process_response(response, query):
     _response = response.lower()
     if any(key in _response for key in _NO_HISTORY_KEYS):
+        return query
+
+    if any(key in _response and key not in query for key in _QUERY_TYPE_KEYS):
         return query
 
     return response

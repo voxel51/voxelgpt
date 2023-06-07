@@ -17,3 +17,9 @@ You must not respond with what you think the answer to the user's effective quer
 Just because the history is relevant does not mean ALL of the history is relevant. You must determine what is relevant to the current query and what is not. You will be penalized if you do not.
 
 You must end the query with a question mark if you think the user intended to ask a question. You will be penalized if you do not.
+
+If "show" or "display" is in the user's query, your effective query must contain "show" or "display". You will be penalized if you do not.
+
+If "fiftyone" or "docs" is in the user's query, your effective query must contain "fiftyone" or "docs". You will be penalized if you do not.
+
+Do not include phrases like "What is the code to" in your effective query. You will be penalized if you do.
