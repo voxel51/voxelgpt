@@ -158,7 +158,7 @@ def _process_response(response, query):
     if any(key in _response for key in _NO_HISTORY_KEYS):
         return query
 
-    if any(key in _response for key in _QUERY_TYPE_KEYS):
+    if any(key in _response and key not in query for key in _QUERY_TYPE_KEYS):
         return query
 
     return response
