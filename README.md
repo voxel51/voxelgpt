@@ -127,6 +127,12 @@ your plugins directory:
 ln -s "$(pwd)" "$(fiftyone config plugins_dir)/voxelgpt"
 ```
 
+### FiftyOne Teams
+
+Want to add VoxelGPT to your
+[FiftyOne Teams](https://voxel51.com/fiftyone-teams) deployment? You can!
+[Instructions here](FIFTYONE_TEAMS.md).
+
 ## Using VoxelGPT in the App
 
 You can use VoxelGPT in the FiftyOne App by loading any dataset:
@@ -373,10 +379,6 @@ The current implementation supports most FiftyOne
 [view stages](https://docs.voxel51.com/user_guide/using_views.html), but
 certain stages like `concat()`, `mongo()`, and `geo_within()` are not yet
 supported. We're working on it!
-
-### Deploying on FiftyOne Teams
-
-Instructions for deploying the plugin to FiftyOne Teams are [here](DEPLOY.md).
 
 ## About FiftyOne
 
