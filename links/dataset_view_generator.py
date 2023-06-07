@@ -918,6 +918,13 @@ def _replace_match_labels_logical_operators(stage):
     return stage
 
 
+def _clean_match_labels_F_expr(stage):
+    pattern = r'F\("label\..*?"\)'
+    replacement = 'F("label")'
+    stage = re.sub(pattern, replacement, stage)
+    return stage
+
+
 def _add_match_labels_fields_expr(stage, label_classes):
     if "fields=" in stage or stage.count(",") != 1:
         return stage
@@ -944,13 +951,8 @@ def _postprocess_match_labels(stage, label_classes):
     stage = _replace_match_labels_label(stage, label_classes)
     stage = _remove_double_match_labels_labels(stage)
     stage = _replace_match_labels_logical_operators(stage)
-
-    pattern = r'F\("label\..*?"\)'
-    replacement = 'F("label")'
-    stage = re.sub(pattern, replacement, stage)
-
+    stage = _clean_match_labels_F_expr(stage)
     stage = _add_match_labels_fields_expr(stage, label_classes)
-
     return stage
 
 
