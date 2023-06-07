@@ -823,6 +823,17 @@ def _remove_match_labels_field_name(stage):
 
     field = F_contents.split(".")[0].replace('"', "").replace("'", "")
     stage = stage.replace(F_contents, '"label"')
+
+    if "," in contents:
+        filter_arg, fields_arg = contents.split(",")
+        if "F(" in fields_arg:
+            filter_arg, fields_arg = fields_arg, filter_arg
+        filter_arg = filter_arg.replace(field, "label")
+        contents = f"{filter_arg}, {fields_arg}"
+    else:
+        contents = contents.replace(field, "label")
+    stage = f"match_labels({contents})"
+
     if "fields" not in stage:
         contents = stage[13:-1]
         stage = f'match_labels({contents}, fields="{field}")'
@@ -849,7 +860,7 @@ def _replace_match_labels_label(stage, label_classes):
     F_contents = F_expr.split("(")[1].split(")")[0]
     for field_name in label_classes.keys():
         if field_name in F_contents:
-            stage.replace(field_name, "label")
+            stage = stage.replace(field_name, "label")
             if "fields" not in stage:
                 contents = stage[13:-1]
                 stage = f'match_labels({contents}, fields="{field_name}")'
