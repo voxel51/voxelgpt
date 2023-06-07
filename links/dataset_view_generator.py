@@ -901,7 +901,6 @@ def _replace_match_labels_logical_operators(stage):
     if " and " in filter_expr or " & " in filter_expr:
         filter_expr = filter_expr.replace(" and ", " & ")
         filter_expr_parts = filter_expr.split(" & ")
-        print(filter_expr_parts)
         filter_expr_parts = [f"({f})" for f in filter_expr_parts]
         filter_expr = " & ".join(filter_expr_parts)
     if " or " in filter_expr or " | " in filter_expr:
@@ -1408,11 +1407,48 @@ def _validate_eval_result(stage, sample_collection, required_brain_runs):
     eval_key = required_brain_runs["evaluation"]["key"]
 
     label_type = _get_label_type(pred_field, sample_collection)
-    if label_type in ["Detections", "Polylines"]:
-        for patt in ["fp", "tp", "fn"]:
-            if f"{eval_key}_{patt}" in stage:
-                return f'match_labels(filter=F("{eval_key}") == "{patt}", fields="{pred_field}")'
 
+    contents = "(".join(stage.split("(")[1:])[:-1]
+    if "fields" in contents and contents.startswith("filter"):
+        filter_expr = contents.split("fields")[0]
+    else:
+        filter_expr = contents
+
+    filter_expr = filter_expr.replace("filter", "").strip()[1:]
+
+    if label_type in ["Detections", "Polylines"]:
+        if "|" in filter_expr or "&" in filter_expr:
+            conds = (
+                filter_expr.split("|")
+                if "|" in filter_expr
+                else filter_expr.split("&")
+            )
+        else:
+            conds = [filter_expr]
+
+        new_conds = []
+        for cond in conds:
+            if not any(patt in cond for patt in ["fp", "tp", "fn"]):
+                new_conds.append(cond)
+                continue
+            else:
+                for patt in ["fp", "tp", "fn"]:
+                    if patt in cond:
+                        if f"{eval_key}_{patt}" in cond:
+                            new_conds.append(f'(F("{eval_key}") == "{patt}")')
+                            continue
+                        else:
+                            new_conds.append(cond)
+                            continue
+                    else:
+                        continue
+
+        filter_expr = (
+            " | ".join(new_conds)
+            if "|" in filter_expr
+            else " & ".join(new_conds)
+        )
+        return f'match_labels(filter={filter_expr}, fields="{pred_field}")'
     return stage
 
 
