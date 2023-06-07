@@ -10,18 +10,11 @@ You can upload VoxelGPT manually or via the
 
 ### Manual upload
 
-First clone and ZIP the repository:
-
-```shell
-git clone https://github.com/voxel51/voxelgpt
-cd voxelgpt
-
-git archive --format=zip --output=archives/voxelgpt.zip
-```
-
-Then follow
-[these instructions](https://docs.voxel51.com/teams/teams_plugins.html) to
-upload the ZIP via the UI.
+1.  Download a ZIP of the `main` branch
+    [from this link](https://github.com/voxel51/voxelgpt/archive/refs/heads/main.zip)
+2.  Follow
+    [these instructions](https://docs.voxel51.com/teams/teams_plugins.html) to
+    upload the ZIP via the UI
 
 ### Management SDK
 
@@ -29,12 +22,18 @@ You can also programmatically upload the plugin via the
 [Management SDK](https://docs.voxel51.com/teams/management_sdk.html):
 
 ```shell
-git clone https://github.com/voxel51/voxelgpt
+wget https://github.com/voxel51/voxelgpt/archive/refs/heads/main.zip
 ```
 
 ```py
 import fiftyone.management as fom
 
+fom.upload_plugin("main.zip", overwrite=True)
+```
+
+Or, if you already have the repository cloned locally, you can use:
+
+```py
 fom.upload_plugin("/path/to/voxelgpt", optimize=True, overwrite=True)
 ```
 
