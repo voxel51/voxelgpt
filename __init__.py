@@ -13,6 +13,7 @@ import traceback
 from bson import json_util
 
 import fiftyone as fo
+from fiftyone.core.utils import add_sys_path
 import fiftyone.operators as foo
 import fiftyone.operators.types as types
 
@@ -147,14 +148,13 @@ class AskVoxelGPTPanel(foo.Operator):
         try:
             with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
                 # pylint: disable=no-name-in-module
-                from voxelgpt import ask_voxelgpt_generator
                 import db
-                
-                # persist all user queries
+                from voxelgpt import ask_voxelgpt_generator
+
+                # Log user query
                 table = db.table(db.UserQueryTable)
-                query_id = table.insert_query(query)
-                print(f"Inserted query {query_id}")
-                ctx.params["query_id"] = query_id
+                ctx.params["query_id"] = table.insert_query(query)
+
                 streaming_message = None
 
                 for response in ask_voxelgpt_generator(
@@ -228,8 +228,6 @@ class AskVoxelGPTPanel(foo.Operator):
         message = str(exception)
         trace = traceback.format_exc()
         view = types.Error(label=message, description=trace)
-        print("----------VoxelGPT Error-----------")
-        print(message)
         return self.show_message(ctx, message, view)
 
     def done(self, ctx):
@@ -333,6 +331,7 @@ class OpenVoxelGPTPanelOnStartup(foo.Operator):
                 ),
             )
 
+
 class VoteForQuery(foo.Operator):
     @property
     def config(self):
@@ -357,36 +356,22 @@ class VoteForQuery(foo.Operator):
             required=True,
         )
         return types.Property(inputs)
-    
+
     def execute(self, ctx):
         query_id = ctx.params["query_id"]
         vote = ctx.params["vote"]
+
         with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
+            # pylint: disable=no-name-in-module
             import db
+
             table = db.table(db.UserQueryTable)
             if vote == "upvote":
                 table.upvote_query(query_id)
             elif vote == "downvote":
                 table.downvote_query(query_id)
             else:
-                raise Exception("Invalid vote type")
-            
-            
-                
-
-class add_sys_path(object):
-    def __init__(self, path, index=0):
-        self.path = path
-        self.index = index
-
-    def __enter__(self):
-        sys.path.insert(self.index, self.path)
-
-    def __exit__(self, *args):
-        try:
-            sys.path.remove(self.path)
-        except:
-            pass
+                raise ValueError(f"Invalid vote '{vote}'")
 
 
 def get_plugin_setting(dataset, plugin_name, key, default=None):
