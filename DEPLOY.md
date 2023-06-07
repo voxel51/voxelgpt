@@ -2,6 +2,24 @@
 
 > **You must have the [contributor steps](README.md#contributing) completed before running the commands below**
 
+## Release Script
+
+To create a release run the following.
+
+```sh
+yarn release 1.2.3-rc1
+```
+
+Replacing `1.2.3-rc1` with your version number.
+
+You can also follow these steps to manually create a release.
+
+**Build the latest**
+
+```
+yarn build
+```
+
 **Bump the version**
 
 Bump the version of the plugin by running:
