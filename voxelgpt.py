@@ -595,9 +595,9 @@ _HELP_MESSAGE_MARKDOWN = """
 Hi! I'm VoxelGPT, your AI assistant for computer vision.
 
 I can help you with the following tasks:
-- 🔎 **Querying your data** I can help you filter, match, sort, and more - without writing a line of code. Tell me what you'd like to see and I'll load the corresponding view
-- 💪 **Becoming a FiftyOne pro** I have access to the FiftyOne documentation, so I can help you learn how to use FiftyOne and find the information you're looking for
-- 📈 **Troubleshooting data quality** I can help you build better datasets and higher quality models by answering general knowledge questions about computer vision and machine learning
+- 🔎 **Querying your data:** I can help you filter, match, sort, and more - without writing a line of code. Tell me what you'd like to see and I'll load the corresponding view
+- 💪 **Becoming a FiftyOne pro:** I have access to the FiftyOne documentation, so I can help you learn how to use FiftyOne and find the information you're looking for
+- 📈 **Troubleshooting data quality:** I can help you build better datasets and higher quality models by answering general knowledge questions about computer vision and machine learning
 
 **Tips**
 - Be as specific as possible. The more specific you are, the better I can help you. I am still learning, so sometimes I need a little help understanding what you're asking
