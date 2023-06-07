@@ -47,14 +47,16 @@ def test_upvote_query(mock_client, mock_bigquery):
     table = UserQueryTable('project_id', mock_client, mock_bigquery, 'dataset_id')
     query_id = '1234'
 
+    mock_client.insert_rows.return_value = []
     table.upvote_query(query_id)
 
-    mock_client.query.assert_called_once()
+    mock_client.insert_rows.assert_called_once()
 
 def test_downvote_query(mock_client, mock_bigquery):
     table = UserQueryTable('project_id', mock_client, mock_bigquery, 'dataset_id')
     query_id = '1234'
 
+    mock_client.insert_rows.return_value = []
     table.downvote_query(query_id)
 
-    mock_client.query.assert_called_once()
+    mock_client.insert_rows.assert_called_once()

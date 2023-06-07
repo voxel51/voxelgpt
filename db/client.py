@@ -1,4 +1,3 @@
-import os
 import db.memory as memory
 
 def get_client(project_id):
