@@ -1,7 +1,10 @@
 # Releasing a new VoxelGPT version
 
-> You must have the [contributor steps](CONTRIBUTING.md) completed before
-> running the commands below
+This document is for VoxelGPT maintainers looking to release a new version of
+the plugin.
+
+Note that you must have the [contributor steps](CONTRIBUTING.md) completed
+before running the commands below.
 
 ## Release script
 
