@@ -118,7 +118,7 @@ export function MessageWrapper({ type, messages, receiving, waiting, last }) {
           )}
         </Grid>
         <Grid container item xs={1}>
-          {isIncoming && <Vote queryId={queryId} hidden={false} />}
+          {isIncoming && <Vote queryId={queryId} hidden={!hovered} />}
         </Grid>
       </Grid>
     </Grid>
