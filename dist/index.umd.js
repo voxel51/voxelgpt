@@ -18694,9 +18694,9 @@ Please use another name.`);
         container: true,
         sx: { background, padding: "1rem", "& p": { m: 0, mt: 1 } },
         justifyContent: "center",
-        children: /* @__PURE__ */ jsxRuntime.exports.jsxs(Grid$4, { container: true, item: true, lg: 8, spacing: 2, style: { minWidth: "500px" }, children: [
-          /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { item: true, container: true, xs: 1, children: /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { item: true, justifyContent: "center", children: isIncoming ? /* @__PURE__ */ jsxRuntime.exports.jsx(ChatGPTAvatar, {}) : /* @__PURE__ */ jsxRuntime.exports.jsx(Avatar$2, { alt: "you" }) }) }),
-          /* @__PURE__ */ jsxRuntime.exports.jsxs(Grid$4, { container: true, item: true, xs: 9, children: [
+        children: /* @__PURE__ */ jsxRuntime.exports.jsxs(Grid$4, { container: true, item: true, xs: 10, spacing: 2, style: { minWidth: "500px" }, children: [
+          /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { item: true, container: true, xs: 0.5, children: /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { item: true, justifyContent: "center", children: isIncoming ? /* @__PURE__ */ jsxRuntime.exports.jsx(ChatGPTAvatar, { size: 28 }) : /* @__PURE__ */ jsxRuntime.exports.jsx(Avatar$2, { sx: { width: 28, height: 28 }, alt: "you" }) }) }),
+          /* @__PURE__ */ jsxRuntime.exports.jsxs(Grid$4, { container: true, item: true, xs: 10.5, style: { marginTop: isIncoming ? "-7px" : "-5px" }, children: [
             messages.map((message, index) => /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { item: true, xs: 12, style: { paddingLeft: "1rem" }, children: /* @__PURE__ */ jsxRuntime.exports.jsx(
               Message,
               {
@@ -18705,9 +18705,9 @@ Please use another name.`);
               },
               index
             ) })),
-            showLoading && /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { container: true, item: true, xs: 12, sx: { pl: 1 }, children: /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { item: true, children: /* @__PURE__ */ jsxRuntime.exports.jsx(Box, { my: 1.5, children: /* @__PURE__ */ jsxRuntime.exports.jsx(LoadingIndicator, {}) }) }) })
+            showLoading && /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { container: true, item: true, xs: 12, sx: { paddingLeft: "1rem" }, children: /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { item: true, children: /* @__PURE__ */ jsxRuntime.exports.jsx(Box, { my: 1.5, children: /* @__PURE__ */ jsxRuntime.exports.jsx(LoadingIndicator, {}) }) }) })
           ] }),
-          /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { container: true, item: true, xs: 2, children: isIncoming && /* @__PURE__ */ jsxRuntime.exports.jsx(Vote, { queryId, hidden: !hovered }) })
+          /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { container: true, item: true, xs: 1, children: isIncoming && /* @__PURE__ */ jsxRuntime.exports.jsx(Vote, { queryId, hidden: !hovered }) })
         ] })
       }
     );
@@ -18731,10 +18731,18 @@ Please use another name.`);
       }
       setIsLoading(false);
     };
-    return /* @__PURE__ */ jsxRuntime.exports.jsxs("div", { style: { marginTop: "3px", opacity: hasVoted ? 0.5 : 1 }, children: [
-      showVoteUp && /* @__PURE__ */ jsxRuntime.exports.jsx(IconButton$1, { disabled: hasVoted, onClick: () => handleVote("upvote"), children: /* @__PURE__ */ jsxRuntime.exports.jsx(default_1$8, { style: { width: "18px" } }) }),
-      showVoteDown && /* @__PURE__ */ jsxRuntime.exports.jsx(IconButton$1, { disabled: hasVoted, onClick: () => handleVote("downvote"), children: /* @__PURE__ */ jsxRuntime.exports.jsx(default_1$9, { style: { width: "18px" } }) })
-    ] });
+    const noPadding = { padding: 0 };
+    const ThumbsContainer = styled.div`
+    margin-top: 3px;
+    opacity: 1;
+    width: 45px;
+    display: flex;
+    justify-content: space-between;
+  `;
+    return /* @__PURE__ */ jsxRuntime.exports.jsx("div", { children: /* @__PURE__ */ jsxRuntime.exports.jsxs(ThumbsContainer, { style: { opacity: hasVoted ? 0.5 : 1 }, children: [
+      showVoteUp && /* @__PURE__ */ jsxRuntime.exports.jsx(IconButton$1, { style: noPadding, disabled: hasVoted, onClick: () => handleVote("upvote"), children: /* @__PURE__ */ jsxRuntime.exports.jsx(default_1$8, { style: { width: "18px" } }) }),
+      showVoteDown && /* @__PURE__ */ jsxRuntime.exports.jsx(IconButton$1, { style: noPadding, disabled: hasVoted, onClick: () => handleVote("downvote"), children: /* @__PURE__ */ jsxRuntime.exports.jsx(default_1$9, { style: { width: "18px" } }) })
+    ] }) });
   }
   const SCROLL_TO_BOTTOM_THROTTLE = 1500;
   const Grid$3 = window["__mui__"].Grid;

@@ -10,6 +10,7 @@ import ThumbDown from '@mui/icons-material/ThumbDown'
 import ThumbUp from '@mui/icons-material/ThumbUp'
 import { useRecoilState } from 'recoil'
 import {atoms} from './state'
+import styled from 'styled-components'
 
 export const Message = ({ type, avatar, content = '', outputs, data }) => {
   if (outputs) {
@@ -89,13 +90,13 @@ export function MessageWrapper({ type, messages, receiving, waiting, last }) {
       sx={{ background, padding: '1rem', '& p': {m: 0, mt: 1} }}
       justifyContent="center"
     >
-      <Grid container item lg={8} spacing={2} style={{minWidth: '500px'}}>
-        <Grid item container xs={1}>
+      <Grid container item xs={10} spacing={2} style={{minWidth: '500px'}}>
+        <Grid item container xs={0.5}>
           <Grid item justifyContent="center">
-            {isIncoming ? <ChatGPTAvatar /> : <Avatar alt="you" />}
+            {isIncoming ? <ChatGPTAvatar size={28} /> : <Avatar sx={{ width: 28, height: 28 }} alt="you" />}
           </Grid>
         </Grid>
-        <Grid container item xs={9}>
+        <Grid container item xs={10.5} style={{marginTop: isIncoming ? '-7px' : '-5px'}}>
           {messages.map((message, index) => (
             <Grid item xs={12} style={{paddingLeft: '1rem'}}>
               <Message
@@ -107,7 +108,7 @@ export function MessageWrapper({ type, messages, receiving, waiting, last }) {
           ))}
 
           {showLoading && (
-            <Grid container item xs={12} sx={{ pl: 1 }}>
+            <Grid container item xs={12} sx={{ paddingLeft: '1rem' }}>
               <Grid item>
                 <Box my={1.5}>
                   <LoadingIndicator />
@@ -116,7 +117,7 @@ export function MessageWrapper({ type, messages, receiving, waiting, last }) {
             </Grid>
           )}
         </Grid>
-        <Grid container item xs={2}>
+        <Grid container item xs={1}>
           {isIncoming && <Vote queryId={queryId} hidden={!hovered} />}
         </Grid>
       </Grid>
@@ -146,14 +147,25 @@ function Vote({queryId, hidden}) {
     setIsLoading(false)
   }
 
+  const noPadding = {padding: 0}
+  const ThumbsContainer = styled.div`
+    margin-top: 3px;
+    opacity: 1;
+    width: 45px;
+    display: flex;
+    justify-content: space-between;
+  `
+
   return (
-    <div style={{marginTop: '3px', opacity: hasVoted ? 0.5 : 1}}>
-      {showVoteUp && <IconButton disabled={hasVoted} onClick={() => handleVote('upvote')}>
-        <ThumbUp style={{width: '18px'}} />
-      </IconButton>}
-      {showVoteDown && <IconButton disabled={hasVoted} onClick={() => handleVote('downvote')}>
-        <ThumbDown style={{width: '18px'}} />
-      </IconButton>}
+    <div>
+      <ThumbsContainer style={{opacity: hasVoted ? 0.5 : 1}}>
+        {showVoteUp && <IconButton style={noPadding} disabled={hasVoted} onClick={() => handleVote('upvote')}>
+          <ThumbUp style={{width: '18px'}} />
+        </IconButton>}
+        {showVoteDown && <IconButton style={noPadding} disabled={hasVoted} onClick={() => handleVote('downvote')}>
+          <ThumbDown style={{width: '18px'}} />
+        </IconButton>}
+      </ThumbsContainer>
     </div>
   )
 }
