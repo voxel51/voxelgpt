@@ -6345,11 +6345,19 @@ var __publicField = (obj, key, value) => {
       }
     }).call(commonjsGlobal);
   })(lodash$1, lodash$1.exports);
+<<<<<<< HEAD
   const React$g = window["React"];
   window["React"].Component;
   const ErrorBoundary = window["__foc__"].ErrorBoundary;
   function PluginWrapper({ component, props }) {
     return /* @__PURE__ */ jsxRuntime.exports.jsx(ErrorBoundary, { disableReset: true, children: React$g.createElement(component, props) });
+=======
+  const React$f = window["React"];
+  window["React"].Component;
+  const ErrorBoundary = window["__foc__"].ErrorBoundary;
+  function PluginWrapper({ component, props }) {
+    return /* @__PURE__ */ jsxRuntime.exports.jsx(ErrorBoundary, { disableReset: true, children: React$f.createElement(component, props) });
+>>>>>>> 91fe7d4 (build)
   }
   function wrapCustomComponent(customComponent) {
     return (props) => /* @__PURE__ */ jsxRuntime.exports.jsx(PluginWrapper, { component: customComponent, props });
@@ -6361,14 +6369,22 @@ var __publicField = (obj, key, value) => {
   window["__fou__"].getFetchFunction;
   window["__fou__"].getFetchOrigin;
   const mui = window["__mui__"];
+<<<<<<< HEAD
   const React$f = window["React"];
+=======
+  const React$e = window["React"];
+>>>>>>> 91fe7d4 (build)
   window["React"].useEffect;
   window["React"].useMemo;
   window["React"].useState;
   const ReactDOM = window["ReactDOM"];
   const recoil = window["recoil"];
   if (typeof window !== "undefined") {
+<<<<<<< HEAD
     window.React = React$f;
+=======
+    window.React = React$e;
+>>>>>>> 91fe7d4 (build)
     window.ReactDOM = ReactDOM;
     window.recoil = recoil;
     window.__fos__ = fos;
@@ -12976,9 +12992,15 @@ var __publicField = (obj, key, value) => {
       return null;
     };
   }
+<<<<<<< HEAD
   const React$e = window["React"];
   function isMuiElement(element, muiNames) {
     return /* @__PURE__ */ React$e.isValidElement(element) && muiNames.indexOf(element.type.muiName) !== -1;
+=======
+  const React$d = window["React"];
+  function isMuiElement(element, muiNames) {
+    return /* @__PURE__ */ React$d.isValidElement(element) && muiNames.indexOf(element.type.muiName) !== -1;
+>>>>>>> 91fe7d4 (build)
   }
   function ownerDocument(node2) {
     return node2 && node2.ownerDocument || document;
@@ -13012,6 +13034,7 @@ var __publicField = (obj, key, value) => {
       ref.current = value;
     }
   }
+<<<<<<< HEAD
   const React$d = window["React"];
   const useEnhancedEffect = typeof window !== "undefined" ? React$d.useLayoutEffect : React$d.useEffect;
   const useEnhancedEffect$1 = useEnhancedEffect;
@@ -13021,6 +13044,17 @@ var __publicField = (obj, key, value) => {
     const [defaultId, setDefaultId] = React$c.useState(idOverride);
     const id = idOverride || defaultId;
     React$c.useEffect(() => {
+=======
+  const React$c = window["React"];
+  const useEnhancedEffect = typeof window !== "undefined" ? React$c.useLayoutEffect : React$c.useEffect;
+  const useEnhancedEffect$1 = useEnhancedEffect;
+  const React$b = window["React"];
+  let globalId = 0;
+  function useGlobalId(idOverride) {
+    const [defaultId, setDefaultId] = React$b.useState(idOverride);
+    const id = idOverride || defaultId;
+    React$b.useEffect(() => {
+>>>>>>> 91fe7d4 (build)
       if (defaultId == null) {
         globalId += 1;
         setDefaultId(`mui-${globalId}`);
@@ -13028,7 +13062,11 @@ var __publicField = (obj, key, value) => {
     }, [defaultId]);
     return id;
   }
+<<<<<<< HEAD
   const maybeReactUseId = React$c["useId"];
+=======
+  const maybeReactUseId = React$b["useId"];
+>>>>>>> 91fe7d4 (build)
   function useId(idOverride) {
     if (maybeReactUseId !== void 0) {
       const reactId = maybeReactUseId();
@@ -13043,7 +13081,11 @@ var __publicField = (obj, key, value) => {
     }
     return null;
   }
+<<<<<<< HEAD
   const React$b = window["React"];
+=======
+  const React$a = window["React"];
+>>>>>>> 91fe7d4 (build)
   function useControlled({
     controlled,
     default: defaultProp,
@@ -13052,31 +13094,49 @@ var __publicField = (obj, key, value) => {
   }) {
     const {
       current: isControlled
+<<<<<<< HEAD
     } = React$b.useRef(controlled !== void 0);
     const [valueState, setValue] = React$b.useState(defaultProp);
     const value = isControlled ? controlled : valueState;
     {
       React$b.useEffect(() => {
+=======
+    } = React$a.useRef(controlled !== void 0);
+    const [valueState, setValue] = React$a.useState(defaultProp);
+    const value = isControlled ? controlled : valueState;
+    {
+      React$a.useEffect(() => {
+>>>>>>> 91fe7d4 (build)
         if (isControlled !== (controlled !== void 0)) {
           console.error([`MUI: A component is changing the ${isControlled ? "" : "un"}controlled ${state} state of ${name} to be ${isControlled ? "un" : ""}controlled.`, "Elements should not switch from uncontrolled to controlled (or vice versa).", `Decide between using a controlled or uncontrolled ${name} element for the lifetime of the component.`, "The nature of the state is determined during the first render. It's considered controlled if the value is not `undefined`.", "More info: https://fb.me/react-controlled-components"].join("\n"));
         }
       }, [state, name, controlled]);
       const {
         current: defaultValue
+<<<<<<< HEAD
       } = React$b.useRef(defaultProp);
       React$b.useEffect(() => {
+=======
+      } = React$a.useRef(defaultProp);
+      React$a.useEffect(() => {
+>>>>>>> 91fe7d4 (build)
         if (!isControlled && defaultValue !== defaultProp) {
           console.error([`MUI: A component is changing the default ${state} state of an uncontrolled ${name} after being initialized. To suppress this warning opt to use a controlled ${name}.`].join("\n"));
         }
       }, [JSON.stringify(defaultProp)]);
     }
+<<<<<<< HEAD
     const setValueIfUncontrolled = React$b.useCallback((newValue) => {
+=======
+    const setValueIfUncontrolled = React$a.useCallback((newValue) => {
+>>>>>>> 91fe7d4 (build)
       if (!isControlled) {
         setValue(newValue);
       }
     }, []);
     return [value, setValueIfUncontrolled];
   }
+<<<<<<< HEAD
   const React$a = window["React"];
   function useEventCallback(fn) {
     const ref = React$a.useRef(fn);
@@ -13088,6 +13148,19 @@ var __publicField = (obj, key, value) => {
   const React$9 = window["React"];
   function useForkRef(...refs) {
     return React$9.useMemo(() => {
+=======
+  const React$9 = window["React"];
+  function useEventCallback(fn) {
+    const ref = React$9.useRef(fn);
+    useEnhancedEffect$1(() => {
+      ref.current = fn;
+    });
+    return React$9.useCallback((...args) => (0, ref.current)(...args), []);
+  }
+  const React$8 = window["React"];
+  function useForkRef(...refs) {
+    return React$8.useMemo(() => {
+>>>>>>> 91fe7d4 (build)
       if (refs.every((ref) => ref == null)) {
         return null;
       }
@@ -13098,7 +13171,11 @@ var __publicField = (obj, key, value) => {
       };
     }, refs);
   }
+<<<<<<< HEAD
   const React$8 = window["React"];
+=======
+  const React$7 = window["React"];
+>>>>>>> 91fe7d4 (build)
   let hadKeyboardEvent = true;
   let hadFocusVisibleRecently = false;
   let hadFocusVisibleRecentlyTimeout;
@@ -13167,12 +13244,20 @@ var __publicField = (obj, key, value) => {
     return hadKeyboardEvent || focusTriggersKeyboardModality(target);
   }
   function useIsFocusVisible() {
+<<<<<<< HEAD
     const ref = React$8.useCallback((node2) => {
+=======
+    const ref = React$7.useCallback((node2) => {
+>>>>>>> 91fe7d4 (build)
       if (node2 != null) {
         prepare(node2.ownerDocument);
       }
     }, []);
+<<<<<<< HEAD
     const isFocusVisibleRef = React$8.useRef(false);
+=======
+    const isFocusVisibleRef = React$7.useRef(false);
+>>>>>>> 91fe7d4 (build)
     function handleBlurVisible() {
       if (isFocusVisibleRef.current) {
         hadFocusVisibleRecently = true;
@@ -14689,6 +14774,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
       };
     }
   };
+<<<<<<< HEAD
   const React$7 = window["React"];
   var syncFallback = function syncFallback2(create) {
     return create();
@@ -14701,6 +14787,20 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
   const forwardRef = window["React"].forwardRef;
   var hasOwnProperty = {}.hasOwnProperty;
   var EmotionCacheContext = /* @__PURE__ */ React$6.createContext(
+=======
+  const React$6 = window["React"];
+  var syncFallback = function syncFallback2(create) {
+    return create();
+  };
+  var useInsertionEffect = React$6["useInsertionEffect"] ? React$6["useInsertionEffect"] : false;
+  var useInsertionEffectAlwaysWithSyncFallback = useInsertionEffect || syncFallback;
+  useInsertionEffect || React$6.useLayoutEffect;
+  const React$5 = window["React"];
+  const useContext = window["React"].useContext;
+  const forwardRef = window["React"].forwardRef;
+  var hasOwnProperty = {}.hasOwnProperty;
+  var EmotionCacheContext = /* @__PURE__ */ React$5.createContext(
+>>>>>>> 91fe7d4 (build)
     typeof HTMLElement !== "undefined" ? /* @__PURE__ */ createCache({
       key: "css"
     }) : null
@@ -14715,7 +14815,11 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
       return func(props, cache, ref);
     });
   };
+<<<<<<< HEAD
   var ThemeContext = /* @__PURE__ */ React$6.createContext({});
+=======
+  var ThemeContext = /* @__PURE__ */ React$5.createContext({});
+>>>>>>> 91fe7d4 (build)
   {
     ThemeContext.displayName = "EmotionThemeContext";
   }
@@ -14742,7 +14846,11 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
     } else if (props.className != null) {
       className = props.className + " ";
     }
+<<<<<<< HEAD
     var serialized = serializeStyles(registeredStyles, void 0, React$6.useContext(ThemeContext));
+=======
+    var serialized = serializeStyles(registeredStyles, void 0, React$5.useContext(ThemeContext));
+>>>>>>> 91fe7d4 (build)
     if (serialized.name.indexOf("-") === -1) {
       var labelFromStack = props[labelPropName];
       if (labelFromStack) {
@@ -14758,16 +14866,28 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
     }
     newProps.ref = ref;
     newProps.className = className;
+<<<<<<< HEAD
     return /* @__PURE__ */ React$6.createElement(React$6.Fragment, null, /* @__PURE__ */ React$6.createElement(Insertion$1, {
       cache,
       serialized,
       isStringTag: typeof WrappedComponent === "string"
     }), /* @__PURE__ */ React$6.createElement(WrappedComponent, newProps));
+=======
+    return /* @__PURE__ */ React$5.createElement(React$5.Fragment, null, /* @__PURE__ */ React$5.createElement(Insertion$1, {
+      cache,
+      serialized,
+      isStringTag: typeof WrappedComponent === "string"
+    }), /* @__PURE__ */ React$5.createElement(WrappedComponent, newProps));
+>>>>>>> 91fe7d4 (build)
   });
   {
     Emotion.displayName = "EmotionCssPropInternal";
   }
+<<<<<<< HEAD
   const React$5 = window["React"];
+=======
+  const React$4 = window["React"];
+>>>>>>> 91fe7d4 (build)
   var testOmitPropsOnStringTag = isPropValid$1;
   var testOmitPropsOnComponent = function testOmitPropsOnComponent2(key) {
     return key !== "theme";
@@ -14849,7 +14969,11 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
           for (var key in props) {
             mergedProps[key] = props[key];
           }
+<<<<<<< HEAD
           mergedProps.theme = React$5.useContext(ThemeContext);
+=======
+          mergedProps.theme = React$4.useContext(ThemeContext);
+>>>>>>> 91fe7d4 (build)
         }
         if (typeof props.className === "string") {
           className = getRegisteredStyles(cache.registered, classInterpolations, props.className);
@@ -14872,11 +14996,19 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
         }
         newProps.className = className;
         newProps.ref = ref;
+<<<<<<< HEAD
         return /* @__PURE__ */ React$5.createElement(React$5.Fragment, null, /* @__PURE__ */ React$5.createElement(Insertion, {
           cache,
           serialized,
           isStringTag: typeof FinalTag === "string"
         }), /* @__PURE__ */ React$5.createElement(FinalTag, newProps));
+=======
+        return /* @__PURE__ */ React$4.createElement(React$4.Fragment, null, /* @__PURE__ */ React$4.createElement(Insertion, {
+          cache,
+          serialized,
+          isStringTag: typeof FinalTag === "string"
+        }), /* @__PURE__ */ React$4.createElement(FinalTag, newProps));
+>>>>>>> 91fe7d4 (build)
       });
       Styled.displayName = identifierName !== void 0 ? identifierName : "Styled(" + (typeof baseTag === "string" ? baseTag : baseTag.displayName || baseTag.name || "Component") + ")";
       Styled.defaultProps = tag.defaultProps;
@@ -16064,12 +16196,20 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
     };
     return muiTheme;
   }
+<<<<<<< HEAD
   const React$4 = window["React"];
+=======
+  const React$3 = window["React"];
+>>>>>>> 91fe7d4 (build)
   function isObjectEmpty(obj) {
     return Object.keys(obj).length === 0;
   }
   function useTheme$2(defaultTheme2 = null) {
+<<<<<<< HEAD
     const contextTheme = React$4.useContext(ThemeContext);
+=======
+    const contextTheme = React$3.useContext(ThemeContext);
+>>>>>>> 91fe7d4 (build)
     return !contextTheme || isObjectEmpty(contextTheme) ? defaultTheme2 : contextTheme;
   }
   const systemDefaultTheme$1 = createTheme$1();
@@ -17082,7 +17222,11 @@ Please use another name.`);
   }
   generateUtilityClasses("MuiSvgIcon", ["root", "colorPrimary", "colorSecondary", "colorAction", "colorError", "colorDisabled", "fontSizeInherit", "fontSizeSmall", "fontSizeMedium", "fontSizeLarge"]);
   const _excluded$1 = ["children", "className", "color", "component", "fontSize", "htmlColor", "inheritViewBox", "titleAccess", "viewBox"];
+<<<<<<< HEAD
   const React$3 = window["React"];
+=======
+  const React$2 = window["React"];
+>>>>>>> 91fe7d4 (build)
   const useUtilityClasses$1 = (ownerState) => {
     const {
       color: color2,
@@ -17131,7 +17275,11 @@ Please use another name.`);
       }[ownerState.color]
     };
   });
+<<<<<<< HEAD
   const SvgIcon = /* @__PURE__ */ React$3.forwardRef(function SvgIcon2(inProps, ref) {
+=======
+  const SvgIcon = /* @__PURE__ */ React$2.forwardRef(function SvgIcon2(inProps, ref) {
+>>>>>>> 91fe7d4 (build)
     const props = useThemeProps({
       props: inProps,
       name: "MuiSvgIcon"
@@ -17191,7 +17339,11 @@ Please use another name.`);
   };
   SvgIcon.muiName = "SvgIcon";
   const SvgIcon$1 = SvgIcon;
+<<<<<<< HEAD
   const React$2 = window["React"];
+=======
+  const React$1 = window["React"];
+>>>>>>> 91fe7d4 (build)
   function createSvgIcon$1(path, displayName) {
     function Component(props, ref) {
       return /* @__PURE__ */ jsxRuntime.exports.jsx(SvgIcon$1, _extends({
@@ -17205,7 +17357,11 @@ Please use another name.`);
       Component.displayName = `${displayName}Icon`;
     }
     Component.muiName = SvgIcon$1.muiName;
+<<<<<<< HEAD
     return /* @__PURE__ */ React$2.memo(/* @__PURE__ */ React$2.forwardRef(Component));
+=======
+    return /* @__PURE__ */ React$1.memo(/* @__PURE__ */ React$1.forwardRef(Component));
+>>>>>>> 91fe7d4 (build)
   }
   const Person = createSvgIcon$1(/* @__PURE__ */ jsxRuntime.exports.jsx("path", {
     d: "M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
@@ -17215,7 +17371,11 @@ Please use another name.`);
   }
   generateUtilityClasses("MuiAvatar", ["root", "colorDefault", "circular", "rounded", "square", "img", "fallback"]);
   const _excluded = ["alt", "children", "className", "component", "imgProps", "sizes", "src", "srcSet", "variant"];
+<<<<<<< HEAD
   const React$1 = window["React"];
+=======
+  const React = window["React"];
+>>>>>>> 91fe7d4 (build)
   const useUtilityClasses = (ownerState) => {
     const {
       classes,
@@ -17292,8 +17452,13 @@ Please use another name.`);
     src,
     srcSet
   }) {
+<<<<<<< HEAD
     const [loaded, setLoaded] = React$1.useState(false);
     React$1.useEffect(() => {
+=======
+    const [loaded, setLoaded] = React.useState(false);
+    React.useEffect(() => {
+>>>>>>> 91fe7d4 (build)
       if (!src && !srcSet) {
         return void 0;
       }
@@ -17324,7 +17489,11 @@ Please use another name.`);
     }, [crossOrigin, referrerPolicy, src, srcSet]);
     return loaded;
   }
+<<<<<<< HEAD
   const Avatar$1 = /* @__PURE__ */ React$1.forwardRef(function Avatar2(inProps, ref) {
+=======
+  const Avatar$1 = /* @__PURE__ */ React.forwardRef(function Avatar2(inProps, ref) {
+>>>>>>> 91fe7d4 (build)
     const props = useThemeProps({
       props: inProps,
       name: "MuiAvatar"
@@ -18586,7 +18755,10 @@ Please use another name.`);
   }), "ThumbUp");
   default_1$8 = ThumbUp.default = _default$8;
   const atom = window["recoil"].atom;
+<<<<<<< HEAD
   const atomFamily = window["recoil"].atomFamily;
+=======
+>>>>>>> 91fe7d4 (build)
   const getBrowserStorageEffectForKey = window["__fos__"].getBrowserStorageEffectForKey;
   const PLUGIN_NAME$1 = "@voxel51/voxelgpt";
   const atoms = {
@@ -18611,6 +18783,7 @@ Please use another name.`);
     input: atom({
       key: "voxel-gpt-input",
       default: ""
+<<<<<<< HEAD
     }),
     votes: atomFamily({
       key: "voxel-gpt-votes",
@@ -18621,14 +18794,23 @@ Please use another name.`);
   const useEffect$2 = window["React"].useEffect;
   const useRef$2 = window["React"].useRef;
   const useState = window["React"].useState;
+=======
+    })
+  };
+>>>>>>> 91fe7d4 (build)
   const useTheme = window["__foc__"].useTheme;
   const Grid$4 = window["__mui__"].Grid;
   const Box = window["__mui__"].Box;
   const Typography$2 = window["__mui__"].Typography;
+<<<<<<< HEAD
   const IconButton$1 = window["__mui__"].IconButton;
   const OperatorIO = window["__foo__"].OperatorIO;
   const types$1 = window["__foo__"].types;
   const executeOperator$1 = window["__foo__"].executeOperator;
+=======
+  const OperatorIO = window["__foo__"].OperatorIO;
+  const types$1 = window["__foo__"].types;
+>>>>>>> 91fe7d4 (build)
   const useRecoilState$3 = window["recoil"].useRecoilState;
   const Message = ({ type, avatar, content = "", outputs, data }) => {
     if (outputs) {
@@ -18658,6 +18840,7 @@ Please use another name.`);
       return /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { spacing: 2, container: true, children: /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { item: true, style: { paddingLeft: "1rem" }, children: /* @__PURE__ */ jsxRuntime.exports.jsx(Typography$2, { component: "p", my: 1.5, children: content }) }) });
     return null;
   };
+<<<<<<< HEAD
   function useHover() {
     const ref = useRef$2(null);
     const [hovered, setHovered] = React.useState(false);
@@ -18691,6 +18874,16 @@ Please use another name.`);
       Grid$4,
       {
         ref,
+=======
+  function MessageWrapper({ type, messages, receiving, waiting, last }) {
+    const theme = useTheme();
+    const isIncoming = type === "incoming";
+    const background = isIncoming ? theme.background.header : theme.background.level1;
+    const showLoading = waiting || receiving;
+    return /* @__PURE__ */ jsxRuntime.exports.jsx(
+      Grid$4,
+      {
+>>>>>>> 91fe7d4 (build)
         container: true,
         sx: { background, padding: "1rem", "& p": { m: 0, mt: 1 } },
         justifyContent: "center",
@@ -18712,19 +18905,32 @@ Please use another name.`);
       }
     );
   }
+<<<<<<< HEAD
   function Vote({ queryId, hidden }) {
     const [vote, setVote] = useRecoilState$3(atoms.votes(queryId));
     useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const hasVoted = vote && vote.direction;
     if (!queryId || hidden)
+=======
+  function Vote({ queryId: queryId2, hidden }) {
+    const [vote, setVote] = useRecoilState$3(atoms.votes(queryId2));
+    useState(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const hasVoted = vote && vote.direction;
+    if (!queryId2 || hidden)
+>>>>>>> 91fe7d4 (build)
       return null;
     const showVoteUp = !hasVoted || vote.direction === "upvote";
     const showVoteDown = !hasVoted || vote.direction === "downvote";
     const handleVote = async (direction) => {
       setIsLoading(true);
       try {
+<<<<<<< HEAD
         await executeOperator$1("@voxel51/voxelgpt/vote_for_query", { query_id: queryId, vote: direction });
+=======
+        await executeOperator("@voxel51/voxelgpt/vote_for_query", { query_id: queryId2, vote: direction });
+>>>>>>> 91fe7d4 (build)
         setVote({ direction });
       } catch (e) {
         console.error(e);
@@ -18740,8 +18946,13 @@ Please use another name.`);
     justify-content: space-between;
   `;
     return /* @__PURE__ */ jsxRuntime.exports.jsx("div", { children: /* @__PURE__ */ jsxRuntime.exports.jsxs(ThumbsContainer, { style: { opacity: hasVoted ? 0.5 : 1 }, children: [
+<<<<<<< HEAD
       showVoteUp && /* @__PURE__ */ jsxRuntime.exports.jsx(IconButton$1, { style: noPadding, disabled: hasVoted, onClick: () => handleVote("upvote"), children: /* @__PURE__ */ jsxRuntime.exports.jsx(default_1$8, { style: { width: "18px" } }) }),
       showVoteDown && /* @__PURE__ */ jsxRuntime.exports.jsx(IconButton$1, { style: noPadding, disabled: hasVoted, onClick: () => handleVote("downvote"), children: /* @__PURE__ */ jsxRuntime.exports.jsx(default_1$9, { style: { width: "18px" } }) })
+=======
+      showVoteUp && /* @__PURE__ */ jsxRuntime.exports.jsx(IconButton, { style: noPadding, disabled: hasVoted, onClick: () => handleVote("upvote"), children: /* @__PURE__ */ jsxRuntime.exports.jsx(default_1$8, { style: { width: "18px" } }) }),
+      showVoteDown && /* @__PURE__ */ jsxRuntime.exports.jsx(IconButton, { style: noPadding, disabled: hasVoted, onClick: () => handleVote("downvote"), children: /* @__PURE__ */ jsxRuntime.exports.jsx(default_1$9, { style: { width: "18px" } }) })
+>>>>>>> 91fe7d4 (build)
     ] }) });
   }
   const SCROLL_TO_BOTTOM_THROTTLE = 1500;
@@ -18824,7 +19035,11 @@ Please use another name.`);
   const useRef = window["React"].useRef;
   const useEffect = window["React"].useEffect;
   const OutlinedInput = window["__mui__"].OutlinedInput;
+<<<<<<< HEAD
   const IconButton = window["__mui__"].IconButton;
+=======
+  const IconButton$1 = window["__mui__"].IconButton;
+>>>>>>> 91fe7d4 (build)
   const useRecoilState$2 = window["recoil"].useRecoilState;
   const InputBar = ({ hasMessages, disabled, onMessageSend, bottomRef }) => {
     const [waiting, setWaiting] = useRecoilState$2(atoms.waiting);
@@ -18862,7 +19077,11 @@ Please use another name.`);
           disabled,
           size: "large",
           placeholder: 'Send a message or type "help"',
+<<<<<<< HEAD
           endAdornment: /* @__PURE__ */ jsxRuntime.exports.jsx(IconButton, { disabled: !showAdornment, onClick: sendMessage, children: /* @__PURE__ */ jsxRuntime.exports.jsx(default_1$7, { style: { opacity: showAdornment ? 1 : 0.2 } }) })
+=======
+          endAdornment: /* @__PURE__ */ jsxRuntime.exports.jsx(IconButton$1, { disabled: !showAdornment, onClick: sendMessage, children: /* @__PURE__ */ jsxRuntime.exports.jsx(default_1$7, { style: { opacity: showAdornment ? 1 : 0.2 } }) })
+>>>>>>> 91fe7d4 (build)
         }
       ),
       /* @__PURE__ */ jsxRuntime.exports.jsx("div", { ref: bottomRef })
@@ -18908,6 +19127,7 @@ Please use another name.`);
         ctx.state.set(atoms.waiting, false);
         const { overwrite_last } = ctx.params.data || {};
         if (overwrite_last) {
+<<<<<<< HEAD
           ctx.hooks.updateLastIncomingMessage({
             response_to: ctx.params.query_id,
             ...ctx.params
@@ -18915,6 +19135,11 @@ Please use another name.`);
         } else {
           ctx.hooks.addMessage({
             response_to: ctx.params.query_id,
+=======
+          ctx.hooks.updateLastIncomingMessage(ctx.params);
+        } else {
+          ctx.hooks.addMessage({
+>>>>>>> 91fe7d4 (build)
             type: "incoming",
             ...ctx.params
           });
@@ -18944,7 +19169,11 @@ Please use another name.`);
   const Operator = window["__foo__"].Operator;
   const OperatorConfig = window["__foo__"].OperatorConfig;
   const types = window["__foo__"].types;
+<<<<<<< HEAD
   const executeOperator = window["__foo__"].executeOperator;
+=======
+  const executeOperator$1 = window["__foo__"].executeOperator;
+>>>>>>> 91fe7d4 (build)
   const useRecoilState = window["recoil"].useRecoilState;
   class SendMessageToVoxelGPT extends Operator {
     get config() {
@@ -18973,7 +19202,11 @@ Please use another name.`);
         type: "outgoing",
         content: ctx.params.message
       });
+<<<<<<< HEAD
       await executeOperator(`${this.pluginName}/ask_voxelgpt_panel`, {
+=======
+      await executeOperator$1(`${this.pluginName}/ask_voxelgpt_panel`, {
+>>>>>>> 91fe7d4 (build)
         query: ctx.params.message,
         history: ctx.hooks.messages
       });
