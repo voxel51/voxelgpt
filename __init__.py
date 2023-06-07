@@ -369,16 +369,7 @@ class VoteForQuery(foo.Operator):
             elif vote == "downvote":
                 table.downvote_query(query_id)
             else:
-                raise Exception("Invalid vote type")    
-            outputs = types.Object()
-            outputs.str("msg", view=types.Notice(label="Thank you for your feedback!"))
-            ctx.trigger(
-                "show_output",
-                {
-                    "outputs": types.Property(outputs, view=types.View(space=4)).to_json(),
-                }
-            )
-
+                raise Exception("Invalid vote type")
             
             
                 

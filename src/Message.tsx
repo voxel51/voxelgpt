@@ -6,7 +6,8 @@ import { Grid, Box, Typography, IconButton } from '@mui/material'
 import {OperatorIO, types, executeOperator} from "@fiftyone/operators"
 import LoadingIndicator from './LoadingIndicator'
 import { ChatGPTAvatar } from './avatars'
-import { ThumbDown, ThumbUp } from '@mui/icons-material'
+import ThumbDown from '@mui/icons-material/ThumbDown'
+import ThumbUp from '@mui/icons-material/ThumbUp'
 import { useRecoilState } from 'recoil'
 import {atoms} from './state'
 
@@ -128,11 +129,12 @@ function Vote({queryId, hidden}) {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const hasVoted = vote && vote.direction;
-  if (!queryId || hidden || hasVoted) return null;
+  if (!queryId || hidden) return null;
+
+  const showVoteUp = !hasVoted || vote.direction === 'upvote';
+  const showVoteDown = !hasVoted || vote.direction === 'downvote';
 
   const handleVote = async (direction) => {
-    // TODO: send vote to server
-    console.log(`Voted ${direction} on query ${queryId}`)
     let error = null;
     setIsLoading(true)
     try {
@@ -145,13 +147,13 @@ function Vote({queryId, hidden}) {
   }
 
   return (
-    <div style={{marginTop: '0.8rem'}}>
-      <IconButton onClick={() => handleVote('upvote')}>
-        <ThumbUp style={{marginRight: '0.5rem'}} />
-      </IconButton>
-      <IconButton onClick={() => handleVote('downvote')}>
-        <ThumbDown />
-      </IconButton>
+    <div style={{marginTop: '3px', opacity: hasVoted ? 0.5 : 1}}>
+      {showVoteUp && <IconButton disabled={hasVoted} onClick={() => handleVote('upvote')}>
+        <ThumbUp style={{width: '18px'}} />
+      </IconButton>}
+      {showVoteDown && <IconButton disabled={hasVoted} onClick={() => handleVote('downvote')}>
+        <ThumbDown style={{width: '18px'}} />
+      </IconButton>}
     </div>
   )
 }
