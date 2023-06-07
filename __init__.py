@@ -13,6 +13,7 @@ import traceback
 from bson import json_util
 
 import fiftyone as fo
+from fiftyone.core.utils import add_sys_path
 import fiftyone.operators as foo
 import fiftyone.operators.types as types
 
@@ -147,7 +148,12 @@ class AskVoxelGPTPanel(foo.Operator):
         try:
             with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
                 # pylint: disable=no-name-in-module
+                import db
                 from voxelgpt import ask_voxelgpt_generator
+
+                # Log user query
+                table = db.table(db.UserQueryTable)
+                ctx.params["query_id"] = table.insert_query(query)
 
                 streaming_message = None
 
@@ -236,6 +242,7 @@ class AskVoxelGPTPanel(foo.Operator):
         return ctx.trigger(
             f"{self.plugin_name}/show_message",
             params=dict(
+                query_id=ctx.params.get("query_id"),
                 outputs=types.Property(outputs).to_json(),
                 data=dict(message=message, **kwargs),
             ),
@@ -325,19 +332,46 @@ class OpenVoxelGPTPanelOnStartup(foo.Operator):
             )
 
 
-class add_sys_path(object):
-    def __init__(self, path, index=0):
-        self.path = path
-        self.index = index
+class VoteForQuery(foo.Operator):
+    @property
+    def config(self):
+        return foo.OperatorConfig(
+            name="vote_for_query",
+            label="Vote For Query",
+            unlisted=True,
+        )
 
-    def __enter__(self):
-        sys.path.insert(self.index, self.path)
+    def resolve_input(self, ctx):
+        inputs = types.Object()
+        inputs.str(
+            "query_id",
+            label="query_id",
+            required=True,
+            description="User Query to Vote For",
+        )
+        inputs.enum(
+            "vote",
+            ["upvote", "downvote"],
+            label="Vote",
+            required=True,
+        )
+        return types.Property(inputs)
 
-    def __exit__(self, *args):
-        try:
-            sys.path.remove(self.path)
-        except:
-            pass
+    def execute(self, ctx):
+        query_id = ctx.params["query_id"]
+        vote = ctx.params["vote"]
+
+        with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
+            # pylint: disable=no-name-in-module
+            import db
+
+            table = db.table(db.UserQueryTable)
+            if vote == "upvote":
+                table.upvote_query(query_id)
+            elif vote == "downvote":
+                table.downvote_query(query_id)
+            else:
+                raise ValueError(f"Invalid vote '{vote}'")
 
 
 def get_plugin_setting(dataset, plugin_name, key, default=None):
@@ -365,3 +399,4 @@ def register(p):
     p.register(AskVoxelGPTPanel)
     p.register(OpenVoxelGPTPanel)
     p.register(OpenVoxelGPTPanelOnStartup)
+    p.register(VoteForQuery)
