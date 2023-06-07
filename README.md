@@ -3,7 +3,7 @@
 Wish you could search your images or videos without writing a line of code? Now
 you can! 🎉
 
-The VoxelGPT [plugin](https://docs.voxel51.com/plugins/index.html) combines the
+VoxelGPT is a [FiftyOne Plugin](https://docs.voxel51.com/plugins/index.html) that combines the
 power of [GPT-3.5](https://platform.openai.com/docs/models/gpt-3-5) with
 [FiftyOne](https://github.com/voxel51/fiftyone)'s computer vision query
 language, enabling you to filter, sort, and semantically slice your data with
