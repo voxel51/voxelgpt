@@ -874,12 +874,19 @@ def _replace_match_labels_label(stage, label_classes):
     return stage
 
 
+def _remove_double_match_labels_labels(stage):
+    if 'F("label").label' in stage:
+        return stage.replace('F("label").label', 'F("label")')
+    return stage
+
+
 def _postprocess_match_labels(stage, label_classes):
     if "match_labels" not in stage:
         return stage
     stage = _remove_match_labels_field_name(stage)
     stage = _remove_match_labels_contains(stage)
     stage = _replace_match_labels_label(stage, label_classes)
+    stage = _remove_double_match_labels_labels(stage)
     return stage
 
 
