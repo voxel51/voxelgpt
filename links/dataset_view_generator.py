@@ -811,6 +811,8 @@ def _validate_sort_by(stage, sample_collection, required_brain_runs):
 def _remove_match_labels_field_name(stage):
     contents = stage[13:-1]
     if "," in contents:
+        if len(contents.split(",")) > 2:
+            return stage
         F_expr, fields_expr = contents.split(",")
         if "F(" in fields_expr:
             F_expr, fields_expr = fields_expr, F_expr
@@ -825,6 +827,8 @@ def _remove_match_labels_field_name(stage):
     stage = stage.replace(F_contents, '"label"')
 
     if "," in contents:
+        if len(contents.split(",")) > 2:
+            return stage
         filter_arg, fields_arg = contents.split(",")
         if "F(" in fields_arg:
             filter_arg, fields_arg = fields_arg, filter_arg
@@ -852,6 +856,8 @@ def _remove_match_labels_contains(stage):
 def _replace_match_labels_label(stage, label_classes):
     contents = stage[13:-1]
     if "," in contents:
+        if len(contents.split(",")) > 2:
+            return stage
         F_expr, fields_expr = contents.split(",")
         if "F(" in fields_expr:
             F_expr, fields_expr = fields_expr, F_expr
@@ -869,6 +875,8 @@ def _replace_match_labels_label(stage, label_classes):
 
 
 def _postprocess_match_labels(stage, label_classes):
+    if "match_labels" not in stage:
+        return stage
     stage = _remove_match_labels_field_name(stage)
     stage = _remove_match_labels_contains(stage)
     stage = _replace_match_labels_label(stage, label_classes)
@@ -942,6 +950,16 @@ def _validate_match_labels(stage, label_classes):
 
         return f'match(F("{field}.detections").filter({filter_expr}).length(){length_expr})'
 
+    def _convert_all_match_labels_to_match(stage):
+        contents = stage[13:-1]
+        all_contents = contents.split(".all(")[1].split(")")[0]
+        if "fields" in contents:
+            field = contents.split("fields=")[1].split('"')[1]
+        else:
+            field = "ground_truth"
+
+        return f'match(F("{field}.detections.label").contains({all_contents}, all=True))'
+
     stage = stage.replace("in_classes", "is_in")
     stage = stage.replace("contains_labels", "contains")
 
@@ -950,6 +968,9 @@ def _validate_match_labels(stage, label_classes):
 
     if "count" in stage:
         return _convert_count_match_labels_to_match(stage)
+
+    if ".all(" in stage:
+        return _convert_all_match_labels_to_match(stage)
 
     contents = stage[13:-1]
     if "labels" in contents and "{" in contents:
