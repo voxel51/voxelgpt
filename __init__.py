@@ -153,7 +153,6 @@ class AskVoxelGPTPanel(foo.Operator):
                 # persist all user queries
                 table = db.table(db.UserQueryTable)
                 query_id = table.insert_query(query)
-                print(f"Inserted query {query_id}")
                 ctx.params["query_id"] = query_id
                 streaming_message = None
 

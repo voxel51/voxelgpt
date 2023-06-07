@@ -5,7 +5,6 @@ class UserQueryTable:
     def __init__(self, project_id, client, bigquery, dataset_id):
         table_id = os.environ.get('USER_QUERY_TABLE_ID', 'user_queries')
         self.table_id = f"{project_id}.{dataset_id}.{table_id}"
-        print(f"Table ID: {self.table_id}")
         self.client = client
         # Define the schema of the fields you want to insert
         self.schema = [
