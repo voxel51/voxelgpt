@@ -18695,8 +18695,8 @@ Please use another name.`);
         sx: { background, padding: "1rem", "& p": { m: 0, mt: 1 } },
         justifyContent: "center",
         children: /* @__PURE__ */ jsxRuntime.exports.jsxs(Grid$4, { container: true, item: true, xs: 10, spacing: 2, style: { minWidth: "500px" }, children: [
-          /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { item: true, container: true, xs: 0.5, children: /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { item: true, justifyContent: "center", children: isIncoming ? /* @__PURE__ */ jsxRuntime.exports.jsx(ChatGPTAvatar, { size: 24 }) : /* @__PURE__ */ jsxRuntime.exports.jsx(Avatar$2, { sx: { width: 24, height: 24 }, alt: "you" }) }) }),
-          /* @__PURE__ */ jsxRuntime.exports.jsxs(Grid$4, { container: true, item: true, xs: 10.5, style: { marginTop: "-10px" }, children: [
+          /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { item: true, container: true, xs: 0.5, children: /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { item: true, justifyContent: "center", children: isIncoming ? /* @__PURE__ */ jsxRuntime.exports.jsx(ChatGPTAvatar, { size: 28 }) : /* @__PURE__ */ jsxRuntime.exports.jsx(Avatar$2, { sx: { width: 28, height: 28 }, alt: "you" }) }) }),
+          /* @__PURE__ */ jsxRuntime.exports.jsxs(Grid$4, { container: true, item: true, xs: 10.5, style: { marginTop: isIncoming ? "-7px" : "-5px" }, children: [
             messages.map((message, index) => /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { item: true, xs: 12, style: { paddingLeft: "1rem" }, children: /* @__PURE__ */ jsxRuntime.exports.jsx(
               Message,
               {
@@ -18705,9 +18705,9 @@ Please use another name.`);
               },
               index
             ) })),
-            showLoading && /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { container: true, item: true, xs: 12, sx: { pl: 1 }, children: /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { item: true, children: /* @__PURE__ */ jsxRuntime.exports.jsx(Box, { my: 1.5, children: /* @__PURE__ */ jsxRuntime.exports.jsx(LoadingIndicator, {}) }) }) })
+            showLoading && /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { container: true, item: true, xs: 12, sx: { paddingLeft: "1rem" }, children: /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { item: true, children: /* @__PURE__ */ jsxRuntime.exports.jsx(Box, { my: 1.5, children: /* @__PURE__ */ jsxRuntime.exports.jsx(LoadingIndicator, {}) }) }) })
           ] }),
-          /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { container: true, item: true, xs: 1, children: isIncoming && /* @__PURE__ */ jsxRuntime.exports.jsx(Vote, { queryId, hidden: false }) })
+          /* @__PURE__ */ jsxRuntime.exports.jsx(Grid$4, { container: true, item: true, xs: 1, children: isIncoming && /* @__PURE__ */ jsxRuntime.exports.jsx(Vote, { queryId, hidden: !hovered }) })
         ] })
       }
     );
@@ -18735,7 +18735,7 @@ Please use another name.`);
     const ThumbsContainer = styled.div`
     margin-top: 3px;
     opacity: 1;
-    width: 41px;
+    width: 45px;
     display: flex;
     justify-content: space-between;
   `;

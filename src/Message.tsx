@@ -93,10 +93,10 @@ export function MessageWrapper({ type, messages, receiving, waiting, last }) {
       <Grid container item xs={10} spacing={2} style={{minWidth: '500px'}}>
         <Grid item container xs={0.5}>
           <Grid item justifyContent="center">
-            {isIncoming ? <ChatGPTAvatar size={24} /> : <Avatar sx={{ width: 24, height: 24 }} alt="you" />}
+            {isIncoming ? <ChatGPTAvatar size={28} /> : <Avatar sx={{ width: 28, height: 28 }} alt="you" />}
           </Grid>
         </Grid>
-        <Grid container item xs={10.5} style={{marginTop: '-10px'}}>
+        <Grid container item xs={10.5} style={{marginTop: isIncoming ? '-7px' : '-5px'}}>
           {messages.map((message, index) => (
             <Grid item xs={12} style={{paddingLeft: '1rem'}}>
               <Message
@@ -108,7 +108,7 @@ export function MessageWrapper({ type, messages, receiving, waiting, last }) {
           ))}
 
           {showLoading && (
-            <Grid container item xs={12} sx={{ pl: 1 }}>
+            <Grid container item xs={12} sx={{ paddingLeft: '1rem' }}>
               <Grid item>
                 <Box my={1.5}>
                   <LoadingIndicator />
@@ -151,7 +151,7 @@ function Vote({queryId, hidden}) {
   const ThumbsContainer = styled.div`
     margin-top: 3px;
     opacity: 1;
-    width: 41px;
+    width: 45px;
     display: flex;
     justify-content: space-between;
   `
