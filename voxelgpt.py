@@ -595,9 +595,9 @@ _HELP_MESSAGE_MARKDOWN = """
 Hi! I'm VoxelGPT, your AI assistant for computer vision.
 
 I can help you with the following tasks:
-- **Querying your data** 🔎 &nbsp; I can help you filter, match, sort, and more - without writing a line of code. Tell me what you'd like to see and I'll load the corresponding view
-- **Becoming a FiftyOne pro** 💪 &nbsp; I have access to the FiftyOne documentation, so I can help you learn how to use FiftyOne and find the information you're looking for
-- **Troubleshooting data quality** 📈 &nbsp; I can help you build better datasets and higher quality models by answering general knowledge questions about computer vision and machine learning
+- 🔎 **Querying your data:** I can help you filter, match, sort, and more - without writing a line of code. Tell me what you'd like to see and I'll load the corresponding view
+- 💪 **Becoming a FiftyOne pro:** I have access to the FiftyOne documentation, so I can help you learn how to use FiftyOne and find the information you're looking for
+- 📈 **Troubleshooting data quality:** I can help you build better datasets and higher quality models by answering general knowledge questions about computer vision and machine learning
 
 **Tips**
 - Be as specific as possible. The more specific you are, the better I can help you. I am still learning, so sometimes I need a little help understanding what you're asking
@@ -607,6 +607,7 @@ I can help you with the following tasks:
 
 **Learn more**
 - You can learn more about me on my [GitHub page](https://github.com/voxel51/voxelgpt). While you're at it, please give me a star ⭐! VoxelGPT is open source and it is constantly improving. Contributions are welcome!
+- Did you know that I'm a [FiftyOne Plugin](https://docs.voxel51.com/plugins/index.html)? Check out how FiftyOne can be extended to do all sorts of cool things!
 - Learn more about [FiftyOne](https://github.com/voxel51/fiftyone) and give the project a star ⭐! FiftyOne is open source too!
 - Join the [FiftyOne Slack community](https://slack.voxel51.com) where thousands of enthusiasts and professionals are discussing the latest in computer vision and machine learning
 
@@ -665,6 +666,9 @@ Learn more
 -   You can learn more about me on GitHub: https://github.com/voxel51/voxelgpt
     While you're at it, please give me a star ⭐! VoxelGPT is an open source
     project and it is constantly improving. Contributions are welcome!
+
+-   Did you know that I'm a FiftyOne Plugin? Check out how FiftyOne can be 
+    extended to do all sorts of cool things at https://docs.voxel51.com/plugins/index.html
 
 -   Learn more about FiftyOne at https://github.com/voxel51/fiftyone
     Please give the project a star ⭐! FiftyOne is open source too!
