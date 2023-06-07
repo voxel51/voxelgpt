@@ -158,7 +158,11 @@ and then either:
 -   Clicking on the OpenAI icon above the grid
 -   Pressing the `+` icon next to the Samples tab and choosing VoxelGPT
 
-https://github.com/voxel51/voxelgpt/assets/12500356/af8a75d0-c17d-45c9-b745-323ce3fec1b2
+
+
+https://github.com/voxel51/voxelgpt/assets/12500356/fbaccb6f-dc7f-43d7-9da3-adb4062c398b
+
+
 
 For example, try asking the following questions:
 
