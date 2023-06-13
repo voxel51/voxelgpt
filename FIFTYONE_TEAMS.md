@@ -53,6 +53,9 @@ pluginsSettings:
 	tag: v1.3.0
 ```
 
+Once you have made these changes, redeploy your `teams-plugins` service
+using `docker compose up -d` or
+`helm upgrade fiftyone-teams-app voxel51/fiftyone-teams-app -f values.yaml`
 
 ## Uploading the code
 
