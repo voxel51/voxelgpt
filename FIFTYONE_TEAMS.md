@@ -36,9 +36,9 @@ To use the Voxel51 image for Docker Compose, edit your
 
 ```
 services:
-  env:
-    OPENAI_API_KEY: Your OpenAI API Key here
   teams-plugins:
+    env:
+      OPENAI_API_KEY: Your OpenAI API Key here
     image: voxel51/fiftyone-app-gpt:v1.3.0
 ```
 
