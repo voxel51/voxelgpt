@@ -3,60 +3,6 @@
 This guide explains how to upload the latest version of VoxelGPT to your
 [FiftyOne Teams](https://voxel51.com/fiftyone-teams) deployment.
 
-## Enable Plugins for FiftyOne Teams
-
-In order to run the VoxelGPT plugin you must have enabled Plugins for
-FiftyOne Teams.
-
-Instructions for enabling  FiftyOne Teams Plugins with Docker Compose
-are [here](https://github.com/voxel51/fiftyone-teams-app-deploy/tree/main/docker#enabling-fiftyone-teams-plugins)
-
-Instructions for enabling FiftyOne Teams Plugins with Helm are
-[here](https://helm.fiftyone.ai/#enabling-fiftyone-teams-plugins)
-
-## Creating your `teams-plugins` GPT container
-
-VoxelGPT requires certain Python packages to be installed. You can see the
-current requirements by running:
-
-```shell
-cat requirements.txt
-```
-
-If any of these Python packages are not available in your `teams-plugins`
-containers, you'll need to add them or you can use the `fiftyone-app-gpt`
-image included in the `voxel51` Docker Hub repository.
-
-You must also ensure that a valid OpenAI API key
-([create one](https://platform.openai.com/account/api-keys)) is available to
-the containers via the `OPENAI_API_KEY` environment variable.
-
-To use the Voxel51 image for Docker Compose, edit your
- `compose.override.yaml` to include:
-
-```
-services:
-  teams-plugins:
-    env:
-      OPENAI_API_KEY: Your OpenAI API Key here
-    image: voxel51/fiftyone-app-gpt:v1.3.0
-```
-
-For Helm, edit your `values.yaml` to include:
-
-```
-pluginsSettings:
-  environment:
-    OPENAI_API_KEY: Your OpenAI API Key here
-  image:
-    repository: voxel51/fiftyone-app-gpt
-	tag: v1.3.0
-```
-
-Once you have made these changes, redeploy your `teams-plugins` service
-using `docker compose up -d` or
-`helm upgrade fiftyone-teams-app voxel51/fiftyone-teams-app -f values.yaml`
-
 ## Uploading the code
 
 You can upload VoxelGPT manually or via the
@@ -72,15 +18,7 @@ You can upload VoxelGPT manually or via the
 
 ### Management SDK
 
-You can also programmatically upload the plugin via the
-[Management SDK](https://docs.voxel51.com/teams/management_sdk.html) if you
-have exposed your `teams-api` service.
-
-Instructions for exposing your `teams-api` service using docker compose
-are [here](https://github.com/voxel51/fiftyone-teams-app-deploy/blob/main/docker/docs/expose-teams-api.md)
-
-Instructions for exposing your `teams-api` service using helm are
-[here](https://helm.fiftyone.ai/docs/expose-teams-api.html)
+You can also programmatically upload the plugin via the Management SDK.
 
 ```shell
 wget https://github.com/voxel51/voxelgpt/archive/refs/heads/main.zip
@@ -98,9 +36,88 @@ Or, if you already have the repository cloned locally, you can use:
 fom.upload_plugin("/path/to/voxelgpt", optimize=True, overwrite=True)
 ```
 
-### Troubleshooting
+## Updating your plugin containers
 
-If you are seeing issues with the plugin not updating in the App:
+VoxelGPT requires certain Python packages to be available in your
+`teams-plugins` containers. You can see the current requirements by running:
+
+```shell
+cat requirements.txt
+```
+
+If any of these Python packages are not available in your `teams-plugins`
+containers, you'll need to add them (or just use the `fiftyone-app-gpt` image
+included in the `voxel51` Docker Hub repository).
+
+You must also ensure that a valid OpenAI API key
+([create one](https://platform.openai.com/account/api-keys)) is available to
+the containers via the `OPENAI_API_KEY` environment variable.
+
+### Docker Compose
+
+If your Teams deployment uses Docker Compose, edit your `compose.override.yaml`
+to include:
+
+```
+services:
+  teams-plugins:
+    env:
+      OPENAI_API_KEY: Your OpenAI API Key here
+    image: voxel51/fiftyone-app-gpt:v1.3.0
+```
+
+and then redeploy your `teams-plugins` service:
+
+```
+docker compose up -d
+```
+
+### Helm
+
+If your Teams deployment uses Helm, edit your `values.yaml` to include:
+
+```
+pluginsSettings:
+  environment:
+    OPENAI_API_KEY: XXXXXXXX
+  image:
+    repository: voxel51/fiftyone-app-gpt
+  tag: v1.3.0
+```
+
+and then redeploy your `teams-plugins` service:
+
+```
+helm upgrade fiftyone-teams-app voxel51/fiftyone-teams-app -f values.yaml
+```
+
+## Troubleshooting
+
+### Enabling plugins
+
+In order to use VoxelGPT (or any other plugin), you must have enabled plugins
+for your FiftyOne Teams deployment:
+
+-   Instructions for
+    [Docker Compose](https://github.com/voxel51/fiftyone-teams-app-deploy/tree/main/docker#enabling-fiftyone-teams-plugins)
+-   Instructions for
+    [Helm](https://helm.fiftyone.ai/#enabling-fiftyone-teams-plugins)
+
+### Exposing your `teams-api` service
+
+In order to use the
+[Management SDK](https://docs.voxel51.com/teams/management_sdk.html), you must
+have exposed your `teams-api` service:
+
+-   Instructions for
+    [Docker Compose](https://github.com/voxel51/fiftyone-teams-app-deploy/blob/main/docker/docs/expose-teams-api.md)
+-   Instructions for
+    [Helm](https://helm.fiftyone.ai/docs/expose-teams-api.html)
+
+### Plugin not updating
+
+If you are seeing issues with the plugin not updating in the App after you
+upload a new version:
 
 -   Check the logs for any additional information
--   Restart your `teams-plugins` pods
+-   Try restarting your `teams-plugins` pods
