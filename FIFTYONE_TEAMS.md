@@ -76,7 +76,7 @@ have exposed your `teams-api` service.
 Instructions for exposing your `teams-api` service using docker compose
 are [here](https://github.com/voxel51/fiftyone-teams-app-deploy/blob/main/docker/docs/expose-teams-api.md)
 
-Instructions for exposing your API service using helm are
+Instructions for exposing your `teams-api` service using helm are
 [here](https://helm.fiftyone.ai/docs/expose-teams-api.html)
 
 ```shell
