@@ -5,8 +5,7 @@ This guide explains how to upload the latest version of VoxelGPT to your
 
 ## Uploading the code
 
-You can upload VoxelGPT manually or via the
-[Management SDK](https://docs.voxel51.com/teams/management_sdk.html).
+You can upload VoxelGPT manually or via the Management SDK.
 
 ### Manual upload
 
@@ -18,7 +17,8 @@ You can upload VoxelGPT manually or via the
 
 ### Management SDK
 
-You can also programmatically upload the plugin via the Management SDK.
+You can also programmatically upload the plugin via the
+[Management SDK](https://docs.voxel51.com/teams/management_sdk.html).
 
 ```shell
 wget https://github.com/voxel51/voxelgpt/archive/refs/heads/main.zip
