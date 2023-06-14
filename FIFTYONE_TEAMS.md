@@ -61,7 +61,7 @@ to include:
 ```
 services:
   teams-plugins:
-    env:
+    environment:
       OPENAI_API_KEY: Your OpenAI API Key here
     image: voxel51/fiftyone-app-gpt:v1.3.0
 ```
@@ -78,11 +78,11 @@ If your Teams deployment uses Helm, edit your `values.yaml` to include:
 
 ```
 pluginsSettings:
-  environment:
+  env:
     OPENAI_API_KEY: XXXXXXXX
   image:
     repository: voxel51/fiftyone-app-gpt
-  tag: v1.3.0
+    tag: v1.3.0
 ```
 
 and then redeploy your `teams-plugins` service:
