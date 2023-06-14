@@ -4,7 +4,7 @@ version: 1.0.0
 fiftyone:
   version: "*"
 url: https://github.com/voxel51/voxelgpt
-license: MIT
+license: Apache 2.0
 js_bundle: dist/index.umd.js
 operators:
   - ask_voxelgpt
