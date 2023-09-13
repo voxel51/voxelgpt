@@ -200,7 +200,7 @@ def _generate_docs_embeddings():
         pickle.dump(api_embeddings_dict, f)
 
 
-class FiftyOneDocsRetriever(BaseRetriever):
+class FiftyOneDocsRetriever:
     def __init__(self, embeddings):
         self.model = get_embedding_function()
         self.contents = [
