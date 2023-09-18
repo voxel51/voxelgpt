@@ -24,6 +24,8 @@ class AskVoxelGPT(foo.Operator):
         return foo.OperatorConfig(
             name="ask_voxelgpt",
             label="Ask VoxelGPT",
+            light_icon="/assets/icon-light.svg",
+            dark_icon="/assets/icon-dark.svg",
             execute_as_generator=True,
         )
 
@@ -147,7 +149,7 @@ class AskVoxelGPTPanel(foo.Operator):
 
         try:
             with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
-                # pylint: disable=no-name-in-module
+                # pylint: disable=import-error,no-name-in-module
                 import db
                 from voxelgpt import ask_voxelgpt_generator
 
@@ -297,7 +299,7 @@ class OpenVoxelGPTPanel(foo.Operator):
             types.Places.SAMPLES_GRID_ACTIONS,
             types.Button(
                 label="Open VoxelGPT",
-                icon="/assets/chatgpt.svg",
+                icon="/assets/icon-dark.svg",
                 prompt=False,
             ),
         )
@@ -362,7 +364,7 @@ class VoteForQuery(foo.Operator):
         vote = ctx.params["vote"]
 
         with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
-            # pylint: disable=no-name-in-module
+            # pylint: disable=import-error,no-name-in-module
             import db
 
             table = db.table(db.UserQueryTable)

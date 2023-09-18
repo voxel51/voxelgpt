@@ -15,6 +15,7 @@ export class SendMessageToVoxelGPT extends Operator {
     return new OperatorConfig({
       name: "send_message_to_voxelgpt",
       label: "Send Message to VoxelGPT",
+      unlisted: true,
     });
   }
 
