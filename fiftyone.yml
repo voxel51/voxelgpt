@@ -12,3 +12,5 @@ operators:
   - open_voxelgpt_panel
   - open_voxelgpt_panel_on_startup
   - vote_for_query
+secrets:
+  - OPENAI_API_KEY
