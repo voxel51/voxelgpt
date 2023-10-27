@@ -44,6 +44,8 @@ class AskVoxelGPT(foo.Operator):
         sample_collection = ctx.view if ctx.view is not None else ctx.dataset
         messages = []
 
+        inject_voxelgpt_secrets(ctx)
+
         try:
             with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
                 # pylint: disable=no-name-in-module
@@ -146,6 +148,8 @@ class AskVoxelGPTPanel(foo.Operator):
         chat_history, sample_collection, orig_view = self._parse_history(
             ctx, history
         )
+
+        inject_voxelgpt_secrets(ctx)
 
         try:
             with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
@@ -394,6 +398,14 @@ def serialize_view(view):
 
 def deserialize_view(dataset, stages):
     return fo.DatasetView._build(dataset, json_util.loads(json.dumps(stages)))
+
+
+def inject_voxelgpt_secrets(ctx):
+    secrets = getattr(ctx, "secrets", {})
+
+    api_key = secrets.get("OPENAI_API_KEY", None)
+    if api_key:
+        os.environ["OPENAI_API_KEY"] = api_key
 
 
 def register(p):
