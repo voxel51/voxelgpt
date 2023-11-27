@@ -1,5 +1,5 @@
 langchain>=0.0.179
-openai
+openai<1.0.0
 pandas
 scipy
 tiktoken
