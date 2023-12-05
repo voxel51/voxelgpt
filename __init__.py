@@ -401,7 +401,11 @@ def deserialize_view(dataset, stages):
 
 
 def inject_voxelgpt_secrets(ctx):
-    api_key = ctx.secret("OPENAI_API_KEY")
+    try:
+        api_key = ctx.secrets["OPENAI_API_KEY"]
+    except:
+        api_key = None
+
     if api_key:
         os.environ["OPENAI_API_KEY"] = api_key
 
