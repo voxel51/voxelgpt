@@ -11,27 +11,27 @@ import sys
 
 import fiftyone as fo
 
-from links.query_moderator import moderate_query
-from links.dataset_schema_handler import query_schema
-from links.query_intent_classifier import classify_query_intent
-from links.docs_query_dispatcher import run_docs_query, stream_docs_query
-from links.computer_vision_query_dispatcher import (
+from voxelgpt.links.query_moderator import moderate_query
+from voxelgpt.links.dataset_schema_handler import query_schema
+from voxelgpt.links.query_intent_classifier import classify_query_intent
+from voxelgpt.links.docs_query_dispatcher import run_docs_query, stream_docs_query
+from voxelgpt.links.computer_vision_query_dispatcher import (
     run_computer_vision_query,
     stream_computer_vision_query,
 )
-from links.view_stage_example_selector import (
+from voxelgpt.links.view_stage_example_selector import (
     generate_view_stage_examples_prompt,
 )
-from links.view_stage_description_selector import (
+from voxelgpt.links.view_stage_description_selector import (
     generate_view_stage_descriptions_prompt,
     get_most_relevant_view_stages,
 )
-from links.algorithm_selector import select_algorithms
-from links.run_selector import select_runs
-from links.field_selector import select_fields
-from links.label_class_selector import select_label_classes
-from links.dataset_view_generator import get_gpt_view_stage_strings
-from links.effective_query_generator import generate_effective_query
+from voxelgpt.links.algorithm_selector import select_algorithms
+from voxelgpt.links.run_selector import select_runs
+from voxelgpt.links.field_selector import select_fields
+from voxelgpt.links.label_class_selector import select_label_classes
+from voxelgpt.links.dataset_view_generator import get_gpt_view_stage_strings
+from voxelgpt.links.effective_query_generator import generate_effective_query
 
 
 _SUPPORTED_DIALECTS = ("string", "markdown", "raw")

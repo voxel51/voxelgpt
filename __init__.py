@@ -13,11 +13,12 @@ import traceback
 from bson import json_util
 
 import fiftyone as fo
-from fiftyone.core.utils import add_sys_path
+# from fiftyone.core.utils import add_sys_path
 import fiftyone.operators as foo
 import fiftyone.operators.types as types
 
-
+from .voxelgpt import ask_voxelgpt_generator
+import db
 class AskVoxelGPT(foo.Operator):
     @property
     def config(self):
@@ -47,47 +48,47 @@ class AskVoxelGPT(foo.Operator):
         inject_voxelgpt_secrets(ctx)
 
         try:
-            with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
-                # pylint: disable=no-name-in-module
-                from voxelgpt import ask_voxelgpt_generator
+            # with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
+            #     # pylint: disable=no-name-in-module
+            #     from voxelgpt import ask_voxelgpt_generator
 
-                streaming_message = None
+            streaming_message = None
 
-                for response in ask_voxelgpt_generator(
-                    query,
-                    sample_collection=sample_collection,
-                    dialect="string",
-                    allow_streaming=True,
-                ):
-                    type = response["type"]
-                    data = response["data"]
+            for response in ask_voxelgpt_generator(
+                query,
+                sample_collection=sample_collection,
+                dialect="string",
+                allow_streaming=True,
+            ):
+                type = response["type"]
+                data = response["data"]
 
-                    if type == "view":
-                        yield self.view(ctx, data["view"])
-                    elif type == "message":
-                        kwargs = {}
+                if type == "view":
+                    yield self.view(ctx, data["view"])
+                elif type == "message":
+                    kwargs = {}
 
-                        if data["overwrite"]:
-                            kwargs["overwrite_last"] = True
+                    if data["overwrite"]:
+                        kwargs["overwrite_last"] = True
 
-                        yield self.message(
-                            ctx, data["message"], messages, **kwargs
-                        )
-                    elif type == "streaming":
-                        kwargs = {}
+                    yield self.message(
+                        ctx, data["message"], messages, **kwargs
+                    )
+                elif type == "streaming":
+                    kwargs = {}
 
-                        if streaming_message is None:
-                            streaming_message = data["content"]
-                        else:
-                            streaming_message += data["content"]
-                            kwargs["overwrite_last"] = True
+                    if streaming_message is None:
+                        streaming_message = data["content"]
+                    else:
+                        streaming_message += data["content"]
+                        kwargs["overwrite_last"] = True
 
-                        yield self.message(
-                            ctx, streaming_message, messages, **kwargs
-                        )
+                    yield self.message(
+                        ctx, streaming_message, messages, **kwargs
+                    )
 
-                        if data["last"]:
-                            streaming_message = None
+                    if data["last"]:
+                        streaming_message = None
         except Exception as e:
             yield self.error(ctx, e)
 
@@ -152,65 +153,65 @@ class AskVoxelGPTPanel(foo.Operator):
         inject_voxelgpt_secrets(ctx)
 
         try:
-            with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
-                # pylint: disable=import-error,no-name-in-module
-                import db
-                from voxelgpt import ask_voxelgpt_generator
+            # with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
+            #     # pylint: disable=import-error,no-name-in-module
+            #     import db
+            #     from voxelgpt import ask_voxelgpt_generator
 
-                # Log user query
-                table = db.table(db.UserQueryTable)
-                ctx.params["query_id"] = table.insert_query(query)
+            # Log user query
+            table = db.table(db.UserQueryTable)
+            ctx.params["query_id"] = table.insert_query(query)
 
-                streaming_message = None
+            streaming_message = None
 
-                for response in ask_voxelgpt_generator(
-                    query,
-                    sample_collection=sample_collection,
-                    chat_history=chat_history,
-                    dialect="markdown",
-                    allow_streaming=True,
-                ):
-                    type = response["type"]
-                    data = response["data"]
+            for response in ask_voxelgpt_generator(
+                query,
+                sample_collection=sample_collection,
+                chat_history=chat_history,
+                dialect="markdown",
+                allow_streaming=True,
+            ):
+                type = response["type"]
+                data = response["data"]
 
-                    if type == "view":
-                        if orig_view is not None:
-                            message = (
-                                "I'm remembering your previous view. Any "
-                                "follow-up questions in this session will be "
-                                "posed with respect to it"
-                            )
-                            yield self.message(
-                                ctx, message, orig_view=orig_view
-                            )
+                if type == "view":
+                    if orig_view is not None:
+                        message = (
+                            "I'm remembering your previous view. Any "
+                            "follow-up questions in this session will be "
+                            "posed with respect to it"
+                        )
+                        yield self.message(
+                            ctx, message, orig_view=orig_view
+                        )
 
-                        yield self.view(ctx, data["view"])
-                    elif type == "message":
-                        kwargs = {}
+                    yield self.view(ctx, data["view"])
+                elif type == "message":
+                    kwargs = {}
 
-                        if data["overwrite"]:
-                            kwargs["overwrite_last"] = True
+                    if data["overwrite"]:
+                        kwargs["overwrite_last"] = True
 
-                        kwargs["history"] = data["history"]
-                        yield self.message(ctx, data["message"], **kwargs)
-                    elif type == "streaming":
-                        kwargs = {}
+                    kwargs["history"] = data["history"]
+                    yield self.message(ctx, data["message"], **kwargs)
+                elif type == "streaming":
+                    kwargs = {}
 
-                        if streaming_message is None:
-                            streaming_message = data["content"]
-                        else:
-                            streaming_message += data["content"]
-                            kwargs["overwrite_last"] = True
+                    if streaming_message is None:
+                        streaming_message = data["content"]
+                    else:
+                        streaming_message += data["content"]
+                        kwargs["overwrite_last"] = True
 
-                        if data["last"]:
-                            kwargs["history"] = streaming_message
+                    if data["last"]:
+                        kwargs["history"] = streaming_message
 
-                        yield self.message(ctx, streaming_message, **kwargs)
+                    yield self.message(ctx, streaming_message, **kwargs)
 
-                        if data["last"]:
-                            streaming_message = None
-                    elif type == "warning":
-                        yield self.warning(ctx, data["message"])
+                    if data["last"]:
+                        streaming_message = None
+                elif type == "warning":
+                    yield self.warning(ctx, data["message"])
         except Exception as e:
             yield self.error(ctx, e)
         finally:
@@ -367,17 +368,17 @@ class VoteForQuery(foo.Operator):
         query_id = ctx.params["query_id"]
         vote = ctx.params["vote"]
 
-        with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
-            # pylint: disable=import-error,no-name-in-module
-            import db
+        # with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
+        #     # pylint: disable=import-error,no-name-in-module
+        #     import db
 
-            table = db.table(db.UserQueryTable)
-            if vote == "upvote":
-                table.upvote_query(query_id)
-            elif vote == "downvote":
-                table.downvote_query(query_id)
-            else:
-                raise ValueError(f"Invalid vote '{vote}'")
+        table = db.table(db.UserQueryTable)
+        if vote == "upvote":
+            table.upvote_query(query_id)
+        elif vote == "downvote":
+            table.downvote_query(query_id)
+        else:
+            raise ValueError(f"Invalid vote '{vote}'")
 
 
 def get_plugin_setting(dataset, plugin_name, key, default=None):
