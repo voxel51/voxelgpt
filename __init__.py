@@ -13,7 +13,6 @@ import traceback
 from bson import json_util
 
 import fiftyone as fo
-# from fiftyone.core.utils import add_sys_path
 import fiftyone.operators as foo
 import fiftyone.operators.types as types
 
@@ -48,10 +47,6 @@ class AskVoxelGPT(foo.Operator):
         inject_voxelgpt_secrets(ctx)
 
         try:
-            # with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
-            #     # pylint: disable=no-name-in-module
-            #     from voxelgpt import ask_voxelgpt_generator
-
             streaming_message = None
 
             for response in ask_voxelgpt_generator(
@@ -153,10 +148,6 @@ class AskVoxelGPTPanel(foo.Operator):
         inject_voxelgpt_secrets(ctx)
 
         try:
-            # with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
-            #     # pylint: disable=import-error,no-name-in-module
-            #     import db
-            #     from voxelgpt import ask_voxelgpt_generator
 
             # Log user query
             table = db.table(db.UserQueryTable)
@@ -368,9 +359,6 @@ class VoteForQuery(foo.Operator):
         query_id = ctx.params["query_id"]
         vote = ctx.params["vote"]
 
-        # with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
-        #     # pylint: disable=import-error,no-name-in-module
-        #     import db
 
         table = db.table(db.UserQueryTable)
         if vote == "upvote":
