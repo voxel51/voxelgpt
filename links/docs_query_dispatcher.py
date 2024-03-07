@@ -11,7 +11,7 @@ import os
 import pickle
 import uuid
 
-from langchain.schema import Document, BaseRetriever
+from langchain.schema import Document
 import numpy as np
 from scipy.spatial.distance import cosine
 
