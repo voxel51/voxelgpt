@@ -10,7 +10,6 @@ import pickle
 
 import numpy as np
 from scipy.spatial.distance import cosine
-from tabulate import tabulate
 
 import fiftyone as fo
 
