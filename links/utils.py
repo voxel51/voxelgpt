@@ -6,6 +6,7 @@ Link utils.
 |
 """
 import hashlib
+import logging
 import os
 import re
 import tiktoken
@@ -96,6 +97,12 @@ def stream_llm(prompt):
 
 
 def _llm_thread(g, prompt):
+    logger = logging.getLogger()
+    handler = logging.StreamHandler(g)
+    handler.setLevel(logging.WARNING)
+    handler.setFormatter(logging.Formatter("%(message)s"))
+    logger.addHandler(handler)
+
     try:
         llm = ChatOpenAI(
             openai_api_key=get_openai_key(),
@@ -104,11 +111,16 @@ def _llm_thread(g, prompt):
             streaming=True,
             callbacks=[StreamingHandler(g)],
         )
+
+        # https://github.com/hwchase17/langchain/blob/aec642febb3daa7dbb6a19996aac2efa92bbf1bd/langchain/chat_models/openai.py#L79
+        logger.warning("THIS IS A WARNING")
+
         llm.call_as_llm(prompt)
     except Exception as e:
         g.send(e)
     finally:
         g.close()
+        logger.removeHandler(handler)
 
 
 def query_retriever(retriever, prompt_template, query):
@@ -220,6 +232,12 @@ class ThreadedGenerator(object):
 
     def send(self, data):
         self.queue.put(data)
+
+    def write(self, data):
+        self.queue.put(Warning(data))
+
+    def flush(self):
+        pass
 
     def close(self):
         self.queue.put(StopIteration)
