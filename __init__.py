@@ -93,10 +93,7 @@ class AskVoxelGPT(foo.Operator):
 
     def view(self, ctx, view):
         if view != ctx.view:
-            return ctx.trigger(
-                "set_view",
-                params=dict(view=serialize_view(view)),
-            )
+            ctx.ops.set_view(view=view)
 
     def message(self, ctx, message, messages, overwrite_last=False):
         if overwrite_last:
@@ -218,10 +215,7 @@ class AskVoxelGPTPanel(foo.Operator):
 
     def view(self, ctx, view):
         if view != ctx.view:
-            return ctx.trigger(
-                "set_view",
-                params=dict(view=serialize_view(view)),
-            )
+            ctx.ops.set_view(view=view)
 
     def message(self, ctx, message, **kwargs):
         return self.show_message(ctx, message, types.MarkdownView(), **kwargs)
