@@ -7,7 +7,6 @@ VoxelGPT plugin.
 """
 import json
 import os
-import sys
 import traceback
 
 from bson import json_util
