@@ -1,52 +1,41 @@
 """
 Computer vision query dispatcher.
 
-| Copyright 2017-2023, Voxel51, Inc.
+| Copyright 2017-2024, Voxel51, Inc.
 | `voxel51.com <https://voxel51.com/>`_
 |
 """
 import os
 
-from langchain.prompts import PromptTemplate
+from langchain_core.runnables import RunnableLambda
 
 # pylint: disable=relative-beyond-top-level
-from .utils import get_llm, stream_llm, get_cache
+from .utils import PROMPTS_DIR, _build_chat_chain, gpt_4o, stream_runnable
+
+CV_QA_PATH = os.path.join(PROMPTS_DIR, "computer_vision_response.txt")
+cv_chain = _build_chat_chain(gpt_4o, template_path=CV_QA_PATH)
 
 
-ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PROMPTS_DIR = os.path.join(ROOT_DIR, "prompts")
-
-CV_QUERY_TASK_RULES_PATH = os.path.join(
-    PROMPTS_DIR, "computer_vision_query_task_rules.txt"
-)
+def cv_func(info):
+    query = info["query"]
+    response = cv_chain.invoke({"messages": [("user", query)]}).content
+    return {"input": query, "output": response}
 
 
-def _load_query_prefix():
-    cache = get_cache()
-    key = "computer_vision_query_prefix"
-    if key not in cache:
-        with open(CV_QUERY_TASK_RULES_PATH, "r") as f:
-            cache[key] = f.read()
-    return cache[key]
-
-
-def _get_prompt(query):
-    prefix = _load_query_prefix()
-    return prefix + PromptTemplate(
-        input_variables=["query"],
-        template="Question: {query}\nAnswer:",
-    ).format(query=query)
-
-
-def run_computer_vision_query(query):
-    prompt = _get_prompt(query)
-    return get_llm().call_as_llm(prompt).strip()
+def cv_func_streaming(info):
+    query = info["query"]
+    for chunk in cv_chain.stream({"messages": [("user", query)]}):
+        yield chunk
 
 
 def stream_computer_vision_query(query):
-    prompt = _get_prompt(query)
-    for content in stream_llm(prompt):
+    cv_runnable_streaming = RunnableLambda(cv_func_streaming)
+    for content in stream_runnable(cv_runnable_streaming, {"query": query}):
         if isinstance(content, Exception):
             raise content
+        yield content.content
 
-        yield content
+
+def run_computer_vision_query(query):
+    cv_runnable = RunnableLambda(cv_func)
+    return cv_runnable.invoke({"query": query})["output"]

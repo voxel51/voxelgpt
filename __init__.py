@@ -1,13 +1,12 @@
 """
 VoxelGPT plugin.
 
-| Copyright 2017-2023, Voxel51, Inc.
+| Copyright 2017-2024, Voxel51, Inc.
 | `voxel51.com <https://voxel51.com/>`_
 |
 """
 import json
 import os
-import sys
 import traceback
 
 from bson import json_util
@@ -16,6 +15,11 @@ import fiftyone as fo
 from fiftyone.core.utils import add_sys_path
 import fiftyone.operators as foo
 import fiftyone.operators.types as types
+
+
+def write_log(log):
+    with open("/tmp/log.txt", "a") as f:
+        f.write(str(log) + "\n")
 
 
 class AskVoxelGPT(foo.Operator):
@@ -55,7 +59,7 @@ class AskVoxelGPT(foo.Operator):
 
                 for response in ask_voxelgpt_generator(
                     query,
-                    sample_collection=sample_collection,
+                    ctx=ctx,
                     dialect="string",
                     allow_streaming=True,
                 ):
@@ -93,10 +97,7 @@ class AskVoxelGPT(foo.Operator):
 
     def view(self, ctx, view):
         if view != ctx.view:
-            return ctx.trigger(
-                "set_view",
-                params=dict(view=serialize_view(view)),
-            )
+            ctx.ops.set_view(view)
 
     def message(self, ctx, message, messages, overwrite_last=False):
         if overwrite_last:
@@ -165,7 +166,7 @@ class AskVoxelGPTPanel(foo.Operator):
 
                 for response in ask_voxelgpt_generator(
                     query,
-                    sample_collection=sample_collection,
+                    ctx=ctx,
                     chat_history=chat_history,
                     dialect="markdown",
                     allow_streaming=True,

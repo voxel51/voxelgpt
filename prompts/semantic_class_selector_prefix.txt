@@ -1,1 +1,0 @@
-Given a class name, your task is to find all likely semantic matches in the label classes. Return a list of matches. This list can be empty. If it is not empty, all elements in the list should be strings and should be in the label classes.

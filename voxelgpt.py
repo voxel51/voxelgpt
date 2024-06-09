@@ -1,40 +1,41 @@
 """
 VoxelGPT entrypoints.
 
-| Copyright 2017-2023, Voxel51, Inc.
+| Copyright 2017-2024, Voxel51, Inc.
 | `voxel51.com <https://voxel51.com/>`_
 |
 """
-from collections import defaultdict
 import re
 import sys
 
 import fiftyone as fo
 
-from links.query_moderator import moderate_query
-from links.dataset_schema_handler import query_schema
 from links.query_intent_classifier import classify_query_intent
 from links.docs_query_dispatcher import run_docs_query, stream_docs_query
 from links.computer_vision_query_dispatcher import (
     run_computer_vision_query,
     stream_computer_vision_query,
 )
-from links.view_stage_example_selector import (
-    generate_view_stage_examples_prompt,
+from links.workspace_inspection_agent import run_workspace_inspection_query
+from links.data_inspection_agent import run_basic_data_inspection_query
+from links.view_creation_classifier import should_create_view
+from links.view_setting_classifier import should_set_view
+from links.aggregation_classifier import should_aggregate
+from links.view_creator import create_view
+from links.aggregator import (
+    run_aggregation_query,
+    stream_aggregation_query,
 )
-from links.view_stage_description_selector import (
-    generate_view_stage_descriptions_prompt,
-    get_most_relevant_view_stages,
-)
-from links.algorithm_selector import select_algorithms
-from links.run_selector import select_runs
-from links.field_selector import select_fields
-from links.label_class_selector import select_label_classes
-from links.dataset_view_generator import get_gpt_view_stage_strings
-from links.effective_query_generator import generate_effective_query
+
+# from links.effective_query_generator import generate_effective_query
 
 
 _SUPPORTED_DIALECTS = ("string", "markdown", "raw")
+
+## For debugging purposes
+def write_log(log):
+    with open("/tmp/log.txt", "a") as f:
+        f.write(str(log) + "\n")
 
 
 def ask_voxelgpt_interactive(
@@ -110,6 +111,7 @@ def ask_voxelgpt_interactive(
 def ask_voxelgpt(
     query,
     sample_collection=None,
+    ctx=None,
     allow_streaming=True,
     chat_history=None,
 ):
@@ -137,6 +139,7 @@ def ask_voxelgpt(
     for response in ask_voxelgpt_generator(
         query,
         sample_collection=sample_collection,
+        ctx=ctx,
         dialect="string",
         allow_streaming=allow_streaming,
         chat_history=chat_history,
@@ -162,6 +165,7 @@ def ask_voxelgpt(
 def ask_voxelgpt_generator(
     query,
     sample_collection=None,
+    ctx=None,
     dialect="string",
     allow_streaming=True,
     chat_history=None,
@@ -247,9 +251,40 @@ def ask_voxelgpt_generator(
         if msg is not None:
             return _emit_message(msg, str_msg, overwrite=overwrite)
 
-    if not moderate_query(query):
-        yield _respond(_moderation_fail_message())
-        return
+    if ctx is not None:
+        sample_collection = ctx.view
+
+    view = sample_collection.view()
+
+    # def perform_docs_query(query):
+    #     write_log("in perform_docs_query")
+    #     if allow_streaming:
+    #         write_log("in if")
+    #         message = ""
+    #         for content in stream_docs_query(query):
+    #             if isinstance(content, dict):
+    #                 message = content
+    #             else:
+    #                 message += content
+    #                 yield _emit_streaming_content(content)
+
+    #         yield _emit_streaming_content("", last=True)
+    #         yield _respond(_format_docs_message(message), overwrite=True)
+    #     else:
+    #         write_log("in else")
+    #         yield _respond(_format_docs_message(run_docs_query(query)))
+
+    # def perform_cv_query(query):
+    #     if allow_streaming:
+    #         message = ""
+    #         for content in stream_computer_vision_query(query):
+    #             message += content
+    #             yield _emit_streaming_content(content)
+
+    #         yield _emit_streaming_content("", last=True)
+    #         yield _respond(message, overwrite=True)
+    #     else:
+    #         yield _respond(run_computer_vision_query(query))
 
     if query.strip().lower() == "help":
         yield _respond(_help_message())
@@ -258,19 +293,17 @@ def ask_voxelgpt_generator(
     _log_chat_history("User", query, chat_history)
 
     # Generate a new query that incorporates the chat history
-    if chat_history:
-        query = generate_effective_query(chat_history)
-
-    # Handle schema queries first
-    schema_response = query_schema(query, sample_collection)
-    if schema_response:
-        yield _respond(schema_response)
-        return
+    # if chat_history:
+    #     query = generate_effective_query(chat_history)
 
     # Intent classification
     intent = classify_query_intent(query)
+    write_log(intent)
+
     if intent == "documentation":
+        write_log("performing docs query")
         if allow_streaming:
+            write_log("in if")
             message = ""
             for content in stream_docs_query(query):
                 if isinstance(content, dict):
@@ -282,10 +315,11 @@ def ask_voxelgpt_generator(
             yield _emit_streaming_content("", last=True)
             yield _respond(_format_docs_message(message), overwrite=True)
         else:
+            write_log("in else")
             yield _respond(_format_docs_message(run_docs_query(query)))
-
         return
-    elif intent == "computer_vision":
+    elif intent == "general":
+        write_log("performing cv query")
         if allow_streaming:
             message = ""
             for content in stream_computer_vision_query(query):
@@ -296,12 +330,14 @@ def ask_voxelgpt_generator(
             yield _respond(message, overwrite=True)
         else:
             yield _respond(run_computer_vision_query(query))
-
         return
-    elif intent != "display":
-        yield _respond(_clarify_message())
+    elif intent == "workspace":
+        yield _respond(
+            _format_docs_message(run_workspace_inspection_query(query))
+        )
         return
 
+    ## If the query is not a documentation query, a computer vision query, or a workspace query, we need to inspect the dataset
     if sample_collection is None:
         yield _respond(
             "You must provide a sample collection in order for me to respond "
@@ -309,97 +345,61 @@ def ask_voxelgpt_generator(
         )
         return
 
-    if sample_collection.media_type not in ("image", "video"):
+    ## If no view creation and no aggregation, run basic data inspection agent
+    create_view_flag = should_create_view(query)
+    aggregate_flag = should_aggregate(query)
+
+    if not create_view_flag and not aggregate_flag:
         yield _respond(
-            "Only image or video collections are currently supported"
+            run_basic_data_inspection_query(query, sample_collection)
         )
+        # return
+
+    if create_view_flag:
+        view = create_view(query, sample_collection)
+
+    write_log(view)
+
+    if should_set_view(query):
+        yield _emit_view(view.view())
+
+    if not aggregate_flag:
         return
 
-    # Algorithms
-    algorithms = select_algorithms(query)
-    if algorithms:
-        yield _respond(_algorithms_message(algorithms))
+    write_log("Aggregating")
+    if allow_streaming:
+        write_log("in if")
+        message = ""
+        for content in stream_aggregation_query(query, view):
+            message += content
+            yield _emit_streaming_content(content)
 
-    # Runs
-    runs, runs_message = select_runs(sample_collection, query, algorithms)
-    if runs or runs_message:
-        yield _respond(_runs_message(runs, runs_message))
-
-    # Fields
-    fields = select_fields(sample_collection, query)
-    if fields:
-        yield _respond(_fields_message(fields))
-
-    # Label classes
-    label_classes = select_label_classes(sample_collection, query, fields)
-    if label_classes == "_CONFUSED_":
-        if "text_similarity" in runs:
-            label_classes = {}
-        else:
-            yield _respond(_clarify_message())
-            return
-
-    if any(len(v) > 0 for v in label_classes.values()):
-        _label_classes, _unmatched_classes = _format_label_classes(
-            label_classes
-        )
-        yield _respond(_label_classes_message(_label_classes))
-
-    examples = generate_view_stage_examples_prompt(
-        sample_collection, query, runs, label_classes
-    )
-    view_stage_descriptions = generate_view_stage_descriptions_prompt(examples)
-
-    # View stages
-    view_stages = get_most_relevant_view_stages(examples)
-    if view_stages:
-        yield _respond(_view_stages_message(view_stages))
-
-    examples = _reformat_query(examples, label_classes)
-    _label_classes, _unmatched_classes = _format_label_classes(label_classes)
-
-    stages = get_gpt_view_stage_strings(
-        sample_collection,
-        runs,
-        fields,
-        _label_classes,
-        _unmatched_classes,
-        view_stage_descriptions,
-        examples,
-    )
-
-    if "metadata" in ".".join(stages) and "metadata" not in runs:
-        stages = "_NEED_METADATA_"
-
-    if dialect == "raw":
-        yield stages
-        return
-
-    if stages == "_NEED_METADATA_":
-        yield _respond(_metadata_message())
-        return
-
-    if stages == "_MORE_":
-        yield _respond(_specific_message())
-        return
-
-    if stages == "_CONFUSED_":
-        yield _respond(_clarify_message())
-        return
-
-    stages = _format_stages(sample_collection, stages)
-
-    if stages:
-        yield _respond(_load_view_message(stages))
-
-        try:
-            view = _build_view(sample_collection, stages)
-            yield _emit_view(view)
-        except Exception as e:
-            yield _respond(_invalid_view_message())
+        yield _emit_streaming_content("", last=True)
+        yield _respond(message, overwrite=True)
     else:
-        yield _respond(_full_collection_message(sample_collection))
-        yield _emit_view(sample_collection)
+        write_log("in else")
+        yield _respond(run_aggregation_query(query, view))
+
+    return
+
+    # if "metadata" in ".".join(stages) and "metadata" not in runs:
+    #     stages = "_NEED_METADATA_"
+
+    # if dialect == "raw":
+    #     yield stages
+    #     return
+
+    # if stages == "_NEED_METADATA_":
+    #     yield _respond(_metadata_message())
+    #     return
+
+    # if stages == "_MORE_":
+    #     yield _respond(_specific_message())
+    #     return
+
+    # if stages == "_CONFUSED_":
+    #     yield _respond(_clarify_message())
+    #     return
 
 
 def _format_label_classes(label_classes):
@@ -443,45 +443,8 @@ def _reformat_query(examples, label_classes):
     return "\n".join(example_lines)
 
 
-def _format_stages(sample_collection, stages):
-    stages = [s for s in stages if s.strip() not in ("", "None")]
-
-    if not stages:
-        return None
-
-    if isinstance(sample_collection, fo.DatasetView):
-        ctype = "view"
-    else:
-        ctype = "dataset"
-
-    return [ctype] + stages
-
-
-def _build_view(sample_collection, stages):
-    import fiftyone as fo
-    from fiftyone import ViewField as F
-
-    if isinstance(sample_collection, fo.DatasetView):
-        view = sample_collection
-        dataset = view._root_dataset
-    else:
-        dataset = sample_collection
-        view = dataset.view()
-
-    view = eval(".".join(stages))
-
-    # Ensures view is valid
-    _ = view.count()
-
-    return view
-
-
 def _log_chat_history(speaker, text, chat_history):
     chat_history.append(f"{speaker}: {text}")
-
-
-def _moderation_fail_message():
-    return "I'm sorry, this query does not abide by OpenAI's guidelines"
 
 
 def _metadata_message():
