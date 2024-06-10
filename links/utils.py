@@ -27,7 +27,7 @@ PROMPTS_DIR = os.path.join(ROOT_DIR, "prompts")
 
 REPLACEMENT_MAPPING = {
     'F("$IMAGE_AREA")': 'F("$IMAGE_WIDTH") * F("$IMAGE_HEIGHT")',
-    'F("ABS_BBOX_WIDTH")': 'F("REL_BBOX_WIIDTH") * F("$IMAGE_WIDTH")',
+    'F("ABS_BBOX_WIDTH")': 'F("REL_BBOX_DTH") * F("$IMAGE_WIDTH")',
     'F("ABS_BBOX_HEIGHT")': 'F("REL_BBOX_HEIGHT") * F("$IMAGE_HEIGHT")',
     'F("ABS_BBOX_AREA")': 'F("REL_BBOX_AREA") * F("$IMAGE_AREA")',
     "F('ABS_BBOX_AREA')": 'F("REL_BBOX_AREA") * F("$IMAGE_AREA")',
@@ -40,8 +40,8 @@ REPLACEMENT_MAPPING = {
     "F('IMAGE_WIDTH')": 'F("$metadata.width")',
     'F("REL_BBOX_AREA")': 'F("bounding_box")[2] * F("bounding_box")[3]',
     "F('REL_BBOX_AREA')": 'F("bounding_box")[2] * F("bounding_box")[3]',
-    'F("REL_BBOX_WIIDTH")': 'F("bounding_box")[2]',
-    "F('REL_BBOX_WIIDTH')": 'F("bounding_box")[2]',
+    'F("REL_BBOX_WIDTH")': 'F("bounding_box")[2]',
+    "F('REL_BBOX_WIDTH')": 'F("bounding_box")[2]',
     'F("REL_BBOX_HEIGHT")': 'F("bounding_box")[3]',
     "F('REL_BBOX_HEIGHT')": 'F("bounding_box")[3]',
     'F("IMAGE_AREA")': 'F("metadata.width") * F("metadata.height")',

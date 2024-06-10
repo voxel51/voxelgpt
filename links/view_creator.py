@@ -33,12 +33,14 @@ def create_view(query, dataset):
     inspection_results = None
 
     view_stages = []
+    stage_reprs = []
     built_stages = []
     for assignee, step in zip(view_creation_actors, view_creation_plan.steps):
         stage = construct_stage(step, assignee, inspection_results, dataset)
         stage = validate_view_stage(stage, dataset)
         if stage is not None:
             built_stages.append(stage.build())
+            stage_reprs.append(str(stage.__repr__()))
 
     _reorder_built_stages_if_needed(built_stages)
     for stage in built_stages:
@@ -50,7 +52,7 @@ def create_view(query, dataset):
     for stage in view_stages:
         view = view.add_stage(stage)
 
-    return view
+    return view, stage_reprs
 
 
 def _reorder_built_stages_if_needed(built_stages):

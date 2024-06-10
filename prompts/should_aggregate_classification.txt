@@ -51,6 +51,9 @@ Examples::
     # User: Show me the samples with the highest uniqueness.
     Classification: No
 
+    # User: Filter for ground truth bounding boxes > 90% of image width
+    Classification: No
+
     # User: What is the distribution of the number of objects in the samples?
     Classification: Yes
 

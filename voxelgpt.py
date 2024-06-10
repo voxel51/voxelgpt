@@ -5,6 +5,7 @@ VoxelGPT entrypoints.
 | `voxel51.com <https://voxel51.com/>`_
 |
 """
+
 import re
 import sys
 
@@ -21,6 +22,7 @@ from links.data_inspection_agent import run_basic_data_inspection_query
 from links.view_creation_classifier import should_create_view
 from links.view_setting_classifier import should_set_view
 from links.aggregation_classifier import should_aggregate
+from links.view_creation_start_classifier import view_creation_starting_point
 from links.view_creator import create_view
 from links.aggregator import (
     run_aggregation_query,
@@ -31,6 +33,7 @@ from links.aggregator import (
 
 
 _SUPPORTED_DIALECTS = ("string", "markdown", "raw")
+
 
 ## For debugging purposes
 def write_log(log):
@@ -257,9 +260,7 @@ def ask_voxelgpt_generator(
     view = sample_collection.view()
 
     # def perform_docs_query(query):
-    #     write_log("in perform_docs_query")
     #     if allow_streaming:
-    #         write_log("in if")
     #         message = ""
     #         for content in stream_docs_query(query):
     #             if isinstance(content, dict):
@@ -271,7 +272,6 @@ def ask_voxelgpt_generator(
     #         yield _emit_streaming_content("", last=True)
     #         yield _respond(_format_docs_message(message), overwrite=True)
     #     else:
-    #         write_log("in else")
     #         yield _respond(_format_docs_message(run_docs_query(query)))
 
     # def perform_cv_query(query):
@@ -293,17 +293,16 @@ def ask_voxelgpt_generator(
     _log_chat_history("User", query, chat_history)
 
     # Generate a new query that incorporates the chat history
-    # if chat_history:
-    #     query = generate_effective_query(chat_history)
+    if chat_history:
+        write_log("Chat history exists")
+        write_log(str(chat_history))
+        # query = generate_effective_query(chat_history)
 
     # Intent classification
     intent = classify_query_intent(query)
-    write_log(intent)
 
     if intent == "documentation":
-        write_log("performing docs query")
         if allow_streaming:
-            write_log("in if")
             message = ""
             for content in stream_docs_query(query):
                 if isinstance(content, dict):
@@ -315,11 +314,9 @@ def ask_voxelgpt_generator(
             yield _emit_streaming_content("", last=True)
             yield _respond(_format_docs_message(message), overwrite=True)
         else:
-            write_log("in else")
             yield _respond(_format_docs_message(run_docs_query(query)))
         return
     elif intent == "general":
-        write_log("performing cv query")
         if allow_streaming:
             message = ""
             for content in stream_computer_vision_query(query):
@@ -337,7 +334,8 @@ def ask_voxelgpt_generator(
         )
         return
 
-    ## If the query is not a documentation query, a computer vision query, or a workspace query, we need to inspect the dataset
+    ## If the query is not a documentation query, a computer vision query, or a
+    ## workspace query, we need to inspect the dataset
     if sample_collection is None:
         yield _respond(
             "You must provide a sample collection in order for me to respond "
@@ -353,22 +351,32 @@ def ask_voxelgpt_generator(
         yield _respond(
             run_basic_data_inspection_query(query, sample_collection)
         )
-        # return
 
     if create_view_flag:
-        view = create_view(query, sample_collection)
+        if view == sample_collection._dataset:
+            starting_view = sample_collection
+            starting_str = "dataset"
+        elif view_creation_starting_point(query) == "view":
+            starting_view = view
+            starting_str = "view"
+        else:
+            starting_view = sample_collection
+            starting_str = "dataset"
 
-    write_log(view)
+        view, stage_reprs = create_view(query, starting_view)
+        yield _respond(_load_view_message(starting_str, stage_reprs))
 
     if should_set_view(query):
         yield _emit_view(view.view())
 
     if not aggregate_flag:
+        yield _respond(
+            "I've updated the view in the App. Let me know if you need anything else!"
+        )
         return
 
     write_log("Aggregating")
     if allow_streaming:
-        write_log("in if")
         message = ""
         for content in stream_aggregation_query(query, view):
             message += content
@@ -377,7 +385,6 @@ def ask_voxelgpt_generator(
         yield _emit_streaming_content("", last=True)
         yield _respond(message, overwrite=True)
     else:
-        write_log("in else")
         yield _respond(run_aggregation_query(query, view))
 
     return
@@ -668,16 +675,16 @@ def _get_stage_doc_link(stage_name):
     return f"https://docs.voxel51.com/api/fiftyone.core.collections.html#fiftyone.core.collections.SampleCollection.{stage_name}"
 
 
-def _load_view_message(stages):
+def _load_view_message(start_string, view_stage_strings):
     prefix = "Okay, I'm going to load "
-    view_str = ".".join(stages)
+    view_str = start_string + "." + ".".join(view_stage_strings)
 
     # Markdown
-    if len(view_str) < 80 or len(stages) <= 2:
+    if len(view_str) < 80 or len(view_stage_strings) <= 2:
         markdown = f":\n```py\n{view_str}\n```"
     else:
-        stages_str = "".join(f"    .{s}\n" for s in stages[1:])
-        markdown = f":\n```py\nview = (\n    {stages[0]}\n{stages_str})\n```"
+        stages_str = "".join(f"    .{s}\n" for s in view_stage_strings[1:])
+        markdown = f":\n```py\nview = (\n    {view_stage_strings[0]}\n{stages_str})\n```"
 
     return {
         "string": prefix + view_str,
@@ -689,13 +696,13 @@ def _invalid_view_message():
     return "I tested the view and it was invalid. Please try again"
 
 
-def _full_collection_message(sample_collection):
-    if isinstance(sample_collection, fo.DatasetView):
-        ctype = "view"
-    else:
-        ctype = "dataset"
+# def _full_collection_message(sample_collection):
+#     if isinstance(sample_collection, fo.DatasetView):
+#         ctype = "view"
+#     else:
+#         ctype = "dataset"
 
-    return f"Okay, let's load your entire {ctype}"
+#     return f"Okay, let's load your entire {ctype}"
 
 
 def _emit_message(message, history, overwrite=False):

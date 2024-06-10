@@ -18,8 +18,8 @@ CREATE_VIEW_PLANNING_PATH = os.path.join(
 
 
 def write_log(log):
-    with open("log.txt", "w") as f:
-        f.write(str(log))
+    with open("/tmp/log.txt", "a") as f:
+        f.write(str(log) + "\n")
 
 
 class ViewCreationPlan(BaseModel):

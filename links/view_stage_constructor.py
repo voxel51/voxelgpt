@@ -245,6 +245,9 @@ class Take(ViewStage):
     def build(self):
         return fo.Take(self.take)
 
+    def __repr__(self):
+        return f"take({self.take})"
+
 
 class Limit(ViewStage):
     """View stage to limit the number of samples in the view
@@ -266,6 +269,9 @@ class Limit(ViewStage):
     def build(self):
         return fo.Limit(self.limit)
 
+    def __repr__(self):
+        return f"limit({self.limit})"
+
 
 class Skip(ViewStage):
     """View stage to skip the specified number of samples in the view
@@ -284,6 +290,9 @@ class Skip(ViewStage):
 
     def build(self):
         return fo.Skip(self.skip)
+
+    def __repr__(self):
+        return f"skip({self.skip})"
 
 
 class Shuffle(ViewStage):
@@ -305,6 +314,9 @@ class Shuffle(ViewStage):
 
     def build(self):
         return fo.Shuffle(seed=self.seed)
+
+    def __repr__(self):
+        return f"shuffle(seed={self.seed})"
 
 
 class Exists(ViewStage):
@@ -336,6 +348,9 @@ class Exists(ViewStage):
     def build(self):
         return fo.Exists(self.field, bool=self.positive_match)
 
+    def __repr__(self):
+        return f"exists({self.field}, bool={self.positive_match})"
+
 
 class LimitLabels(ViewStage):
     """View stage to limit the number of `Label` instances in the specified
@@ -365,6 +380,9 @@ class LimitLabels(ViewStage):
     def build(self):
         return fo.LimitLabels(self.field, self.limit)
 
+    def __repr__(self):
+        return f"limit_labels({self.field}, {self.limit})"
+
 
 class SelectFields(ViewStage):
     """View stage to select the specified fields in the current view. Only the
@@ -386,6 +404,9 @@ class SelectFields(ViewStage):
     def build(self):
         return fo.SelectFields(self.fields)
 
+    def __repr__(self):
+        return f"select_fields(field_names={self.fields})"
+
 
 class ExcludeFields(ViewStage):
     """View stage to exclude the specified fields in the current view. All fields
@@ -405,6 +426,9 @@ class ExcludeFields(ViewStage):
 
     def build(self):
         return fo.ExcludeFields(self.fields)
+
+    def __repr__(self):
+        return f"exclude_fields(field_names={self.fields})"
 
 
 def _geocode_point(address):
@@ -468,6 +492,9 @@ class GeoNear(ViewStage):
             max_distance=self.max_distance,
         )
 
+    def __repr__(self):
+        return f"geo_near({self.location_name}, min_distance={self.min_distance}, max_distance={self.max_distance})"
+
 
 def _geocode_boundary(address):
     url = "https://nominatim.openstreetmap.org/search"
@@ -515,6 +542,9 @@ class GeoWithin(ViewStage):
             )
         return fo.GeoWithin(boundary)
 
+    def __repr__(self):
+        return f"geo_within({self.location_name})"
+
 
 class ToPatches(ViewStage):
     """View stage to create a view that contains one sample per object patch in
@@ -540,6 +570,9 @@ class ToPatches(ViewStage):
 
     def build(self):
         return fo.ToPatches(self.field)
+
+    def __repr__(self):
+        return f"to_patches({self.field})"
 
 
 class ToEvaluationPatches(ViewStage):
@@ -572,6 +605,9 @@ class ToEvaluationPatches(ViewStage):
     def build(self):
         return fo.ToEvaluationPatches(self.eval_key)
 
+    def __repr__(self):
+        return f"to_evaluation_patches({self.eval_key})"
+
 
 class SelectBy(ViewStage):
     """View stage to select the samples with the given field values from the collection.
@@ -601,6 +637,11 @@ class SelectBy(ViewStage):
 
     def build(self):
         return fo.SelectBy(self.field, self.values, ordered=self.ordered)
+
+    def __repr__(self):
+        return (
+            f"select_by({self.field}, {self.values}, ordered={self.ordered})"
+        )
 
 
 class SelectGroupSlices(ViewStage):
@@ -635,6 +676,9 @@ class SelectGroupSlices(ViewStage):
         return fo.SelectGroupSlices(
             slices=self.slices, media_type=self.media_type
         )
+
+    def __repr__(self):
+        return f"select_group_slices(slices={self.slices}, media_type={self.media_type})"
 
 
 class MatchTags(ViewStage):
@@ -682,6 +726,9 @@ class MatchTags(ViewStage):
             tags=self.tags, bool=self.positive_match, all=self.match_all
         )
 
+    def __repr__(self):
+        return f"match_tags(tags={self.tags}, bool={self.positive_match}, all={self.match_all})"
+
 
 class SelectLabels(ViewStage):
     """Selects only the specified labels from the collection.
@@ -709,6 +756,9 @@ class SelectLabels(ViewStage):
 
     def build(self):
         return fo.SelectLabels(tags=self.tags, fields=self.fields)
+
+    def __repr__(self):
+        return f"select_labels(tags={self.tags}, fields={self.fields})"
 
 
 class SortBySimilarity(ViewStage):
@@ -742,6 +792,9 @@ class SortBySimilarity(ViewStage):
         return fo.SortBySimilarity(
             self.text, k=self.k, brain_key=self.brain_key
         )
+
+    def __repr__(self):
+        return f"sort_by_similarity({self.text}, k={self.k}, brain_key={self.brain_key})"
 
 
 class GroupBy(ViewStage):
@@ -784,6 +837,13 @@ class GroupBy(ViewStage):
             key = eval(key)
 
         return fo.GroupBy(key)
+
+    def __repr__(self):
+        # pylint: disable=no-member
+        if not self.key.startswith("F(") and not self.key.startswith('F("'):
+            key = 'F("' + self.key + '")'
+        key = _make_replacements(key)
+        return f"group_by({key})"
 
 
 class SortBy(ViewStage):
@@ -828,6 +888,13 @@ class SortBy(ViewStage):
 
         return fo.SortBy(key, reverse=self.reverse)
 
+    def __repr__(self):
+        # pylint: disable=no-member
+        if not self.key.startswith("F(") and not self.key.startswith('F("'):
+            key = 'F("' + self.key + '")'
+        key = _make_replacements(key)
+        return f"sort_by({key}, reverse={self.reverse})"
+
 
 class FilterField(ViewStage):
     """Filters the values of a field of each sample in the collection.
@@ -859,6 +926,9 @@ class FilterField(ViewStage):
             filter_expr = filter_expr.replace("F()", 'F("filepath")')
             return fo.Match(eval(filter_expr))
         return fo.FilterField(self.field, eval(filter_expr))
+
+    def __repr__(self):
+        return f"filter_field({self.field}, {self.filter_expression})"
 
 
 class MatchLabels(ViewStage):
@@ -913,6 +983,9 @@ class MatchLabels(ViewStage):
             fields=self.fields, filter=filter_expr, bool=self.positive
         )
 
+    def __repr__(self):
+        return f"match_labels(fields={self.fields}, filter={self.filter_expression}, bool={self.positive})"
+
 
 class FilterLabels(ViewStage):
     """Filters the contents of a label field for labels that match the specified
@@ -947,6 +1020,10 @@ class FilterLabels(ViewStage):
         filter_expr = eval(filter_expr)
         return fo.FilterLabels(self.field, filter_expr)
 
+    def __repr__(self):
+        filter_expr = _format_filter_expression(self.filter_expression)
+        return f"filter_labels({self.field}, {filter_expr})"
+
 
 class MapLabels(ViewStage):
     """Maps the labels in the specified label field of each sample in the
@@ -979,6 +1056,9 @@ class MapLabels(ViewStage):
     def build(self):
         return fo.MapLabels(self.field, self.mapping)
 
+    def __repr__(self):
+        return f"map_labels({self.field}, {self.mapping})"
+
 
 class Match(ViewStage):
     """
@@ -1007,6 +1087,10 @@ class Match(ViewStage):
         filter_expr = _format_filter_expression(self.filter_expression)
         filter_expr = eval(filter_expr)
         return fo.Match(filter_expr)
+
+    def __repr__(self):
+        filter_expr = _format_filter_expression(self.filter_expression)
+        return f"match({filter_expr})"
 
 
 VIEW_STAGE_OUTPUT_TYPES = {
