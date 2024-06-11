@@ -5,6 +5,7 @@ Link utils.
 | `voxel51.com <https://voxel51.com/>`_
 |
 """
+
 import os
 import re
 import threading
@@ -17,10 +18,10 @@ from langchain_core.prompts import (
     ChatPromptTemplate,
     PromptTemplate,
 )
-from langchain_openai import ChatOpenAI
 
-gpt_3_5 = ChatOpenAI(model="gpt-3.5-turbo")
-gpt_4o = ChatOpenAI(model="gpt-4o")
+
+EMBEDDING_MODEL_NAME = "text-embedding-3-large"
+
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROMPTS_DIR = os.path.join(ROOT_DIR, "prompts")
@@ -51,6 +52,101 @@ REPLACEMENT_MAPPING = {
     'F("IMAGE_HEIGHT")': 'F("metadata.height")',
     "F('IMAGE_HEIGHT')": 'F("metadata.height")',
 }
+
+
+def get_embedding_model():
+    if _is_azure_deployment():
+        return _get_embedding_model_azure()
+    else:
+        return _get_embedding_model_openai()
+
+
+def get_gpt4o():
+    if _is_azure_deployment():
+        return _get_gpt4o_azure()
+    else:
+        return _get_gpt4o_openai()
+
+
+def get_gpt_35():
+    if _is_azure_deployment():
+        return _get_gpt_35_azure()
+    else:
+        return _get_gpt_35_openai()
+
+
+def _get_embedding_model_openai():
+    from langchain_openai import OpenAIEmbeddings
+
+    return OpenAIEmbeddings(model=EMBEDDING_MODEL_NAME)
+
+
+def _get_embedding_model_azure():
+    from langchain_openai import AzureOpenAIEmbeddings
+
+    return AzureOpenAIEmbeddings(
+        openai_api_version=os.environ.get(
+            "AZURE_OPENAI_API_VERSION", "2024-05-01-preview"
+        ),
+        azure_deployment=os.getenv(
+            "AZURE_OPENAI_TEXT_EMBEDDING_3_LARGE_DEPLOYMENT_NAME"
+        ),
+    )
+
+
+def _is_azure_deployment():
+    # Check for Azure environment variables
+    api_type = os.environ.get("OPENAI_API_TYPE", None)
+    if api_type is None or api_type != "azure":
+        return False
+    if os.environ.get("AZURE_OPENAI_ENDPOINT", None) is None:
+        return False
+    if os.environ.get("AZURE_OPENAI_KEY", None) is None:
+        return False
+    if os.environ.get("AZURE_OPENAI_GPT4O_DEPLOYMENT_NAME", None) is None:
+        return False
+    return True
+
+
+def _get_gpt_35_openai():
+    from langchain_openai import ChatOpenAI
+
+    return ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
+
+
+def _get_gpt_35_azure():
+    from langchain_openai import AzureChatOpenAI
+
+    AzureChatOpenAI(
+        openai_api_version=os.environ.get(
+            "AZURE_OPENAI_API_VERSION", "2024-05-01-preview"
+        ),
+        azure_deployment=os.getenv("AZURE_OPENAI_GPT35_DEPLOYMENT_NAME"),
+        temperature=0,
+    )
+
+
+def _get_gpt4o_azure():
+    from langchain_openai import AzureChatOpenAI
+
+    AzureChatOpenAI(
+        openai_api_version=os.environ.get(
+            "AZURE_OPENAI_API_VERSION", "2024-05-01-preview"
+        ),
+        azure_deployment=os.getenv("AZURE_OPENAI_GPT4O_DEPLOYMENT_NAME"),
+        temperature=0,
+    )
+
+
+def _get_gpt4o_openai():
+    from langchain_openai import ChatOpenAI
+
+    return ChatOpenAI(model="gpt-4o", temperature=0)
+
+
+gpt_3_5 = get_gpt_35()
+gpt_4o = get_gpt4o()
+embedding_model = get_embedding_model()
 
 
 def get_prompt_from(path):
@@ -222,3 +318,11 @@ def _replace_threshold_if_necessary(filter_expr):
         else:
             filter_expr = filter_expr.replace("threshold", "0.1")
     return filter_expr
+
+
+def has_metadata(sample_collection):
+    """Returns whether the sample collection has metadata."""
+    return (
+        sample_collection.exists("metadata").count()
+        == sample_collection.count()
+    )
