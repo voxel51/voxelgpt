@@ -8,6 +8,8 @@ FiftyOne docs query dispatcher.
 import os
 import requests
 
+import numpy as np
+
 from langchain_core.prompts import (
     FewShotPromptTemplate,
     PromptTemplate,
@@ -20,6 +22,7 @@ from .utils import (
     PROMPTS_DIR,
     stream_runnable,
     gpt_4o,
+    embedding_model,
 )
 
 PROTECT_MAPS = [
@@ -75,10 +78,12 @@ def _build_docs_qa_prompt(query, docs):
 
 
 def _get_documents(query):
+    query_vector = embedding_model.embed_query(query)
+    query_vector = [str(np.round(qv, 8)) for qv in query_vector]
     response = requests.get(
-        "http://127.0.0.1:5000/retrieve", params={"query": query}
+        "http://127.0.0.1:5000/retrieve", params={"query": query_vector}
     )
-    response = response.json()["Answer"]
+    response = response.json()["results"]
     return response
 
 
