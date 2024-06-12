@@ -16,6 +16,8 @@ SET_VIEW_CLASSIFICATION_PATH = os.path.join(
 
 
 def should_set_view(query):
-    chain = _build_custom_chain(gpt_3_5, SET_VIEW_CLASSIFICATION_PATH)
+    chain = _build_custom_chain(
+        gpt_3_5, template_path=SET_VIEW_CLASSIFICATION_PATH
+    )
     response = chain.invoke({"query": query})
     return "set" in response.lower()

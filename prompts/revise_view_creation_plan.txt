@@ -49,18 +49,12 @@ In particular, you can use the following `ViewStages` to help users:
 The `DatasetView` can contain one or more of these `ViewStages`.
 
 For the given objective, come up with a plan that outlines the view stages that
-should be applied to the dataset to achieve the desired outcome. 
-
-Here are the rules:
-- If the user says 'label', they likely mean label. In this case, do not replace the word with 'field'.
-- This plan should involve individual view stage names and instructions in context, that if
+should be applied to the dataset to achieve the desired outcome. This plan 
+should involve individual view stage names and instructions in context, that if
 executed in sequence will yield the correct answer. Do not change the meaning. 
-- Do not add any superfluous steps. The result of the final step should be the
-final answer. 
-- Make sure that each step has all the information needed - do not skip steps. 
-- Do *not* include any steps related to aggregations or analysis on the data. Those will be handled separately.
-- If a user uses the word "view" in their query, do not change this to "dataset". Likewise, if they use the word "dataset", do not change this to "view".
-
+Do not add any superfluous steps. The result of the final step should be the
+final answer. Make sure that each step has all the information needed - do not
+skip steps.
 
 Examples::
 
@@ -120,11 +114,6 @@ Examples::
 
 1. Filter the date field for dates between 2021-01-01 and 2021-12-31
 
-# User: How many samples do I have with a cat or a dog in them?
-# Plan:
-
-1. Match samples that have a label with the class 'cat' or 'dog'
-
 # User: Show me all of the left or right stereo images with a car
 # Plan:
 
@@ -162,12 +151,6 @@ Examples::
 
 1. Group samples by the 'weather' field
 
-# User: Show me evaluation patches of dogs
-# Plan:
-
-1. Filter for samples with the class 'dog' in prediction or ground truth label fields
-2. Convert to evaluation patches
-
 # User: Show me the 10 most unique images in Hell's Kitchen
 # Plan:
 
@@ -179,11 +162,6 @@ Examples::
 # Plan:
 
 1. Sort the samples by similarity to the text query 'animals'
-
-# User: What is my average number of birds per image?
-# Plan:
-
-1. FilterLabels for ground truth labels with the class 'bird'
 
 # User: Show me the first 5 samples with a brightness value in the range [0.4, 0.6]
 # Plan:
@@ -206,8 +184,33 @@ Examples::
 1. Filter for TP predictions
 2. Convert to evaluation patches
 
-# User: Show me the images of a horse or a person that have at least 1 high confidence prediction
-# Plan:
 
-1. Match samples that have a label with the class 'horse' or 'person'
-2. Filter for prediction labels with a confidence score > 0.9
+You have already created a first draft of the plan, and have performed an initial
+inspection of the data to understand the structure of the dataset. Given the user
+query, initial plan, and inspection results, refine the plan by adding or modifying
+the view stages as needed to achieve the desired outcome. 
+
+Here are the rules:
+- Be as specific as possible in your instructions to ensure that the plan is clear and concise. 
+- Use relevant field names and label classes based on the dataset inspection results. 
+- If a step is not possible given the dataset structure, indicate that the step cannot be completed with "No: [reason]". 
+- Your revised plan does *not* need to have the same number of steps as the initial plan, and you can add or remove steps as needed.
+- Do *not* include any steps related to aggregations or analysis on the data. Those will be handled separately.
+- You can *only* use the names of fields present in the data inspection results. Do not make up field names.
+- You can *only* use the view stages mentioned in the examples above. Do not make up new view stages.
+- If the initial plan is correct and no changes are needed, simply reiterate the initial plan.
+- If the query just asks for objects of a certain class and the dataset has a ground truth field, you can assume that the query is asking for objects of that class in the ground truth field, and should not match or filter on predictions fields to find objects of that class.
+
+
+Given the following user query, initial plan, and inspection results, refine the
+view creation plan:
+
+Query: {query}
+
+Initial Plan: {initial_plan}
+
+Inspection Results:
+{dataset_info}
+
+Revised Plan: 
+

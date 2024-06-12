@@ -27,6 +27,7 @@ from .utils import (
     gpt_4o,
     _make_replacements,
     _format_filter_expression,
+    get_prompt_from,
 )
 
 stages_type = Optional[List[str]]
@@ -493,7 +494,7 @@ class GeoNear(ViewStage):
         )
 
     def __repr__(self):
-        return f"geo_near({self.location_name}, min_distance={self.min_distance}, max_distance={self.max_distance})"
+        return f"geo_near('{self.location_name}', min_distance={self.min_distance}, max_distance={self.max_distance})"
 
 
 def _geocode_boundary(address):
@@ -543,7 +544,7 @@ class GeoWithin(ViewStage):
         return fo.GeoWithin(boundary)
 
     def __repr__(self):
-        return f"geo_within({self.location_name})"
+        return f"geo_within('{self.location_name}')"
 
 
 class ToPatches(ViewStage):
@@ -572,7 +573,7 @@ class ToPatches(ViewStage):
         return fo.ToPatches(self.field)
 
     def __repr__(self):
-        return f"to_patches({self.field})"
+        return f"to_patches('{self.field}')"
 
 
 class ToEvaluationPatches(ViewStage):
@@ -606,7 +607,7 @@ class ToEvaluationPatches(ViewStage):
         return fo.ToEvaluationPatches(self.eval_key)
 
     def __repr__(self):
-        return f"to_evaluation_patches({self.eval_key})"
+        return f"to_evaluation_patches('{self.eval_key}')"
 
 
 class SelectBy(ViewStage):
@@ -640,7 +641,7 @@ class SelectBy(ViewStage):
 
     def __repr__(self):
         return (
-            f"select_by({self.field}, {self.values}, ordered={self.ordered})"
+            f"select_by('{self.field}', {self.values}, ordered={self.ordered})"
         )
 
 
@@ -678,7 +679,10 @@ class SelectGroupSlices(ViewStage):
         )
 
     def __repr__(self):
-        return f"select_group_slices(slices={self.slices}, media_type={self.media_type})"
+        media_type = self.media_type
+        if media_type is not None:
+            media_type = f"'{media_type}'"
+        return f"select_group_slices(slices={self.slices}, media_type={media_type})"
 
 
 class MatchTags(ViewStage):
@@ -758,6 +762,9 @@ class SelectLabels(ViewStage):
         return fo.SelectLabels(tags=self.tags, fields=self.fields)
 
     def __repr__(self):
+        tags = self.tags
+        if isinstance(tags, str):
+            tags = f"'{tags}'"
         return f"select_labels(tags={self.tags}, fields={self.fields})"
 
 
@@ -782,7 +789,7 @@ class SortBySimilarity(ViewStage):
     text: str = Field(description="The text query to sort by")
     k: Optional[int] = Field(
         description="The number of samples to return. If None, all samples are returned",
-        default=25,
+        default=50,
     )
     brain_key: Optional[str] = Field(
         description="The key of the brain to use for similarity search"
@@ -794,7 +801,7 @@ class SortBySimilarity(ViewStage):
         )
 
     def __repr__(self):
-        return f"sort_by_similarity({self.text}, k={self.k}, brain_key={self.brain_key})"
+        return f"sort_by_similarity('{self.text}', k={self.k}, brain_key='{self.brain_key}')"
 
 
 class GroupBy(ViewStage):
@@ -879,9 +886,10 @@ class SortBy(ViewStage):
 
     def build(self):
         # pylint: disable=no-member
-        if not self.key.startswith("F(") and not self.key.startswith('F("'):
-            key = 'F("' + self.key + '")'
-        key = _make_replacements(self.key)
+        key = self.key
+        if not key.startswith("F(") and not key.startswith('F("'):
+            key = 'F("' + key + '")'
+        key = _make_replacements(key)
         key = eval(key)
         if isinstance(key, str):
             key = eval(key)
@@ -890,8 +898,9 @@ class SortBy(ViewStage):
 
     def __repr__(self):
         # pylint: disable=no-member
-        if not self.key.startswith("F(") and not self.key.startswith('F("'):
-            key = 'F("' + self.key + '")'
+        key = self.key
+        if not key.startswith("F(") and not key.startswith('F("'):
+            key = 'F("' + key + '")'
         key = _make_replacements(key)
         return f"sort_by({key}, reverse={self.reverse})"
 
@@ -928,7 +937,8 @@ class FilterField(ViewStage):
         return fo.FilterField(self.field, eval(filter_expr))
 
     def __repr__(self):
-        return f"filter_field({self.field}, {self.filter_expression})"
+        filter_expr = _format_filter_expression(self.filter_expression)
+        return f"filter_field('{self.field}', {filter_expr})"
 
 
 class MatchLabels(ViewStage):
@@ -984,7 +994,12 @@ class MatchLabels(ViewStage):
         )
 
     def __repr__(self):
-        return f"match_labels(fields={self.fields}, filter={self.filter_expression}, bool={self.positive})"
+        fields = self.fields
+        if isinstance(fields, str):
+            fields = f'"{fields}"'
+
+        filter_expr = _format_filter_expression(self.filter_expression)
+        return f"match_labels(fields={fields}, filter={filter_expr}, bool={self.positive})"
 
 
 class FilterLabels(ViewStage):
@@ -1016,13 +1031,16 @@ class FilterLabels(ViewStage):
     )
 
     def build(self):
+        write_log(f"FilterLabels: {self.filter_expression}")
         filter_expr = _format_filter_expression(self.filter_expression)
+        write_log(f"FilterLabels: {filter_expr}")
         filter_expr = eval(filter_expr)
+        write_log(f"FilterLabels: {filter_expr}")
         return fo.FilterLabels(self.field, filter_expr)
 
     def __repr__(self):
         filter_expr = _format_filter_expression(self.filter_expression)
-        return f"filter_labels({self.field}, {filter_expr})"
+        return f"filter_labels('{self.field}', {filter_expr})"
 
 
 class MapLabels(ViewStage):
@@ -1057,7 +1075,7 @@ class MapLabels(ViewStage):
         return fo.MapLabels(self.field, self.mapping)
 
     def __repr__(self):
-        return f"map_labels({self.field}, {self.mapping})"
+        return f"map_labels('{self.field}', {self.mapping})"
 
 
 class Match(ViewStage):
@@ -1135,9 +1153,7 @@ FILTER_FIELD_EXPRESSION_PROMPT_FILENAMES = {
 }
 
 
-def _construct_filter_field_expression(
-    stage, step, inspection_results, dataset
-):
+def _construct_filter_field_expression(stage, step, dataset):
     field = dataset.get_field(stage.field)
 
     if isinstance(field, fo.StringField):
@@ -1208,9 +1224,7 @@ def _identify_label_field_type(dataset, field_names, filter_expression):
     return "general"
 
 
-def _construct_match_labels_expression(
-    stage, step, inspection_results, dataset
-):
+def _construct_match_labels_expression(stage, step, dataset):
     field = stage.field if hasattr(stage, "field") else stage.fields
     label_type = _identify_label_field_type(dataset, field, step)
     prompt_filename = MATCH_LABELS_EXPRESSION_PROMPT_FILENAMES[label_type]
@@ -1224,45 +1238,35 @@ def _construct_match_labels_expression(
     stage.filter_expression = resp
 
 
-def _construct_match_expression(stage, step, inspection_results, dataset):
+def _construct_match_expression(stage, step, *args):
     FILTER_FIELD_EXPRESSION_PATH = os.path.join(
         PROMPTS_DIR, "match_expression.txt"
     )
+    prompt = get_prompt_from(FILTER_FIELD_EXPRESSION_PATH).format(query=step)
 
-    chain = _build_chat_chain(
-        gpt_4o, template_path=FILTER_FIELD_EXPRESSION_PATH
-    )
+    chain = _build_chat_chain(gpt_4o, prompt=prompt)
 
     resp = chain.invoke({"messages": [("user", step)]}).content
     stage.filter_expression = resp
 
 
-def _construct_view_expression_if_needed(
-    stage, step, inspection_results, dataset
-):
+def _construct_view_expression_if_needed(stage, step, dataset):
     if isinstance(stage, FilterField):
-        _construct_filter_field_expression(
-            stage, step, inspection_results, dataset
-        )
+        _construct_filter_field_expression(stage, step, dataset)
     elif isinstance(stage, MatchLabels) or isinstance(stage, FilterLabels):
         ## Handle MatchLabels and FilterLabels together
-        _construct_match_labels_expression(
-            stage, step, inspection_results, dataset
-        )
+        _construct_match_labels_expression(stage, step, dataset)
     elif isinstance(stage, Match):
-        _construct_match_expression(stage, step, inspection_results, dataset)
+        _construct_match_expression(stage, step, dataset)
 
 
-def construct_stage(step, assignee, inspection_results, dataset):
+def construct_stage(step, assignee, dataset):
     PROMPT_SUFFIX = VIEW_STAGE_PROMPTS[assignee]
     prompt = VIEW_STAGE_PROMPT_PREFIX + PROMPT_SUFFIX
-    ### Add data inspection results...
 
     output_type = VIEW_STAGE_OUTPUT_TYPES[assignee]
 
     chain = _build_chat_chain(gpt_4o, prompt=prompt, output_type=output_type)
     stage = chain.invoke({"messages": [("user", step)]})
-    _construct_view_expression_if_needed(
-        stage, step, inspection_results, dataset
-    )
+    _construct_view_expression_if_needed(stage, step, dataset)
     return stage

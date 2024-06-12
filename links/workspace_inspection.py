@@ -14,7 +14,7 @@ from langchain_core.tools import tool
 import fiftyone as fo
 
 # pylint: disable=relative-beyond-top-level
-from .utils import get_cache, PROMPTS_DIR, _build_agent_executor_chain, gpt_4o
+from .utils import PROMPTS_DIR, _build_agent_executor_chain, gpt_4o
 
 WORKSPACE_INSPECTION_PATH = os.path.join(
     PROMPTS_DIR, "workspace_inspection.txt"

@@ -20,8 +20,14 @@ Examples::
 # Query: Samples that contain either a dog and a cat in their ResNet50 predictions
 # Expression: 'F("resnet50.detections.label").contains(["cat", "dog"], all=True)'
 
+# Query: Filter for samples with the class 'dog' in prediction or ground truth label fields
+# Expression: 'F("ground_truth.detections.label").contains("dog") | F("predictions.detections.label").contains("dog")'
+
 # Query: Images that do not contain a tree
 # Expression: '~F("ground_truth.detections.label").contains("tree")'
 
 # Query: Samples whose mean prediction confidence is greater than 0.5
 # Expression: 'F("predictions.detections.confidence").mean() > 0.5'
+
+# Query: {query}
+# Expression: 

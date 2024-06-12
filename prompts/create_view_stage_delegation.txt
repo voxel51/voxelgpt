@@ -131,6 +131,9 @@ Examples::
 # User: Retrieve all samples with a very small bounding box
 # Classification: MatchLabels
 
+# User: Filter for samples with the class 'dog' in prediction or ground truth label fields
+# Classification: Match
+
 # User: Retrieve the samples where 'is_a_dog' is True
 # Classification: FilterField
 

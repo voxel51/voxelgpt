@@ -23,29 +23,13 @@ from .utils import (
     stream_runnable,
     gpt_4o,
     embedding_model,
+    protect_text,
+    unprotect_text,
 )
 
-PROTECT_MAPS = [
-    ("{source}", "<SOURCE>"),
-    ("{page_content}", "<CONTENT>"),
-    ("{", "LEFT_BRACE"),
-    ("}", "RIGHT_BRACE"),
-]
 
 DOCS_QA_PATH = os.path.join(PROMPTS_DIR, "docs_qa_retrieval.txt")
 DOCS_QA_PROMPT_TEMPLATE = get_prompt_from(DOCS_QA_PATH)
-
-
-def unprotect_text(text):
-    for k, v in PROTECT_MAPS:
-        text = text.replace(v, k)
-    return text
-
-
-def protect_text(text):
-    for k, v in PROTECT_MAPS:
-        text = text.replace(k, v)
-    return text
 
 
 def _build_docs_qa_prompt(query, docs):
@@ -81,7 +65,7 @@ def _get_documents(query):
     query_vector = embedding_model.embed_query(query)
     query_vector = [str(np.round(qv, 8)) for qv in query_vector]
     response = requests.get(
-        "http://127.0.0.1:5000/retrieve", params={"query": query_vector}
+        "http://voxelgpt.fiftyona.ai/retrieve", params={"query": query_vector}
     )
     response = response.json()["results"]
     return response

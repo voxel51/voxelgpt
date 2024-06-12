@@ -38,7 +38,9 @@ REPLACEMENT_MAPPING = {
     "F('BBOX_Y')": 'abs(F("dimensions")[1])',
     'F("BBOX_Z")': 'abs(F("dimensions")[2])',
     'F("$IMAGE_WIDTH")': 'F("$metadata.width")',
-    "F('IMAGE_WIDTH')": 'F("$metadata.width")',
+    "F('$IMAGE_WIDTH')": 'F("$metadata.width")',
+    'F("$IMAGE_HEIGHT")': 'F("$metadata.height")',
+    "F('$IMAGE_HEIGHT')": 'F("$metadata.height")',
     'F("REL_BBOX_AREA")': 'F("bounding_box")[2] * F("bounding_box")[3]',
     "F('REL_BBOX_AREA')": 'F("bounding_box")[2] * F("bounding_box")[3]',
     'F("REL_BBOX_WIDTH")': 'F("bounding_box")[2]',
@@ -52,6 +54,25 @@ REPLACEMENT_MAPPING = {
     'F("IMAGE_HEIGHT")': 'F("metadata.height")',
     "F('IMAGE_HEIGHT')": 'F("metadata.height")',
 }
+
+PROTECT_MAPS = [
+    ("{source}", "<SOURCE>"),
+    ("{page_content}", "<CONTENT>"),
+    ("{", "LEFT_BRACE"),
+    ("}", "RIGHT_BRACE"),
+]
+
+
+def unprotect_text(text):
+    for k, v in PROTECT_MAPS:
+        text = text.replace(v, k)
+    return text
+
+
+def protect_text(text):
+    for k, v in PROTECT_MAPS:
+        text = text.replace(k, v)
+    return text
 
 
 def get_embedding_model():
@@ -160,8 +181,9 @@ def _make_replacements(expr):
     return expr
 
 
-def _build_custom_chain(model, template_path):
-    prompt = get_prompt_from(template_path)
+def _build_custom_chain(model, template_path=None, prompt=None):
+    if template_path:
+        prompt = get_prompt_from(template_path)
     chain = PromptTemplate.from_template(prompt) | model | StrOutputParser()
     return chain
 
@@ -230,14 +252,6 @@ def _get_runnable_thread_output(q):
 def stream_runnable(runnable, info):
     q = _build_runnable_thread(runnable, info)
     return _get_runnable_thread_output(q)
-
-
-def get_cache():
-    g = globals()
-    if "_voxelgpt" not in g:
-        g["_voxelgpt"] = {}
-
-    return g["_voxelgpt"]
 
 
 def get_openai_key():

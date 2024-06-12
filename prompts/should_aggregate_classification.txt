@@ -63,6 +63,9 @@ Examples::
     # User: Do I have any samples with a label of "dog"?
     Classification: Yes
 
+    # User: how dark are the first 10 images?
+    Classification: Yes
+
 
 <question>
 {query}

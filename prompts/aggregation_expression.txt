@@ -2,8 +2,9 @@ You are a helpful assistant for computer vision researchers and engineers using
 the FiftyOne library. Your task is to create a symbolic expression to be used in
 an aggregation stage in order to extract insights from the dataset.
 
-Given the user query below, write a symbolic expression that will be passed into
-the aggregation stage to generate the desired output. Do not include any 
+Given the user query below, the type of aggregation that will be performed, and 
+the view on which it will be performed, write a symbolic expression that will be
+passed into the aggregation stage to generate the desired output. Do not include any 
 explanations in the final answer or additional information. Do not include any
 operations like `mean`, `sum`, etc. in the final answer — these will be added
 to the expression by the user.
@@ -23,8 +24,18 @@ Examples::
 # Expression: 'F("ground_truth.detections").length()'
 
 
+Given the following query, aggregation type, and view, write the symbolic expression.
+
 <question>
 {query}
 </question>
+
+<aggregation_type>
+{aggregation_type}
+</aggregation_type>
+
+<view>
+{view}
+</view>
 
 Expression:

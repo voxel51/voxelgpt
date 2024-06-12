@@ -16,6 +16,8 @@ AGGREGATION_CLASSIFICATION_PATH = os.path.join(
 
 
 def should_aggregate(query):
-    chain = _build_custom_chain(gpt_3_5, AGGREGATION_CLASSIFICATION_PATH)
+    chain = _build_custom_chain(
+        gpt_3_5, template_path=AGGREGATION_CLASSIFICATION_PATH
+    )
     response = chain.invoke({"query": query})
     return "yes" in response.lower()

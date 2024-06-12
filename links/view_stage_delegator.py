@@ -17,5 +17,7 @@ VIEW_STAGE_DELEGATION_PATH = os.path.join(
 
 
 def delegate_view_stage_creation(step):
-    chain = _build_custom_chain(gpt_4o, VIEW_STAGE_DELEGATION_PATH)
+    chain = _build_custom_chain(
+        gpt_4o, template_path=VIEW_STAGE_DELEGATION_PATH
+    )
     return chain.invoke({"question": step})

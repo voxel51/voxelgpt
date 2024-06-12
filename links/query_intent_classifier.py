@@ -14,7 +14,9 @@ INTENT_CLASSIFICATION_PATH = os.path.join(
     PROMPTS_DIR, "intent_classification.txt"
 )
 
-intent_chain = _build_custom_chain(gpt_3_5, INTENT_CLASSIFICATION_PATH)
+intent_chain = _build_custom_chain(
+    gpt_3_5, template_path=INTENT_CLASSIFICATION_PATH
+)
 
 allowed_topics = ["documentation", "dataset", "general", "workspace"]
 
