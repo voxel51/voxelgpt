@@ -11,10 +11,12 @@ import re
 import fiftyone as fo
 
 # pylint: disable=relative-beyond-top-level
+from .utils import _gt_field_names, _pred_field_names
 from .data_inspection import (
     _get_detection_evaluation_runs,
     _get_text_sim_runs,
     _list_detection_fields,
+    _list_fields,
 )
 from .view_stage_constructor import (
     MatchLabels,
@@ -25,18 +27,10 @@ from .view_stage_constructor import (
     MatchTags,
     SelectLabels,
     SortBySimilarity,
+    SelectFields,
+    ExcludeFields,
+    Exists,
 )
-
-
-_gt_field_names = [
-    "ground_truth",
-    "gt",
-    "truth",
-    "ground truth",
-    "GT",
-    "detections",
-]
-_pred_field_names = ["predictions", "preds", "pred", "PRED", "PREDICTIONS"]
 
 
 def _validate_to_patches_stage(view_stage, dataset):
@@ -283,6 +277,51 @@ def _validate_filter_labels_stage(view_stage, dataset):
     return view_stage
 
 
+def _validate_fields_stage(view_stage, dataset):
+    validated_fields = []
+
+    def _validate_field(field):
+        if dataset.has_field(field):
+            validated_fields.append(field)
+        elif field == "detections":
+            det_fields = _list_detection_fields(dataset)
+            if len(det_fields) > 0:
+                validated_fields.append(det_fields[0])
+
+    fields = view_stage.fields
+    if isinstance(fields, str):
+        fields = [fields]
+
+    for field in fields:
+        _validate_field(field)
+
+    view_stage.fields = validated_fields
+    return view_stage
+
+
+def _validate_exists_stage(view_stage, dataset):
+    field = view_stage.field
+    if dataset.has_field(field):
+        return view_stage
+
+    elif field == "detections":
+        det_fields = _list_detection_fields(dataset)
+        if len(det_fields) > 0:
+            view_stage.field = det_fields[0]
+            return view_stage
+    elif field == "classification":
+        class_fields = _list_fields(dataset, fo.Classification)
+        if len(class_fields) > 0:
+            view_stage.field = class_fields[0]
+            return view_stage
+    elif field == "polylines":
+        polyline_fields = _list_fields(dataset, fo.Polylines)
+        if len(polyline_fields) > 0:
+            view_stage.field = polyline_fields[0]
+            return view_stage
+    return "Field not found"
+
+
 def validate_view_stage(view_stage, dataset):
     if isinstance(view_stage, ToPatches):
         view_stage = _validate_to_patches_stage(view_stage, dataset)
@@ -298,5 +337,8 @@ def validate_view_stage(view_stage, dataset):
         view_stage = _validate_sort_by_similarity_stage(view_stage, dataset)
     elif isinstance(view_stage, (MatchLabels, FilterLabels)):
         view_stage = _validate_filter_labels_stage(view_stage, dataset)
-
+    elif isinstance(view_stage, (SelectFields, ExcludeFields)):
+        view_stage = _validate_fields_stage(view_stage, dataset)
+    elif isinstance(view_stage, Exists):
+        view_stage = _validate_exists_stage(view_stage, dataset)
     return view_stage
