@@ -403,10 +403,16 @@ class SelectFields(ViewStage):
     fields: List[str] = Field(description="List of fields to select")
 
     def build(self):
-        return fo.SelectFields(self.fields)
+        fields = self.fields
+        if isinstance(fields, str):
+            fields = f"'{fields}"
+        return fo.SelectFields(field_names=fields)
 
     def __repr__(self):
-        return f"select_fields(field_names={self.fields})"
+        fields = self.fields
+        if isinstance(fields, str):
+            fields = f"'{fields}"
+        return f"select_fields(field_names={fields})"
 
 
 class ExcludeFields(ViewStage):
@@ -426,10 +432,16 @@ class ExcludeFields(ViewStage):
     fields: List[str] = Field(description="List of fields to exclude")
 
     def build(self):
-        return fo.ExcludeFields(self.fields)
+        fields = self.fields
+        if isinstance(fields, str):
+            fields = f"'{fields}"
+        return fo.ExcludeFields(field_names=fields)
 
     def __repr__(self):
-        return f"exclude_fields(field_names={self.fields})"
+        fields = self.fields
+        if isinstance(fields, str):
+            fields = f"'{fields}"
+        return f"exclude_fields(field_names={fields})"
 
 
 def _geocode_point(address):

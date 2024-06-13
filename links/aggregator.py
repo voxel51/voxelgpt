@@ -201,7 +201,7 @@ def construct_aggregation(assignee, query, view_repr, *args, **kwargs):
     if aggregation_constructor is None:
         raise ValueError("Invalid assignee for aggregation")
     elif aggregation_constructor == Count:
-        return aggregation_constructor()
+        return aggregation_constructor(expression="")
     else:
         prompt = get_prompt_from(AGGREGATION_EXPRESSION_PATH).format(
             aggregation_type=assignee, query=query, view=view_repr

@@ -31,4 +31,6 @@ Which resulted in the following:
 Given this information, provide a human-readable and helpful response to the 
 user's query. Do not end your response with anything like "If you have any other
 questions or need further assistance, feel free to ask!" since this is already
-implicitly understood by the user. Avoid redundancy.
+implicitly understood by the user. Avoid redundancy. If you use the `values()`
+aggregation and the resulting list has more than 50 entries, do not return all
+of these raw values to the user.
