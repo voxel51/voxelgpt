@@ -65,7 +65,7 @@ def _get_documents(query):
     query_vector = embedding_model.embed_query(query)
     query_vector = [str(np.round(qv, 8)) for qv in query_vector]
     response = requests.get(
-        "http://voxelgpt.fiftyona.ai/retrieve", params={"query": query_vector}
+        "http://voxelgpt.fiftyone.ai/retrieve", params={"query": query_vector}
     )
     response = response.json()["results"]
     return response
