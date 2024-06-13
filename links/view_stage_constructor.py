@@ -350,7 +350,7 @@ class Exists(ViewStage):
         return fo.Exists(self.field, bool=self.positive_match)
 
     def __repr__(self):
-        return f"exists({self.field}, bool={self.positive_match})"
+        return f"exists('{self.field}', bool={self.positive_match})"
 
 
 class LimitLabels(ViewStage):
@@ -382,7 +382,7 @@ class LimitLabels(ViewStage):
         return fo.LimitLabels(self.field, self.limit)
 
     def __repr__(self):
-        return f"limit_labels({self.field}, {self.limit})"
+        return f"limit_labels('{self.field}', {self.limit})"
 
 
 class SelectFields(ViewStage):
