@@ -209,7 +209,10 @@ def _extract_label_class(expression):
 
 
 def _get_class_names(dataset, field_name):
-    ftype = dataset.get_field(field_name).document_type
+    try:
+        ftype = dataset.get_field(field_name).document_type
+    except:
+        return []
     if ftype == fo.Detections:
         return dataset.distinct(f"{field_name}.detections.label")
     elif ftype == fo.Classification:
