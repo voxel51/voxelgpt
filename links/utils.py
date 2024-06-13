@@ -75,25 +75,69 @@ def protect_text(text):
     return text
 
 
+def _get_dummy_messages():
+    chat_template = ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                "You are a helpful assistant. Help me with my math homework!",
+            ),
+            ("human", "{user_input}"),
+        ]
+    )
+    messages = chat_template.format_messages(
+        user_input="Hello! Could you solve 2+2?"
+    )
+    return messages
+
+
+def _get_dummy_text():
+    return "This is a text to embed"
+
+
 def get_embedding_model():
     if _is_azure_deployment():
-        return _get_embedding_model_azure()
-    else:
-        return _get_embedding_model_openai()
+        try:
+            embedding_model = _get_embedding_model_azure()
+            embedding_model.embed_query(_get_dummy_text())
+            return embedding_model
+        except:
+            pass
+    return _get_embedding_model_openai()
 
 
 def get_gpt4o():
     if _is_azure_deployment():
-        return _get_gpt4o_azure()
-    else:
-        return _get_gpt4o_openai()
+        try:
+            model = _get_gpt4o_azure()
+            model.invoke(_get_dummy_messages())
+            return model
+        except Exception as e:
+            pass
+    return _get_gpt4o_openai()
 
 
 def get_gpt_35():
     if _is_azure_deployment():
-        return _get_gpt_35_azure()
-    else:
-        return _get_gpt_35_openai()
+        try:
+            model = _get_gpt_35_azure()
+            model.invoke(_get_dummy_messages())
+            return model
+        except Exception as e:
+            pass
+    return _get_gpt_35_openai()
+
+
+def _is_azure_deployment():
+    # Check for Azure environment variables
+    api_type = os.environ.get("OPENAI_API_TYPE", None)
+    if api_type is None or api_type != "azure":
+        return False
+    if os.environ.get("AZURE_OPENAI_ENDPOINT", None) is None:
+        return False
+    if os.environ.get("AZURE_OPENAI_KEY", None) is None:
+        return False
+    return True
 
 
 def _get_embedding_model_openai():
@@ -112,21 +156,9 @@ def _get_embedding_model_azure():
         azure_deployment=os.getenv(
             "AZURE_OPENAI_TEXT_EMBEDDING_3_LARGE_DEPLOYMENT_NAME"
         ),
+        azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+        api_key=os.getenv("AZURE_OPENAI_KEY"),
     )
-
-
-def _is_azure_deployment():
-    # Check for Azure environment variables
-    api_type = os.environ.get("OPENAI_API_TYPE", None)
-    if api_type is None or api_type != "azure":
-        return False
-    if os.environ.get("AZURE_OPENAI_ENDPOINT", None) is None:
-        return False
-    if os.environ.get("AZURE_OPENAI_KEY", None) is None:
-        return False
-    if os.environ.get("AZURE_OPENAI_GPT4O_DEPLOYMENT_NAME", None) is None:
-        return False
-    return True
 
 
 def _get_gpt_35_openai():
@@ -138,11 +170,11 @@ def _get_gpt_35_openai():
 def _get_gpt_35_azure():
     from langchain_openai import AzureChatOpenAI
 
-    AzureChatOpenAI(
-        openai_api_version=os.environ.get(
-            "AZURE_OPENAI_API_VERSION", "2024-05-01-preview"
-        ),
+    return AzureChatOpenAI(
+        api_version="2024-05-01-preview",
         azure_deployment=os.getenv("AZURE_OPENAI_GPT35_DEPLOYMENT_NAME"),
+        azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+        api_key=os.getenv("AZURE_OPENAI_KEY"),
         temperature=0,
     )
 
@@ -150,11 +182,11 @@ def _get_gpt_35_azure():
 def _get_gpt4o_azure():
     from langchain_openai import AzureChatOpenAI
 
-    AzureChatOpenAI(
-        openai_api_version=os.environ.get(
-            "AZURE_OPENAI_API_VERSION", "2024-05-01-preview"
-        ),
+    return AzureChatOpenAI(
+        api_version="2024-05-01-preview",
         azure_deployment=os.getenv("AZURE_OPENAI_GPT4O_DEPLOYMENT_NAME"),
+        azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+        api_key=os.getenv("AZURE_OPENAI_KEY"),
         temperature=0,
     )
 
@@ -191,6 +223,7 @@ def _build_custom_chain(model, template_path=None, prompt=None):
 def _build_chat_chain(
     model, output_type=None, template_path=None, prompt=None
 ):
+
     if template_path:
         prompt = get_prompt_from(template_path)
     curr_model = model
