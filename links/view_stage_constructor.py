@@ -835,10 +835,11 @@ class GroupBy(ViewStage):
     )
 
     def build(self):
+        key = self.key
         # pylint: disable=no-member
-        if not self.key.startswith("F(") and not self.key.startswith('F("'):
-            key = 'F("' + self.key + '")'
-        key = _make_replacements(self.key)
+        if not key.startswith("F(") and not key.startswith('F("'):
+            key = 'F("' + key + '")'
+        key = _make_replacements(key)
         key = eval(key)
         if isinstance(key, str):
             key = eval(key)
@@ -846,9 +847,10 @@ class GroupBy(ViewStage):
         return fo.GroupBy(key)
 
     def __repr__(self):
+        key = self.key
         # pylint: disable=no-member
-        if not self.key.startswith("F(") and not self.key.startswith('F("'):
-            key = 'F("' + self.key + '")'
+        if not key.startswith("F(") and not key.startswith('F("'):
+            key = 'F("' + key + '")'
         key = _make_replacements(key)
         return f"group_by({key})"
 
