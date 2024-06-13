@@ -143,7 +143,9 @@ def _is_azure_deployment():
 def _get_embedding_model_openai():
     from langchain_openai import OpenAIEmbeddings
 
-    return OpenAIEmbeddings(model=EMBEDDING_MODEL_NAME)
+    return OpenAIEmbeddings(
+        model=EMBEDDING_MODEL_NAME, openai_api_type="openai"
+    )
 
 
 def _get_embedding_model_azure():
