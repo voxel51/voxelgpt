@@ -345,9 +345,10 @@ def ask_voxelgpt_generator(
             _format_docs_message(run_workspace_inspection_query(query))
         )
         return
+    elif intent == "other":
+        yield _respond(_clarify_message())
+        return
 
-    ## If the query is not a documentation query, a computer vision query, or a
-    ## workspace query, we need to inspect the dataset
     if dataset is None:
         yield _respond(
             "You must provide a sample collection in order for me to respond "
@@ -523,6 +524,10 @@ def _load_view_message(start_string, view_stage_strings):
 
 def _invalid_view_message():
     return "I tested the view and it was invalid. Please try again"
+
+
+def _clarify_message():
+    return "I'm sorry, I don't understand. Can you clarify what you're asking?"
 
 
 def _emit_message(message, history, overwrite=False):

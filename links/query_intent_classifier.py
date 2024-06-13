@@ -18,7 +18,7 @@ intent_chain = _build_custom_chain(
     gpt_3_5, template_path=INTENT_CLASSIFICATION_PATH
 )
 
-allowed_topics = ["documentation", "dataset", "general", "workspace"]
+allowed_topics = ["documentation", "dataset", "general", "workspace", "other"]
 
 bad_topic_text = "I'm sorry, I'm not sure what you're asking. Could you please provide more context?"
 
@@ -35,4 +35,4 @@ def classify_query_intent(query):
         if allowed_topic in topic:
             return allowed_topic
 
-    return bad_topic_text
+    return "other"
