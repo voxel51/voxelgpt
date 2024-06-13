@@ -1,5 +1,7 @@
-langchain>=0.1.0
-openai<1.0.0
-pandas
-scipy
-tiktoken
+langchain>=0.2.0
+langchain-community>=0.2.0
+langchain-core>=0.2.0
+langchain-openai>=0.1.0
+openai>=1.0.0
+fiftyone>=0.24.0
+tiktoken>=0.7.0
