@@ -22,6 +22,9 @@ Examples::
     # User: What is the distribution of labels in my dataset?
     Classification: view
 
+    # User: Do I have any detection fields on my dataset?
+    Classification: dataset
+
     # User: Do I have any geolocation data?
     Classification: dataset
 
@@ -33,6 +36,9 @@ Examples::
 
     # User: Filter for samples with a label of "cat"
     Classification: view
+
+    # User: What classification fields do I have?
+    Classification: dataset
 
     # User: Which fields contain predictions?
     Classification: dataset

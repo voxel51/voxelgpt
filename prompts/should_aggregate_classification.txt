@@ -45,6 +45,9 @@ Examples::
     # User: Show me the samples with the highest confidence predictions.
     Classification: No
 
+    # User: Do I have any detection fields on my dataset?
+    Classification: No
+
     # User: What is the max uniqueness of the first 100 samples?
     Classification: Yes
 
@@ -58,6 +61,9 @@ Examples::
     Classification: Yes
 
     # User: Show me the samples with the most objects.
+    Classification: No
+
+    # User: What classification fields do I have?
     Classification: No
 
     # User: Do I have any samples with a label of "dog"?
