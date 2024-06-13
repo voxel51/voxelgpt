@@ -496,7 +496,7 @@ def _help_message():
 def _perform_aggregation_message(start_string, aggregation_string):
     return {
         "string": f"Performing aggregation: {start_string}.{aggregation_string}",
-        "markdown": f"Performing aggregation: `{start_string}.{aggregation_string}`",
+        "markdown": f"Performing aggregation:\n```py\n{start_string}.{aggregation_string}\n```",
     }
 
 
