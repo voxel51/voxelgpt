@@ -401,14 +401,26 @@ def deserialize_view(dataset, stages):
     return fo.DatasetView._build(dataset, json_util.loads(json.dumps(stages)))
 
 
-def inject_voxelgpt_secrets(ctx):
-    try:
-        api_key = ctx.secrets["OPENAI_API_KEY"]
-    except:
-        api_key = None
+secrets = (
+    "OPENAI_API_KEY",
+    "OPENAI_API_TYPE",
+    "AZURE_OPENAI_GPT35_DEPLOYMENT_NAME",
+    "AZURE_OPENAI_GPT4O_DEPLOYMENT_NAME",
+    "AZURE_OPENAI_TEXT_EMBEDDING_3_LARGE_DEPLOYMENT_NAME",
+    "AZURE_OPENAI_ENDPOINT",
+    "AZURE_OPENAI_KEY",
+)
 
-    if api_key:
-        os.environ["OPENAI_API_KEY"] = api_key
+
+def inject_voxelgpt_secrets(ctx):
+    for secret in secrets:
+        try:
+            value = ctx.secrets[secret]
+        except KeyError:
+            value = None
+
+        if value:
+            os.environ[secret] = value
 
 
 def register(p):
