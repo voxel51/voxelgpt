@@ -45,7 +45,6 @@ class AskVoxelGPT(foo.Operator):
 
     def execute(self, ctx):
         query = ctx.params["query"]
-        sample_collection = ctx.view if ctx.view is not None else ctx.dataset
         messages = []
 
         inject_voxelgpt_secrets(ctx)
@@ -219,10 +218,7 @@ class AskVoxelGPTPanel(foo.Operator):
 
     def view(self, ctx, view):
         if view != ctx.view:
-            return ctx.trigger(
-                "set_view",
-                params=dict(view=serialize_view(view)),
-            )
+            ctx.ops.set_view(view)
 
     def message(self, ctx, message, **kwargs):
         return self.show_message(ctx, message, types.MarkdownView(), **kwargs)
