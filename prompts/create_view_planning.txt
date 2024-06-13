@@ -79,6 +79,11 @@ Examples::
 
 1. GeoNear the location of the Empire State Building with a distance of 400 meters
 
+# User: What is the maximum number of person detections I have in a single image?
+# Plan:
+
+1. FilterLabels for ground truth detections with class "person"
+
 # User: Show me all of the ground truth labels of a cat
 # Plan:
 
