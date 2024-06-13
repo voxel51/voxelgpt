@@ -366,47 +366,55 @@ def ask_voxelgpt_generator(
         return
 
     ### VIEW CREATION
-    if current_view is not None and should_add_to_view(query, current_view):
-        starting_view = current_view
-        starting_str = "view"
-    else:
-        starting_view = dataset
-        starting_str = "dataset"
+    if create_view_flag:
+        if current_view is not None and should_add_to_view(
+            query, current_view
+        ):
+            starting_view = current_view
+            starting_str = "view"
+        else:
+            starting_view = dataset
+            starting_str = "dataset"
 
-    yield _respond("Creating a plan...", add_to_history=False)
-    view_creation_plan = create_view_creation_plan(query)
-    yield _respond(
-        _view_creation_plan_message(view_creation_plan), add_to_history=False
-    )
-    view_creation_actors = [
-        delegate_view_stage_creation(step) for step in view_creation_plan.steps
-    ]
-    yield _respond("Inspecting the data schema...", add_to_history=False)
-    inspection_results = _run_default_inspection_for_plan(
-        starting_view, view_creation_actors, view_creation_plan
-    )
-    yield _respond("Crafting a revised plan...", add_to_history=False)
-    view_creation_plan = revise_view_creation_plan(
-        query, inspection_results, view_creation_plan
-    )
-    yield _respond(
-        _view_creation_plan_message(view_creation_plan), add_to_history=False
-    )
-
-    view, stage_reprs = create_view_from_plan(
-        starting_view, view_creation_plan
-    )
-
-    if view is None:
-        yield _respond(_invalid_view_message())
-        return
-
-    if view == starting_view:
+        yield _respond("Creating a plan...", add_to_history=False)
+        view_creation_plan = create_view_creation_plan(query)
         yield _respond(
-            "No view stages were applied. Perhaps you should try a different query, or add fields to the dataset.",
+            _view_creation_plan_message(view_creation_plan),
+            add_to_history=False,
         )
-    view_message = _load_view_message(starting_str, stage_reprs)
-    yield _respond(view_message)
+        view_creation_actors = [
+            delegate_view_stage_creation(step)
+            for step in view_creation_plan.steps
+        ]
+        yield _respond("Inspecting the data schema...", add_to_history=False)
+        inspection_results = _run_default_inspection_for_plan(
+            starting_view, view_creation_actors, view_creation_plan
+        )
+        yield _respond("Crafting a revised plan...", add_to_history=False)
+        view_creation_plan = revise_view_creation_plan(
+            query, inspection_results, view_creation_plan
+        )
+        yield _respond(
+            _view_creation_plan_message(view_creation_plan),
+            add_to_history=False,
+        )
+
+        view, stage_reprs = create_view_from_plan(
+            starting_view, view_creation_plan
+        )
+
+        if view is None:
+            yield _respond(_invalid_view_message())
+            return
+
+        if view == starting_view:
+            yield _respond(
+                "No view stages were applied. Perhaps you should try a different query, or add fields to the dataset.",
+            )
+        view_message = _load_view_message(starting_str, stage_reprs)
+        yield _respond(view_message)
+    else:
+        view = dataset
 
     if should_set_view(query):
         yield _emit_view(view.view())
@@ -422,8 +430,10 @@ def ask_voxelgpt_generator(
     if aggregate_flag:
         aggregation_assignee = delegate_aggregation(query)
 
+        view_message_str = view_message["string"] if view_message else ""
+
         aggregation = construct_aggregation(
-            aggregation_assignee, query, view_message["markdown"]
+            aggregation_assignee, query, view_message_str, view
         )
         if aggregation is None:
             yield _respond(
