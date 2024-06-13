@@ -361,7 +361,9 @@ def ask_voxelgpt_generator(
 
     ## If no view creation and no aggregation, run basic data inspection agent
     if not create_view_flag and not aggregate_flag:
-        yield _respond(run_basic_data_inspection_query(query, current_view))
+        query_view = current_view if current_view is not None else dataset
+        yield _respond(run_basic_data_inspection_query(query, query_view))
+        return
 
     ### VIEW CREATION
     if current_view is not None and should_add_to_view(query, current_view):
