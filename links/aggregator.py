@@ -7,11 +7,11 @@ Aggregator
 """
 
 import os
-from langchain_core.pydantic_v1 import BaseModel, Field
 
 import fiftyone as fo
 from fiftyone import ViewField as F
 
+from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.runnables import RunnableLambda
 
 # pylint: disable=relative-beyond-top-level

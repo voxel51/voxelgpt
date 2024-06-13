@@ -10,16 +10,11 @@ import os
 import fiftyone as fo
 from fiftyone import ViewField as F
 
-from langchain_core.runnables import RunnableLambda
-
 # pylint: disable=relative-beyond-top-level
 from .utils import (
     PROMPTS_DIR,
     _build_custom_chain,
     gpt_4o,
-    get_prompt_from,
-    _format_filter_expression,
-    stream_runnable,
 )
 
 EFFECTIVE_QUERY_PATH = os.path.join(

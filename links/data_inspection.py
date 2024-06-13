@@ -17,28 +17,6 @@ from fiftyone import ViewField as F
 
 # pylint: disable=relative-beyond-top-level
 from .utils import PROMPTS_DIR, _build_agent_executor_chain, gpt_4o
-from .view_stage_constructor import (
-    FilterLabels,
-    LimitLabels,
-    SelectLabels,
-    MapLabels,
-    MatchLabels,
-    SelectFields,
-    ExcludeFields,
-    FilterField,
-    Exists,
-    Match,
-    MatchTags,
-    SelectBy,
-    SortBy,
-    SortBySimilarity,
-    ToPatches,
-    ToEvaluationPatches,
-    GeoNear,
-    GeoWithin,
-    GroupBy,
-    SelectGroupSlices,
-)
 
 
 DATA_INSPECTION_PATH = os.path.join(
