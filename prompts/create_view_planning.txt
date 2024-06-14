@@ -60,7 +60,7 @@ final answer.
 - Make sure that each step has all the information needed - do not skip steps. 
 - Do *not* include any steps related to aggregations or analysis on the data. Those will be handled separately.
 - If a user uses the word "view" in their query, do not change this to "dataset". Likewise, if they use the word "dataset", do not change this to "view".
-
+- If the user asks for either a or b (e.g. "cat" or "dog"), the plan should have a single step that includes both options, not separate steps for each option.
 
 Examples::
 
@@ -151,6 +151,11 @@ Examples::
 # Plan:
 
 1. Sort the samples by similarity to the text query 'kite flying in the sky'
+
+# User: Show me images with either a horse or a cow
+# Plan:
+
+1. Match samples that have a label with the class 'horse' or 'cow'
 
 # User: Show me just the bounding boxes > 96x96 pixels
 # Plan:

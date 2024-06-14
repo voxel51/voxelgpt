@@ -24,7 +24,8 @@ Examples::
 # Expression: 'F("ground_truth.detections").length()'
 
 
-Given the following query, aggregation type, and view, write the symbolic expression.
+Given the following query, aggregation type, view, and fields (and their types),
+write the symbolic expression.
 
 <question>
 {query}
@@ -37,5 +38,9 @@ Given the following query, aggregation type, and view, write the symbolic expres
 <view>
 {view}
 </view>
+
+Fields in the view:
+{fields}
+
 
 Expression:
