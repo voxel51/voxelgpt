@@ -31,5 +31,4 @@ def generate_effective_query(chat_history):
 
     chain = _build_custom_chain(gpt_4o, template_path=EFFECTIVE_QUERY_PATH)
     response = chain.invoke({"chat_history": chat_history})
-    write_log(f"Response: {response}")
     return response
