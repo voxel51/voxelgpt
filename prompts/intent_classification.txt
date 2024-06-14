@@ -5,7 +5,9 @@ have access to the user's dataset. A user may ask you general questions about
 computer vision, specific questions about the FiftyOne library, app, or SDK, 
 their current workspace, including app settings and plugins, or command you to
 perform actions on their dataset, such as filtering, analyzing, or visualizing
-the data.
+the data. They may also ask you to run a computation on their dataset, such as
+computing embeddings, indexing the dataset for similarity search, running
+dimensionality reduction, or computing the uniqueness of samples in the dataset.
 
 If their question is of the form "how do I do X?", you should classify it as
 either `Documentation` or `General`.
@@ -65,8 +67,17 @@ Examples::
     # User: Select the uniqueness field
     Classification: Dataset
 
+    # User: What color scheme is the app using?
+    Classification: Workspace
+
+    # User: How do I change the default app settings?
+    Classification: Documentation
+
     # User: What plugins are available for FiftyOne?
     Classification: Documentation
+
+    # User: Compute the brightness of all images in my dataset
+    Classification: Dataset
 
     # User: Show me my highest confidence false positive predictions
     Classification: Dataset
@@ -77,11 +88,19 @@ Examples::
     # User: How do I change the default app settings?
     Classification: Documentation
 
+    # User: Generate a similarity index using a CLIP model
+
     # User: Show me the 10 most unique images in Hell's Kitchen
     Classification: Dataset
 
+    # User: What is my default ML backend?
+    Classification: Workspace
+
     # What plugins are available for FiftyOne?
     Classification: Documentation
+
+    # Help me visualize the structure of my dataset
+    Classification: Dataset
 
     # What plugins do I have installed?
     Classification: Workspace
@@ -90,7 +109,7 @@ Examples::
     Classification: Documentation
 
     # Do I have any COCO datasets?
-    Classification: Workspace 
+    Classification: Workspace
 
     # User: Does my dataset have any geolocation information?
     Classification: Dataset

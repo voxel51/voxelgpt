@@ -63,6 +63,21 @@ PROTECT_MAPS = [
 ]
 
 
+_gt_field_names = [
+    "ground_truth",
+    "gt",
+    "truth",
+    "ground truth",
+    "GT",
+    "detections",
+]
+_pred_field_names = ["predictions", "preds", "pred", "PRED", "PREDICTIONS"]
+
+fp_field_names = ["false_positives", "false positives", "FP"]
+fn_field_names = ["false_negatives", "false negatives", "FN"]
+tp_field_names = ["true_positives", "true positives", "TP"]
+
+
 def unprotect_text(text):
     for k, v in PROTECT_MAPS:
         text = text.replace(v, k)

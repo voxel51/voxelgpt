@@ -29,7 +29,14 @@ from links.view_creation_classifier import (
 )
 from links.view_setting_classifier import should_set_view
 from links.aggregation_classifier import should_aggregate
-
+from links.computation import (
+    should_run_computation,
+    delegate_computation,
+    run_computation,
+    computation_is_possible,
+    computation_failure_message,
+    computation_already_done,
+)
 from links.view_creator import create_view_from_plan
 from links.aggregator import (
     delegate_aggregation,
@@ -48,6 +55,11 @@ from links.effective_query_generator import generate_effective_query
 
 
 _SUPPORTED_DIALECTS = ("string", "markdown", "raw")
+
+
+def write_log(log):
+    with open("/tmp/log.txt", "a") as f:
+        f.write(str(log) + "\n")
 
 
 def ask_voxelgpt_interactive(
@@ -272,12 +284,18 @@ def ask_voxelgpt_generator(
 
     _log_chat_history("User", query, chat_history)
 
+    ## Check if have computational approval
+    approved_flag = _has_compute_approval(chat_history)
+
     # Generate a new query that incorporates the chat history
-    if chat_history:
+    if chat_history and not approved_flag:
         query = generate_effective_query(chat_history)
 
     # Intent classification
-    intent = classify_query_intent(query)
+    if not approved_flag:
+        intent = classify_query_intent(query)
+    else:
+        intent = "computation"
 
     if intent == "documentation":
         if allow_streaming:
@@ -320,6 +338,41 @@ def ask_voxelgpt_generator(
             "You must provide a sample collection in order for me to respond "
             "to this query"
         )
+        return
+
+    if approved_flag or should_run_computation(query):
+        if approved_flag:
+            query, computation_assignee = _recover_computation_query(
+                chat_history
+            )
+        else:
+            computation_assignee = delegate_computation(query)
+            if computation_assignee == "other":
+                #! To Do: use docs to provide suggestions
+                yield _respond(
+                    "I'm sorry, it looks like you want to run a computation on the dataset, but I can only compute the following: brightness, entropy, uniqueness, similarity, dimensionality reduction, and clustering. Please try again with one of these."
+                )
+                return
+            if not computation_is_possible(computation_assignee):
+                yield _respond(
+                    computation_failure_message(computation_assignee)
+                )
+                return
+
+            if computation_already_done(dataset, computation_assignee):
+                yield _respond(
+                    "It looks like you already have this information. Let me know if you need anything else!"
+                )
+                return
+
+            if dataset.count() > 100:
+                yield _respond(
+                    _get_compute_approval_message(computation_assignee)
+                )
+                return
+
+        response = run_computation(dataset, computation_assignee, query)
+        yield _respond(response)
         return
 
     create_view_flag = should_create_view(query)
@@ -519,6 +572,19 @@ def _get_dataset_and_view(sample_collection, ctx):
     return dataset, view
 
 
+def _recover_computation_query(chat_history):
+    query_message = chat_history[-3]
+    query = query_message.split(":")[-1].strip()
+    compute_assignee_message = chat_history[-2]
+    first_sentence = compute_assignee_message.split(".")[0]
+    return (
+        query,
+        first_sentence.replace(
+            "It looks like you want to compute ", ""
+        ).strip(),
+    )
+
+
 def _load_view_message(start_string, view_stage_strings):
     if not view_stage_strings:
         return {
@@ -558,6 +624,22 @@ def _emit_message(message, history, overwrite=False):
             "overwrite": overwrite,
         },
     }
+
+
+def _has_compute_approval(chat_history):
+    if not chat_history:
+        return False
+    last_message = chat_history[-1]
+    if "yes" not in last_message.lower():
+        return False
+    second_last_message = chat_history[-2]
+    if "it looks like you want to compute" in second_last_message.lower():
+        return True
+    return False
+
+
+def _get_compute_approval_message(computation_assignee):
+    return f"It looks like you want to compute {computation_assignee}. For a dataset of this size, I need your approval to proceed. Please confirm by typing 'yes'"
 
 
 def _emit_streaming_content(content, last=False):
