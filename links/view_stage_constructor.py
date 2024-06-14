@@ -5,6 +5,8 @@ View creation classifier.
 | `voxel51.com <https://voxel51.com/>`_
 |
 """
+
+import json
 import os
 import requests
 from typing import (
@@ -33,7 +35,7 @@ from .utils import (
 stages_type = Optional[List[str]]
 Number = Union[int, float]
 
-## For debugging purposes
+
 def write_log(log):
     with open("/tmp/log.txt", "a") as f:
         f.write(str(log) + "\n")
@@ -46,179 +48,12 @@ by providing them with the appropriate `ViewStages` that can be used to filter,
 sort, slice, match, and transform their datasets. For this task, you need to
 help users """
 
-LIMIT_STAGE_PROMPT_SUFFIX = """
-Limit the number of samples in the view to the specified number. The `limit`
-parameter specifies the maximum number of samples to include in the view.
-"""
+VIEW_STAGE_PROMPTS_PATH = os.path.join(
+    PROMPTS_DIR, "view_stage_prompt_suffixes.json"
+)
 
-TAKE_STAGE_PROMPT_SUFFIX = """
-Pick `take` random samples from the view. The `take` parameter specifies the number
-of samples to take.
-"""
-
-SKIP_STAGE_PROMPT_SUFFIX = """
-Skip the specified number of samples in the view. The `skip` parameter specifies
-the number of samples to skip.
-"""
-
-SHUFFLE_STAGE_PROMPT_SUFFIX = """
-Shuffle the samples in the view. This stage shuffles the samples in the view
-randomly.
-"""
-
-EXISTS_STAGE_PROMPT_SUFFIX = """
-Filters the samples in the current view to only include samples that have (or do not have)
-a non-`None` value for the given field or embedded field.
-"""
-
-LIMIT_LABELS_STAGE_PROMPT_SUFFIX = """
-Limits the number of `Label` instances in the specified labels list field of
-each sample in the collection.
-"""
-
-SELECT_FIELDS_STAGE_PROMPT_SUFFIX = """
-Select the specified fields in the current view. Only the selected fields (and
-default fields like `id`, `tags`) will be present in the view.
-"""
-
-EXCLUDE_FIELDS_STAGE_PROMPT_SUFFIX = """
-Excludes the specified fields in the current view. All fields except the excluded
-fields will be present in the view.
-"""
-
-GEO_NEAR_STAGE_PROMPT_SUFFIX = """
-Sort the samples in the view by their proximity to a specified geolocation,
-optionally filtering by minimum and maximum distances.
-"""
-
-GEO_WITHIN_STAGE_PROMPT_SUFFIX = """
-Filter the samples in the view to only include samples that are within a specified
-geographical region.
-"""
-
-TO_PATCHES_STAGE_PROMPT_SUFFIX = """
-Create a view that contains one sample per object patch in the
-specified field of the collection.
-"""
-
-TO_EVALUATION_PATCHES_STAGE_PROMPT_SUFFIX = """
-Creates a view based on the results of the evaluation with the
-given key that contains one sample for each true positive, false
-positive, and false negative example in the collection, respectively.
-
-True positive examples will result in samples with both their ground
-truth and predicted fields populated, while false positive/negative
-examples will only have one of their corresponding predicted/ground
-truth fields populated, respectively.
-
-If multiple predictions are matched to a ground truth object (e.g., if
-the evaluation protocol includes a crowd attribute), then all matched
-predictions will be stored in the single sample along with the ground
-truth object.
-
-The returned view will also have top-level ``type`` and ``iou``
-fields populated based on the evaluation results for that example, as
-well as a ``sample_id`` field recording the sample ID of the example,
-and a ``crowd`` field if the evaluation protocol defines a crowd
-attribute.
-"""
-
-SELECT_BY_VIEW_STAGE_PROMPT_SUFFIX = """
-Selects the samples with the given field values from the collection.
-
-This stage is typically used to work with categorical fields (strings,
-ints, and bools). If you want to select samples based on floating point
-fields, use :meth:`match`.
-"""
-
-SELECT_GROUP_SLICES_STAGE_PROMPT_SUFFIX = """
-Selects the samples in a group collection from the given slice(s).
-
-The returned view is a flattened non-grouped view containing only the
-slice(s) of interest.
-"""
-
-MATCH_TAGS_STAGE_PROMPT_SUFFIX = """
-Returns a view containing the samples in the collection that have
-or don't have any/all of the given tag(s).
-"""
-
-SELECT_LABELS_STAGE_PROMPT_SUFFIX = """
-Selects only the specified labels from the collection.
-
-The returned view will omit samples, sample fields, and individual
-labels that do not match the specified selection criteria.
-"""
-
-SORT_BY_SIMILARITY_STAGE_PROMPT_SUFFIX = """
-Sorts the samples in the view by their similarity to the specified text query.
-"""
-
-GROUP_BY_STAGE_PROMPT_SUFFIX = """
-Groups the samples in the view by the specified field, embedded field, or
-expression.
-"""
-
-SORT_BY_STAGE_PROMPT_SUFFIX = """
-Sorts the samples in the view by the specified field, embedded field, or
-expression. The `reverse` parameter specifies whether to sort in ascending (False)
-or descending (True) order.
-"""
-
-FILTER_FIELD_STAGE_PROMPT_SUFFIX = """
-Filters the samples in the view by the specified field and filtering expression.
-Can be applied to fields of type `int`, `float`, `bool`, `str`, `date`, and
-`datetime`.
-"""
-
-MATCH_LABELS_STAGE_PROMPT_SUFFIX = """
-Filters the samples in the view to only include samples that have at least one
-label that matches the described expression. This can be applied to all label
-fields, or to specific label fields.
-"""
-
-FILTER_LABELS_STAGE_PROMPT_SUFFIX = """
-Filters the samples in the view to only include the labels within the specified
-label field that match the described expression.
-"""
-
-MAP_LABELS_STAGE_PROMPT_SUFFIX = """
-Maps the labels in the specified label field of each sample in the collection
-using the provided mapping dictionary.
-"""
-
-MATCH_STAGE_PROMPT_SUFFIX = """
-Filters the samples in the view to only include samples that match the described
-expression.
-"""
-
-
-VIEW_STAGE_PROMPTS = {
-    "Limit": LIMIT_STAGE_PROMPT_SUFFIX,
-    "Take": TAKE_STAGE_PROMPT_SUFFIX,
-    "Skip": SKIP_STAGE_PROMPT_SUFFIX,
-    "Shuffle": SHUFFLE_STAGE_PROMPT_SUFFIX,
-    "Exists": EXISTS_STAGE_PROMPT_SUFFIX,
-    "LimitLabels": LIMIT_LABELS_STAGE_PROMPT_SUFFIX,
-    "SelectFields": SELECT_FIELDS_STAGE_PROMPT_SUFFIX,
-    "ExcludeFields": EXCLUDE_FIELDS_STAGE_PROMPT_SUFFIX,
-    "GeoNear": GEO_NEAR_STAGE_PROMPT_SUFFIX,
-    "GeoWithin": GEO_WITHIN_STAGE_PROMPT_SUFFIX,
-    "ToPatches": TO_PATCHES_STAGE_PROMPT_SUFFIX,
-    "ToEvaluationPatches": TO_EVALUATION_PATCHES_STAGE_PROMPT_SUFFIX,
-    "SelectBy": SELECT_BY_VIEW_STAGE_PROMPT_SUFFIX,
-    "SelectGroupSlices": SELECT_GROUP_SLICES_STAGE_PROMPT_SUFFIX,
-    "MatchTags": MATCH_TAGS_STAGE_PROMPT_SUFFIX,
-    "SelectLabels": SELECT_LABELS_STAGE_PROMPT_SUFFIX,
-    "SortBySimilarity": SORT_BY_SIMILARITY_STAGE_PROMPT_SUFFIX,
-    "GroupBy": GROUP_BY_STAGE_PROMPT_SUFFIX,
-    "SortBy": SORT_BY_STAGE_PROMPT_SUFFIX,
-    "FilterField": FILTER_FIELD_STAGE_PROMPT_SUFFIX,
-    "MatchLabels": MATCH_LABELS_STAGE_PROMPT_SUFFIX,
-    "FilterLabels": FILTER_LABELS_STAGE_PROMPT_SUFFIX,
-    "MapLabels": MAP_LABELS_STAGE_PROMPT_SUFFIX,
-    "Match": MATCH_STAGE_PROMPT_SUFFIX,
-}
+with open(VIEW_STAGE_PROMPTS_PATH, "r") as f:
+    VIEW_STAGE_PROMPTS = json.load(f)
 
 
 class ViewStage(BaseModel):
@@ -385,6 +220,12 @@ class LimitLabels(ViewStage):
         return f"limit_labels('{self.field}', {self.limit})"
 
 
+def _format_str_or_list(str_or_list):
+    if isinstance(str_or_list, str):
+        str_or_list = f"'{str_or_list}'"
+    return str_or_list
+
+
 class SelectFields(ViewStage):
     """View stage to select the specified fields in the current view. Only the
     selected fields (and default fields like `id`, `tags`) will be present in
@@ -403,15 +244,11 @@ class SelectFields(ViewStage):
     fields: List[str] = Field(description="List of fields to select")
 
     def build(self):
-        fields = self.fields
-        if isinstance(fields, str):
-            fields = f"'{fields}"
+        fields = _format_str_or_list(self.fields)
         return fo.SelectFields(field_names=fields)
 
     def __repr__(self):
-        fields = self.fields
-        if isinstance(fields, str):
-            fields = f"'{fields}"
+        fields = _format_str_or_list(self.fields)
         return f"select_fields(field_names={fields})"
 
 
@@ -432,15 +269,11 @@ class ExcludeFields(ViewStage):
     fields: List[str] = Field(description="List of fields to exclude")
 
     def build(self):
-        fields = self.fields
-        if isinstance(fields, str):
-            fields = f"'{fields}"
+        fields = _format_str_or_list(self.fields)
         return fo.ExcludeFields(field_names=fields)
 
     def __repr__(self):
-        fields = self.fields
-        if isinstance(fields, str):
-            fields = f"'{fields}"
+        fields = _format_str_or_list(self.fields)
         return f"exclude_fields(field_names={fields})"
 
 
@@ -494,7 +327,6 @@ class GeoNear(ViewStage):
 
     def build(self):
         latitude, longitude = _geocode_point(self.location_name)
-        write_log(f"Latitude: {latitude}, Longitude: {longitude}")
         if latitude is None or longitude is None:
             raise ValueError(
                 f"Could not geocode location: {self.location_name}"
@@ -691,9 +523,7 @@ class SelectGroupSlices(ViewStage):
         )
 
     def __repr__(self):
-        media_type = self.media_type
-        if media_type is not None:
-            media_type = f"'{media_type}'"
+        media_type = _format_str_or_list(self.media_type)
         return f"select_group_slices(slices={self.slices}, media_type={media_type})"
 
 
@@ -774,10 +604,8 @@ class SelectLabels(ViewStage):
         return fo.SelectLabels(tags=self.tags, fields=self.fields)
 
     def __repr__(self):
-        tags = self.tags
-        if isinstance(tags, str):
-            tags = f"'{tags}'"
-        return f"select_labels(tags={self.tags}, fields={self.fields})"
+        tags = _format_str_or_list(self.tags)
+        return f"select_labels(tags={tags}, fields={self.fields})"
 
 
 class SortBySimilarity(ViewStage):
@@ -1001,18 +829,22 @@ class MatchLabels(ViewStage):
     )
 
     def build(self):
+        write_log("MatchLabels.build()")
+        write_log(f"expr: {self.filter_expression}")
         filter_expr = _format_filter_expression(self.filter_expression)
+        write_log(f"expr: {filter_expr}")
         filter_expr = eval(filter_expr)
+        write_log(f"expr: {filter_expr}")
         return fo.MatchLabels(
             fields=self.fields, filter=filter_expr, bool=self.positive
         )
 
     def __repr__(self):
-        fields = self.fields
-        if isinstance(fields, str):
-            fields = f'"{fields}"'
-
+        write_log("MatchLabels.__repr__()")
+        fields = _format_str_or_list(self.fields)
         filter_expr = _format_filter_expression(self.filter_expression)
+        write_log(f"fields: {fields}")
+        write_log(f"filter_expr: {filter_expr}")
         return f"match_labels(fields={fields}, filter={filter_expr}, bool={self.positive})"
 
 
@@ -1045,11 +877,8 @@ class FilterLabels(ViewStage):
     )
 
     def build(self):
-        write_log(f"FilterLabels: {self.filter_expression}")
         filter_expr = _format_filter_expression(self.filter_expression)
-        write_log(f"FilterLabels: {filter_expr}")
         filter_expr = eval(filter_expr)
-        write_log(f"FilterLabels: {filter_expr}")
         return fo.FilterLabels(self.field, filter_expr)
 
     def __repr__(self):
@@ -1188,10 +1017,9 @@ def _construct_filter_field_expression(stage, step, dataset):
         prompt_filename = FILTER_FIELD_EXPRESSION_PROMPT_FILENAMES["other"]
 
     FILTER_FIELD_EXPRESSION_PATH = os.path.join(PROMPTS_DIR, prompt_filename)
+    prompt = get_prompt_from(FILTER_FIELD_EXPRESSION_PATH).format(query=step)
 
-    chain = _build_chat_chain(
-        gpt_4o, template_path=FILTER_FIELD_EXPRESSION_PATH
-    )
+    chain = _build_chat_chain(gpt_4o, prompt=prompt)
 
     resp = chain.invoke({"messages": [("user", step)]}).content
     stage.filter_expression = resp
@@ -1244,9 +1072,9 @@ def _construct_match_labels_expression(stage, step, dataset):
     prompt_filename = MATCH_LABELS_EXPRESSION_PROMPT_FILENAMES[label_type]
     MATCH_LABELS_EXPRESSION_PATH = os.path.join(PROMPTS_DIR, prompt_filename)
 
-    chain = _build_chat_chain(
-        gpt_4o, template_path=MATCH_LABELS_EXPRESSION_PATH
-    )
+    prompt = get_prompt_from(MATCH_LABELS_EXPRESSION_PATH).format(query=step)
+    write_log(f"Prompt: {prompt}")
+    chain = _build_chat_chain(gpt_4o, prompt=prompt)
 
     resp = chain.invoke({"messages": [("user", step)]}).content
     stage.filter_expression = resp
