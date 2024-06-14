@@ -342,6 +342,9 @@ def ask_voxelgpt_generator(
 
     if approved_flag or should_run_computation(query):
         if approved_flag:
+            yield _respond(
+                "Computing...",
+            )
             query, computation_assignee = _recover_computation_query(
                 chat_history
             )

@@ -77,10 +77,11 @@ def run_computation(dataset, assignee, query):
     elif assignee == "dimensionality reduction":
         return compute_dimensionality_reduction(dataset, query)
     elif assignee == "clustering":
-        return compute_clustering(dataset)
+        return compute_clustering(dataset, query)
     elif assignee == "duplicates":
         return compute_duplicates(dataset)
     else:
+        #! TO DO: Add zero-shot classification and detection
         return "Computation not implemented yet."
 
 
@@ -212,8 +213,71 @@ def compute_entropy(dataset, *args, **kwargs):
     return "Entropy computed successfully. A new field `entropy` has been added to the dataset. Refresh the dataset to view the entropy information."
 
 
-def compute_clustering(dataset, *args, **kwargs):
-    return "Clustering not implemented yet."
+def compute_clustering(dataset, query, *args, **kwargs):
+    prompt_path = os.path.join(PROMPTS_DIR, "compute_clustering.txt")
+    prompt = get_prompt_from(prompt_path).format(query=query)
+    output_type = Clustering
+
+    chain = _build_chat_chain(gpt_4o, prompt=prompt, output_type=output_type)
+    clustering = chain.invoke({"messages": [("user", query)]})
+
+    allowed_methods = ["kmeans", "birch", "agglomerative"]
+    method = (
+        clustering.method if clustering.method in allowed_methods else "kmeans"
+    )
+
+    key = clustering.key
+    if not key:
+        key = _generate_new_key(dataset, f"{method}_clustering")
+
+    num_clusters = clustering.num_clusters if clustering.num_clusters else 10
+
+    embedding_fields = list(
+        dataset.get_field_schema(ftype=fo.VectorField).keys()
+    )
+
+    num_clusters_key = f"{method}__n_clusters"
+    params = dict(method=method, run_key=key, delegate=False)
+    params[num_clusters_key] = num_clusters
+
+    if not embedding_fields:
+
+        message = (
+            "No embeddings found. Computing embeddings using CLIP model.\n"
+        )
+        params["model"] = "clip-vit-base32-torch"
+    else:
+        embedding_field = embedding_fields[0]
+        message = (
+            f"Embeddings found in the dataset. Using `{embedding_field}`\n"
+        )
+        params["embedding_field"] = embedding_field
+
+    ctx = dict(dataset=dataset)
+
+    ## compute clusters
+    foo.execute_operator(
+        "@jacobmarks/clustering/compute_clusters", ctx, params=params
+    )
+    run_info = dataset.get_run_info(key)
+    cluster_field = run_info.config.cluster_field or f"{key}_cluster"
+
+    message = f"I've computed clusters successfully and added a new field `{cluster_field}` has been added to the dataset."
+    try:
+        ## assign concepts
+        foo.execute_operator(
+            "@jacobmarks/clustering/label_clusters_with_gpt4v",
+            ctx,
+            params={"run_key": key},
+        )
+        concepts = dataset.distinct(cluster_field)
+        message += " I've also looked at a few samples from each cluster and assigned concepts to them. The samples are grouped into the following concepts:\n"
+        for concept in concepts:
+            message += f"- `{concept}`\n"
+        message += "Refresh the dataset to view the clusters and concepts."
+    except Exception as e:
+        message += " Refresh the dataset to view the clusters."
+    return message
 
 
 class DimensionalityReduction(BaseModel):
@@ -232,6 +296,26 @@ class DimensionalityReduction(BaseModel):
     )
 
 
+class Clustering(BaseModel):
+    """Class for clustering computation
+
+    Args:
+        method: Method for clustering
+        key: Key to store the result. Only lower case alphanumeric characters and underscores are allowed.
+        num_clusters: Number of clusters to create
+    """
+
+    method: Optional[Literal["kmeans", "birch", "agglomerative"]] = Field(
+        description="Method to use for clustering"
+    )
+    key: Optional[str] = Field(
+        description="Key to store the result in the brain"
+    )
+    num_clusters: Optional[int] = Field(
+        description="Number of clusters to create"
+    )
+
+
 def _generate_new_key(dataset, key):
     existing_keys = dataset.list_brain_runs()
     if key not in existing_keys:
@@ -245,8 +329,7 @@ def _generate_new_key(dataset, key):
 
 
 def _can_compute_clustering():
-    return False
-    # return "@jacobmarks/clustering" in fop.list_enabled_plugins()
+    return "@jacobmarks/clustering" in fop.list_enabled_plugins()
 
 
 def _can_compute_brightness():
