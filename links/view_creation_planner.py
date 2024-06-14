@@ -21,11 +21,6 @@ REVISE_VIEW_PLANNING_PATH = os.path.join(
 )
 
 
-def write_log(log):
-    with open("/tmp/log.txt", "a") as f:
-        f.write(str(log) + "\n")
-
-
 class ViewCreationPlan(BaseModel):
     """Plan to follow in future"""
 
@@ -42,7 +37,6 @@ def create_view_creation_plan(query):
     )
 
     response = planner.invoke({"messages": [("user", query)]})
-    write_log(f"Plan: {str(response)}")
     return response
 
 
