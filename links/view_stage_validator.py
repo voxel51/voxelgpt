@@ -22,7 +22,8 @@ from .data_inspection import (
     _get_detection_evaluation_runs,
     _get_text_sim_runs,
     _list_detection_fields,
-    _list_fields,
+    _list_classification_fields,
+    _list_polylines_fields,
 )
 from .view_stage_constructor import (
     MatchLabels,
@@ -171,22 +172,6 @@ def _validate_sort_by_similarity_stage(view_stage, dataset):
     return view_stage
 
 
-def _ensure_no_nested_field(expression):
-    # Regular expression pattern to match everything before the final dot inside the parentheses
-    pattern = r"F\(([^']*')?[^']*\.(.*)\)"
-
-    # Function to replace the matched pattern
-    def replacement(match):
-        # Extract the part after the final dot
-        before_final_dot = match.group(1) if match.group(1) else ""
-        after_final_dot = match.group(2)
-        return f"F({before_final_dot}{after_final_dot})"
-
-    # Use re.sub to replace the matched pattern with the desired result
-    result = re.sub(pattern, replacement, expression)
-    return result
-
-
 def _convert_contains_to_equals(expression):
     # Regular expression pattern to match the .contains("...") part
     pattern = r'\.contains\("([^"]+)"\)'
@@ -197,15 +182,27 @@ def _convert_contains_to_equals(expression):
 
 
 def _extract_label_class(expression):
-    # Regular expression pattern to capture the values in double quotes after == or !=
-    pattern = r'==\s*"([^"]+)"|!=\s*"([^"]+)"'
+    if "==" in expression or "!=" in expression:
+        # Regular expression pattern to capture the values in double quotes after == or !=
+        pattern = r'==\s*"([^"]+)"|!=\s*"([^"]+)"'
 
-    # Find all matches in the expression
-    matches = re.findall(pattern, expression)
+        # Find all matches in the expression
+        matches = re.findall(pattern, expression)
 
-    # Extract the captured values from the matches
-    values = [match[0] or match[1] for match in matches]
-    return values
+        # Extract the captured values from the matches
+        values = [match[0] or match[1] for match in matches]
+        return values
+    elif "is_in" in expression:
+        # Regular expression pattern to capture the values in double quotes after is_in
+        pattern = r"is_in\(\[([^\]]+)\]\)"
+        _match = re.search(pattern, expression)
+        if _match:
+            items_str = _match.group(1)
+            # Split the items by comma and strip quotes and spaces
+            items = [item.strip().strip('"') for item in items_str.split(",")]
+            return items
+    else:
+        return []
 
 
 def _get_class_names(dataset, field_name):
@@ -223,22 +220,14 @@ def _get_class_names(dataset, field_name):
         return []
 
 
-def _validate_filter_labels_stage(view_stage, dataset):
+def _validate_filter_labels_classes(view_stage, dataset):
     filter_expr = view_stage.filter_expression
-    # filter_expr = _ensure_no_nested_field(filter_expr) ## don't want to remove numerical entities...
-
-    ## handle eval key
-    eval_keys = _get_detection_evaluation_runs(dataset)
-    if "eval" in filter_expr and "eval" not in eval_keys:
-        if len(eval_keys) == 0:
-            return "No detection evaluations found"
-        new_key = eval_keys[0]
-        filter_expr = filter_expr.replace("eval", new_key)
 
     ## handle label classes
     filter_expr = _convert_contains_to_equals(filter_expr)
     view_stage.filter_expression = filter_expr
     if "label" not in filter_expr:
+        view_stage.filter_expression = filter_expr
         return view_stage
 
     label_class_names = _extract_label_class(filter_expr)
@@ -285,14 +274,14 @@ def _validate_filter_labels_stage(view_stage, dataset):
     pattern = r"\b\w+\.\w+\.(\w+)\b|\b\w+\.(\w+)\b"
 
     # Function to perform the replacement
-    def replace_label(expr):
+    def _replace_label(expr):
         if expr.group(1):
             return expr.group(1)
         if expr.group(2):
             return expr.group(2)
 
     # Use re.sub to replace the matched pattern with the desired result
-    filter_expr = re.sub(pattern, replace_label, filter_expr)
+    filter_expr = re.sub(pattern, _replace_label, filter_expr)
 
     ## Handle "==" and "!=" explicitly:
     if ").label" in filter_expr:
@@ -306,6 +295,20 @@ def _validate_filter_labels_stage(view_stage, dataset):
             name = re.search(neq_pattern, filter_expr).group(1)
             filter_expr = 'F("label") != "{}"'.format(name)
 
+    view_stage.filter_expression = filter_expr
+    return view_stage
+
+
+def _validate_filter_labels_evaluations(view_stage, dataset):
+    filter_expr = view_stage.filter_expression
+
+    eval_keys = _get_detection_evaluation_runs(dataset)
+    if "eval" in filter_expr and "eval" not in eval_keys:
+        if len(eval_keys) == 0:
+            return "No detection evaluations found"
+        new_key = eval_keys[0]
+        filter_expr = filter_expr.replace("eval", new_key)
+
     ## Handle TP, FP, FN explicitly:
     for tp_patt in tp_field_names:
         if tp_patt in filter_expr:
@@ -318,6 +321,16 @@ def _validate_filter_labels_stage(view_stage, dataset):
             filter_expr = filter_expr.replace(fn_patt, "fn")
 
     view_stage.filter_expression = filter_expr
+    return view_stage
+
+
+def _validate_filter_labels_stage(view_stage, dataset):
+    ## handle evaluations
+    view_stage = _validate_filter_labels_evaluations(view_stage, dataset)
+
+    ## handle label classes
+    view_stage = _validate_filter_labels_classes(view_stage, dataset)
+
     return view_stage
 
 
@@ -354,12 +367,12 @@ def _validate_exists_stage(view_stage, dataset):
             view_stage.field = det_fields[0]
             return view_stage
     elif field == "classification":
-        class_fields = _list_fields(dataset, fo.Classification)
-        if len(class_fields) > 0:
-            view_stage.field = class_fields[0]
+        classif_fields = _list_classification_fields(dataset)
+        if len(classif_fields) > 0:
+            view_stage.field = classif_fields[0]
             return view_stage
     elif field == "polylines":
-        polyline_fields = _list_fields(dataset, fo.Polylines)
+        polyline_fields = _list_polylines_fields(dataset)
         if len(polyline_fields) > 0:
             view_stage.field = polyline_fields[0]
             return view_stage
