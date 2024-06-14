@@ -378,7 +378,8 @@ def _involves_label_classes(actors, plan):
 def _get_text_sim_runs(dataset):
     text_runs = []
     for run in dataset.list_brain_runs():
-        if dataset.get_brain_info(run).config.supports_prompts:
+        config = dataset.get_brain_info(run).config
+        if config.type == "similarity" and config.supports_prompts:
             text_runs.append(run)
     return text_runs
 
