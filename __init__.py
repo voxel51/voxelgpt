@@ -17,11 +17,6 @@ import fiftyone.operators as foo
 import fiftyone.operators.types as types
 
 
-def write_log(log):
-    with open("/tmp/log.txt", "a") as f:
-        f.write(str(log) + "\n")
-
-
 class AskVoxelGPT(foo.Operator):
     @property
     def config(self):
@@ -96,7 +91,10 @@ class AskVoxelGPT(foo.Operator):
 
     def view(self, ctx, view):
         if view != ctx.view:
-            ctx.ops.set_view(view)
+            return ctx.trigger(
+                "set_view",
+                params=dict(view=serialize_view(view)),
+            )
 
     def message(self, ctx, message, messages, overwrite_last=False):
         if overwrite_last:
@@ -218,7 +216,10 @@ class AskVoxelGPTPanel(foo.Operator):
 
     def view(self, ctx, view):
         if view != ctx.view:
-            ctx.ops.set_view(view)
+            return ctx.trigger(
+                "set_view",
+                params=dict(view=serialize_view(view)),
+            )
 
     def message(self, ctx, message, **kwargs):
         return self.show_message(ctx, message, types.MarkdownView(), **kwargs)
