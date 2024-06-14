@@ -15,3 +15,9 @@ Examples::
 
 # Query: Filter for my_bool False
 # Expression: '~F()'
+
+Given the user query below, write a symbolic expression that filters the dataset
+on the given boolean field.
+
+# Query: {query}
+# Expression: 

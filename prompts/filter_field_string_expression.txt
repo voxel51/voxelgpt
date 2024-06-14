@@ -48,3 +48,9 @@ Examples::
 
 # Query: Filter for strings that contains “088” and are JPEG
 # Expression: 'F().re_match("088*.jpg")'
+
+Given the user query below, write a symbolic expression that filters the dataset
+on the given string field.
+
+# Query: {query}
+# Expression: 

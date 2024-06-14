@@ -34,3 +34,9 @@ Examples::
 
 # Query: Filter for multiples of 3
 # Expression: '(F() % 3) == 0'
+
+Given the user query below, write a symbolic expression that filters the dataset
+on the given integer field.
+
+# Query: {query}
+# Expression: 

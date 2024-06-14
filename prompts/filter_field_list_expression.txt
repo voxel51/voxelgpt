@@ -44,3 +44,8 @@ Examples::
 # Query: Filter for lists that are equal to the set {1, 2, 3}
 # Expression: 'F().set_equals([1, 2, 3])'
 
+Given the user query below, write a symbolic expression that filters the dataset
+on the given list field.
+
+# Query: {query}
+# Expression: 
