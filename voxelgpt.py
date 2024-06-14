@@ -18,6 +18,8 @@ from links.query_intent_classifier import classify_query_intent
 from links.docs_qa_with_sources import (
     run_docs_query,
     stream_docs_query,
+    run_docs_computation_query,
+    stream_docs_computation_query,
 )
 from links.general_qa import (
     run_computer_vision_query,
@@ -357,10 +359,19 @@ def ask_voxelgpt_generator(
                 return
             computation_assignee = delegate_computation(query)
             if computation_assignee == "other":
-                #! To Do: use docs to provide suggestions
-                yield _respond(
-                    "I'm sorry, it looks like you want to run a computation on the dataset, but I can only compute the following: brightness, entropy, uniqueness, similarity, dimensionality reduction, and clustering. Please try again with one of these."
-                )
+                if allow_streaming:
+                    message = ""
+                    for content in stream_docs_computation_query(query):
+                        message += content
+                        yield _emit_streaming_content(content)
+
+                    yield _emit_streaming_content("", last=True)
+                    yield _respond(message, overwrite=True)
+                else:
+                    yield _respond(run_docs_computation_query(query))
+                # yield _respond(
+                #     "I'm sorry, it looks like you want to run a computation on the dataset, but I can only compute the following: brightness, entropy, uniqueness, similarity, dimensionality reduction, and clustering. Please try again with one of these."
+                # )
                 return
             if not computation_is_possible(computation_assignee):
                 yield _respond(
