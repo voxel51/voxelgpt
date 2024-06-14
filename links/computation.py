@@ -35,6 +35,25 @@ DELEGATE_COMPUTATION_PATH = os.path.join(
 )
 
 
+def computations_allowed():
+    flag = os.environ.get("VOXELGPT_ALLOW_COMPUTATIONS", True)
+    if isinstance(flag, str):
+        if flag.lower() == "false":
+            return False
+    else:
+        return flag
+
+
+def get_compute_approval_threshold():
+    threshold = os.environ.get("VOXELGPT_COMPUTE_APPROVAL_THRESHOLD", 100)
+    if isinstance(threshold, str):
+        try:
+            threshold = int(threshold)
+        except:
+            threshold = 100
+    return threshold
+
+
 def should_run_computation(query):
     prompt = get_prompt_from(SHOULD_COMPUTE_CLASSIFICATION_PATH).format(
         query=query

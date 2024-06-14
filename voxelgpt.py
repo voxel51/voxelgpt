@@ -36,6 +36,8 @@ from links.computation import (
     computation_is_possible,
     computation_failure_message,
     computation_already_done,
+    computations_allowed,
+    get_compute_approval_threshold,
 )
 from links.view_creator import create_view_from_plan
 from links.aggregator import (
@@ -55,11 +57,6 @@ from links.effective_query_generator import generate_effective_query
 
 
 _SUPPORTED_DIALECTS = ("string", "markdown", "raw")
-
-
-def write_log(log):
-    with open("/tmp/log.txt", "a") as f:
-        f.write(str(log) + "\n")
 
 
 def ask_voxelgpt_interactive(
@@ -284,8 +281,12 @@ def ask_voxelgpt_generator(
 
     _log_chat_history("User", query, chat_history)
 
+    can_compute_flag = computations_allowed()
+
     ## Check if have computational approval
-    approved_flag = _has_compute_approval(chat_history)
+    approved_flag = (
+        _has_compute_approval(chat_history) if can_compute_flag else False
+    )
 
     # Generate a new query that incorporates the chat history
     if chat_history and not approved_flag:
@@ -342,13 +343,16 @@ def ask_voxelgpt_generator(
 
     if approved_flag or should_run_computation(query):
         if approved_flag:
-            yield _respond(
-                "Computing...",
-            )
+            yield _respond("Computing...", add_to_history=False)
             query, computation_assignee = _recover_computation_query(
                 chat_history
             )
         else:
+            if not can_compute_flag:
+                yield _respond(
+                    "I'm sorry, I don't have permission to run computations on this dataset. Please try another query."
+                )
+                return
             computation_assignee = delegate_computation(query)
             if computation_assignee == "other":
                 #! To Do: use docs to provide suggestions
@@ -368,7 +372,7 @@ def ask_voxelgpt_generator(
                 )
                 return
 
-            if dataset.count() > 100:
+            if dataset.count() > get_compute_approval_threshold():
                 yield _respond(
                     _get_compute_approval_message(computation_assignee)
                 )

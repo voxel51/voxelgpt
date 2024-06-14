@@ -150,6 +150,22 @@ Here's some examples of computational queries you can ask VoxelGPT:
 -   Cluster my dataset using KMeans
 -   Help me visualize my dataset in 2D using UMAP
 
+💡 If you do not want to allow VoxelGPT to run computations, set the
+environment variable:
+
+```shell
+export VOXELGPT_ALLOW_COMPUTATIONS=false
+```
+
+You can also set the minimum dataset size at which VoxelGPT needs to ask for
+permission to run computations:
+
+```shell
+export VOXELGPT_APPROVAL_THRESHOLD=1000
+```
+
+The default value is 100 samples.
+
 ### FiftyOne Library queries
 
 VoxelGPT is not only a pair programmer; it is also an educational tool.
