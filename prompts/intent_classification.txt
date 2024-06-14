@@ -22,11 +22,20 @@ Examples::
     # User: How do I filter my dataset to only include samples with a label of "cat"?
     Classification: Documentation
 
+    # User: what runs have I computed?
+    Classification: Dataset
+
     # User: What is an F1 score?
     Classification: General
 
     # User: Select the left and right group slices
     Classification: Dataset
+
+    # User: Do I have any plugins for zero-shot learning?
+    Classification: Workspace
+
+    # Does FiftyOne have any plugins for zero-shot learning?
+    Classification: Documentation
 
     # User: Show me the first 10 samples in my dataset.
     Classification: Dataset
@@ -36,6 +45,9 @@ Examples::
 
     # User: What is the difference between the `Dataset` and `DatasetView` classes?
     Classification: Documentation
+
+    # Have I indexed my dataset for similarity?
+    Classification: Dataset
 
     # User: Collect all of my image slices together
     Classification: Dataset
@@ -52,7 +64,13 @@ Examples::
     # User: What is a grouped dataset?
     Classification: Documentation
 
+    # User: How do I index my dataset for similarity search with vector search?
+    Classification: Documentation
+
     # User: Filter for samples with a label of "cat", and then show me the first 10 samples.
+    Classification: Dataset
+
+    # Does my dataset have any albumentations runs generated?
     Classification: Dataset
 
     # User: What is the best way to evaluate a model's performance?
