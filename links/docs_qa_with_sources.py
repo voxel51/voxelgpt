@@ -69,6 +69,7 @@ def _build_docs_qa_prompt(query, docs):
 def _get_documents(query):
     query_vector = embedding_model.embed_query(query)
     query_vector = [str(np.round(qv, 8)) for qv in query_vector]
+    query_vector = ",".join(query_vector)
     response = requests.get(
         "http://voxelgpt.fiftyone.ai/retrieve",
         params={"query": query_vector}
