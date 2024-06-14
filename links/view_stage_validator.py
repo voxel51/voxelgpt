@@ -11,7 +11,13 @@ import re
 import fiftyone as fo
 
 # pylint: disable=relative-beyond-top-level
-from .utils import _gt_field_names, _pred_field_names
+from .utils import (
+    _gt_field_names,
+    _pred_field_names,
+    tp_field_names,
+    fp_field_names,
+    fn_field_names,
+)
 from .data_inspection import (
     _get_detection_evaluation_runs,
     _get_text_sim_runs,
@@ -272,6 +278,44 @@ def _validate_filter_labels_stage(view_stage, dataset):
                 text=f"A photo of a {label_class_names[0]}"
             )
             return view_stage
+
+    view_stage.filter_expression = filter_expr
+
+    ## Replace "A.label" with "label" in the filter expression
+    pattern = r"\b\w+\.\w+\.(\w+)\b|\b\w+\.(\w+)\b"
+
+    # Function to perform the replacement
+    def replace_label(expr):
+        if expr.group(1):
+            return expr.group(1)
+        if expr.group(2):
+            return expr.group(2)
+
+    # Use re.sub to replace the matched pattern with the desired result
+    filter_expr = re.sub(pattern, replace_label, filter_expr)
+
+    ## Handle "==" and "!=" explicitly:
+    if ").label" in filter_expr:
+        eq_pattern = r'==\s*"([^"]+)"'
+        if re.search(eq_pattern, filter_expr):
+            name = re.search(eq_pattern, filter_expr).group(1)
+            filter_expr = 'F("label") == "{}"'.format(name)
+
+        neq_pattern = r'!=\s*"([^"]+)"'
+        if re.search(neq_pattern, filter_expr):
+            name = re.search(neq_pattern, filter_expr).group(1)
+            filter_expr = 'F("label") != "{}"'.format(name)
+
+    ## Handle TP, FP, FN explicitly:
+    for tp_patt in tp_field_names:
+        if tp_patt in filter_expr:
+            filter_expr = filter_expr.replace(tp_patt, "tp")
+    for fp_patt in fp_field_names:
+        if fp_patt in filter_expr:
+            filter_expr = filter_expr.replace(fp_patt, "fp")
+    for fn_patt in fn_field_names:
+        if fn_patt in filter_expr:
+            filter_expr = filter_expr.replace(fn_patt, "fn")
 
     view_stage.filter_expression = filter_expr
     return view_stage
