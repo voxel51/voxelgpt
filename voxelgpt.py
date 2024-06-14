@@ -50,12 +50,6 @@ from links.effective_query_generator import generate_effective_query
 _SUPPORTED_DIALECTS = ("string", "markdown", "raw")
 
 
-## For debugging purposes
-def write_log(log):
-    with open("/tmp/log.txt", "a") as f:
-        f.write(str(log) + "\n")
-
-
 def ask_voxelgpt_interactive(
     sample_collection=None,
     session=None,
@@ -178,34 +172,6 @@ def ask_voxelgpt(
             sys.stdout.flush()
 
     return view
-
-
-def _view_creation_plan_message(plan):
-    message = ""
-    for step in plan.steps:
-        message += f"  - {step}\n"
-    return {
-        "string": f"Here's the plan:\n{message}",
-        "markdown": f"Here's the plan:\n{message}",
-    }
-
-
-def _get_dataset_and_view(sample_collection, ctx):
-    if sample_collection is not None:
-        if isinstance(sample_collection, fo.DatasetView):
-            view = sample_collection
-            dataset = sample_collection._dataset
-        else:
-            view = None
-            dataset = sample_collection
-    elif ctx is not None:
-        view = ctx.view
-        dataset = ctx.dataset
-    else:
-        view = None
-        dataset = None
-
-    return dataset, view
 
 
 def ask_voxelgpt_generator(
@@ -391,16 +357,25 @@ def ask_voxelgpt_generator(
             starting_view, view_creation_actors, view_creation_plan
         )
         yield _respond("Crafting a revised plan...", add_to_history=False)
-        view_creation_plan = revise_view_creation_plan(
+        revised_view_creation_plan = revise_view_creation_plan(
             query, inspection_results, view_creation_plan
         )
-        yield _respond(
-            _view_creation_plan_message(view_creation_plan),
-            add_to_history=False,
-        )
+
+        if _view_creation_plan_changed(
+            view_creation_plan, revised_view_creation_plan
+        ):
+            yield _respond(
+                _view_creation_plan_message(revised_view_creation_plan),
+                add_to_history=False,
+            )
+        else:
+            yield _respond(
+                "The plan hasn't changed. Proceeding with the original plan.",
+                add_to_history=False,
+            )
 
         view, stage_reprs = create_view_from_plan(
-            starting_view, view_creation_plan
+            starting_view, revised_view_creation_plan
         )
 
         if view is None:
@@ -508,6 +483,40 @@ def _perform_aggregation_message(start_string, aggregation_string):
         "string": f"Performing aggregation: {start_string}.{aggregation_string}",
         "markdown": f"Performing aggregation:\n```py\n{start_string}.{aggregation_string}\n```",
     }
+
+
+def _view_creation_plan_message(plan):
+    message = ""
+    for step in plan.steps:
+        message += f"  - {step}\n"
+    return {
+        "string": f"Here's the plan:\n{message}",
+        "markdown": f"Here's the plan:\n{message}",
+    }
+
+
+def _view_creation_plan_changed(plan1, plan2):
+    if plan1.steps == plan2.steps:
+        return False
+    return True
+
+
+def _get_dataset_and_view(sample_collection, ctx):
+    if sample_collection is not None:
+        if isinstance(sample_collection, fo.DatasetView):
+            view = sample_collection
+            dataset = sample_collection._dataset
+        else:
+            view = None
+            dataset = sample_collection
+    elif ctx is not None:
+        view = ctx.view
+        dataset = ctx.dataset
+    else:
+        view = None
+        dataset = None
+
+    return dataset, view
 
 
 def _load_view_message(start_string, view_stage_strings):
