@@ -19,11 +19,17 @@ Examples::
     # User: How many samples do I have in my dataset?
     Classification: dataset
 
+    # User: Select the brightness field
+    Classification: view
+
     # User: What is the distribution of labels in my dataset?
     Classification: view
 
     # User: Do I have any detection fields on my dataset?
     Classification: dataset
+
+    # User: Exclude the prediction fields
+    Classification: view
 
     # User: Do I have any geolocation data?
     Classification: dataset
@@ -33,6 +39,9 @@ Examples::
 
     # User: What is the max brightness of the first 100 samples?
     Classification: view
+
+    # User: What are the values for my detections?
+    Classification: dataset
 
     # User: Filter for samples with a label of "cat"
     Classification: view
