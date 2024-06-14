@@ -40,6 +40,11 @@ from .view_stage_constructor import (
 )
 
 
+def write_log(log):
+    with open("/tmp/log.txt", "a") as f:
+        f.write(str(log) + "\n")
+
+
 def _validate_to_patches_stage(view_stage, dataset):
     det_fields = _list_detection_fields(dataset)
     if len(det_fields) == 0:
@@ -320,17 +325,22 @@ def _validate_filter_labels_evaluations(view_stage, dataset):
         if fn_patt in filter_expr:
             filter_expr = filter_expr.replace(fn_patt, "fn")
 
+    ##! TODO Add validation for classification evaluation too, True, False <-> TP, FP
     view_stage.filter_expression = filter_expr
     return view_stage
 
 
 def _validate_filter_labels_stage(view_stage, dataset):
+    write_log("Validating filter labels stage")
+    write_log(view_stage)
     ## handle evaluations
     view_stage = _validate_filter_labels_evaluations(view_stage, dataset)
-
+    write_log("After evaluation validation")
+    write_log(view_stage)
     ## handle label classes
     view_stage = _validate_filter_labels_classes(view_stage, dataset)
-
+    write_log("After class validation")
+    write_log(view_stage)
     return view_stage
 
 
@@ -380,22 +390,31 @@ def _validate_exists_stage(view_stage, dataset):
 
 
 def validate_view_stage(view_stage, dataset):
-    if isinstance(view_stage, ToPatches):
-        view_stage = _validate_to_patches_stage(view_stage, dataset)
-    elif isinstance(view_stage, ToEvaluationPatches):
-        view_stage = _validate_to_evaluation_patches_stage(view_stage, dataset)
-    elif isinstance(view_stage, SelectGroupSlices):
-        view_stage = _validate_select_group_slices_stage(view_stage, dataset)
-    elif isinstance(view_stage, MatchTags):
-        view_stage = _validate_match_tags_stage(view_stage, dataset)
-    elif isinstance(view_stage, SelectLabels):
-        view_stage = _validate_select_labels_stage(view_stage, dataset)
-    elif isinstance(view_stage, SortBySimilarity):
-        view_stage = _validate_sort_by_similarity_stage(view_stage, dataset)
-    elif isinstance(view_stage, (MatchLabels, FilterLabels)):
-        view_stage = _validate_filter_labels_stage(view_stage, dataset)
-    elif isinstance(view_stage, (SelectFields, ExcludeFields)):
-        view_stage = _validate_fields_stage(view_stage, dataset)
-    elif isinstance(view_stage, Exists):
-        view_stage = _validate_exists_stage(view_stage, dataset)
+    try:
+        if isinstance(view_stage, ToPatches):
+            view_stage = _validate_to_patches_stage(view_stage, dataset)
+        elif isinstance(view_stage, ToEvaluationPatches):
+            view_stage = _validate_to_evaluation_patches_stage(
+                view_stage, dataset
+            )
+        elif isinstance(view_stage, SelectGroupSlices):
+            view_stage = _validate_select_group_slices_stage(
+                view_stage, dataset
+            )
+        elif isinstance(view_stage, MatchTags):
+            view_stage = _validate_match_tags_stage(view_stage, dataset)
+        elif isinstance(view_stage, SelectLabels):
+            view_stage = _validate_select_labels_stage(view_stage, dataset)
+        elif isinstance(view_stage, SortBySimilarity):
+            view_stage = _validate_sort_by_similarity_stage(
+                view_stage, dataset
+            )
+        elif isinstance(view_stage, (MatchLabels, FilterLabels)):
+            view_stage = _validate_filter_labels_stage(view_stage, dataset)
+        elif isinstance(view_stage, (SelectFields, ExcludeFields)):
+            view_stage = _validate_fields_stage(view_stage, dataset)
+        elif isinstance(view_stage, Exists):
+            view_stage = _validate_exists_stage(view_stage, dataset)
+    except Exception as e:
+        return view_stage
     return view_stage

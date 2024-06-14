@@ -13,7 +13,7 @@ the expression. Do not include "detections" in the expression. Do not use the
 
 If you want to filter for a specific label, you can use the label name directly
 in the expression. For example, if you want to filter for the label "cat", you
-can use `F("label") == "cat"`.
+can use `F("label") == "cat"`. Do not construct an expression like `F("label") == None`
 
 Examples::
 
@@ -25,6 +25,9 @@ Examples::
 
 # Query: Bounding box width greater than 100 pixels
 # Expression: 'F("ABS_BBOX_WIDTH") > 100'
+
+# Query: Display the false positive and false negatives
+# Expression: '(F("eval") == "fp") | (F("eval") == "fn")'
 
 # Query: filter for images with a dog in them
 # Expression: 'F("label") == "dog"'
@@ -40,6 +43,15 @@ Examples::
 
 # Query: Bounding box area < 0.2 of the image area
 # Expression: 'F("REL_BBOX_AREA") < 0.2'
+
+# Query: Filter for prediction labels that are false positives and have a confidence score > 0.9 in the 'predictions' field
+# Expression: '(F("eval") == "fp") & (F("confidence") > 0.9)'
+
+# Query: Show me true predictions
+# Expression: 'F("eval") == "tp"'
+
+# Query: I only want detection labels with confidence < 0.3
+# Expression: 'F("confidence") < 0.3'
 
 # Query: Samples that have a label of "cat" or "dog"
 # Expression: 'F("label").is_in(["cat", "dog"])'

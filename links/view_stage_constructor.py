@@ -1052,8 +1052,22 @@ def _identify_label_field_type(dataset, field_names, filter_expression):
         elif isinstance(field, fo.Classification):
             return "classification"
 
-    det2d_phrases = ["bounding box", "detection", "object", "area", "bbox"]
-    if any(phrase in filter_expression for phrase in det2d_phrases):
+    det2d_phrases = [
+        "bounding box",
+        "detection",
+        "object",
+        "area",
+        "bbox",
+        "fp",
+        "tp",
+        "fn",
+        "iou",
+        "false positive",
+        "true positive",
+        "false negative",
+        "intersection over union",
+    ]
+    if any(phrase in filter_expression.lower() for phrase in det2d_phrases):
         return "detections_2d"
 
     return "general"
