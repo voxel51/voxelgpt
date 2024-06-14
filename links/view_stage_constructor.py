@@ -226,6 +226,15 @@ def _format_str_or_list(str_or_list):
     return str_or_list
 
 
+def _format_key(key):
+    # pylint: disable=no-member
+    if not key.startswith("F(") and not key.startswith('F("'):
+        key = 'F("' + key + '")'
+
+    key = _make_replacements(key)
+    return key
+
+
 class SelectFields(ViewStage):
     """View stage to select the specified fields in the current view. Only the
     selected fields (and default fields like `id`, `tags`) will be present in
@@ -675,11 +684,7 @@ class GroupBy(ViewStage):
     )
 
     def build(self):
-        key = self.key
-        # pylint: disable=no-member
-        if not key.startswith("F(") and not key.startswith('F("'):
-            key = 'F("' + key + '")'
-        key = _make_replacements(key)
+        key = _format_key(self.key)
         key = eval(key)
         if isinstance(key, str):
             key = eval(key)
@@ -687,11 +692,7 @@ class GroupBy(ViewStage):
         return fo.GroupBy(key)
 
     def __repr__(self):
-        key = self.key
-        # pylint: disable=no-member
-        if not key.startswith("F(") and not key.startswith('F("'):
-            key = 'F("' + key + '")'
-        key = _make_replacements(key)
+        key = _format_key(self.key)
         return f"group_by({key})"
 
 
@@ -727,11 +728,7 @@ class SortBy(ViewStage):
     )
 
     def build(self):
-        # pylint: disable=no-member
-        key = self.key
-        if not key.startswith("F(") and not key.startswith('F("'):
-            key = 'F("' + key + '")'
-        key = _make_replacements(key)
+        key = _format_key(self.key)
         key = eval(key)
         if isinstance(key, str):
             key = eval(key)
@@ -739,11 +736,7 @@ class SortBy(ViewStage):
         return fo.SortBy(key, reverse=self.reverse)
 
     def __repr__(self):
-        # pylint: disable=no-member
-        key = self.key
-        if not key.startswith("F(") and not key.startswith('F("'):
-            key = 'F("' + key + '")'
-        key = _make_replacements(key)
+        key = _format_key(self.key)
         return f"sort_by({key}, reverse={self.reverse})"
 
 
