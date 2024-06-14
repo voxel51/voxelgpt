@@ -439,6 +439,7 @@ def ask_voxelgpt_generator(
             return
 
         if view == starting_view:
+            ##! TODO: If FilterLabels, MatchLabels, or SortBySimilarity fails here b/c of lack of computation, suggest computation and add routing to ask for approval
             yield _respond(
                 "No view stages were applied. Perhaps you should try a different query, or add fields to the dataset.",
             )
