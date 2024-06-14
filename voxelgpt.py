@@ -12,8 +12,13 @@ import sys
 
 import fiftyone as fo
 
+from links.utils import PROMPTS_DIR, get_prompt_from
+from links.effective_query_generator import generate_effective_query
 from links.query_intent_classifier import classify_query_intent
-from links.docs_qa_with_sources import run_docs_query, stream_docs_query
+from links.docs_qa_with_sources import (
+    run_docs_query,
+    stream_docs_query,
+)
 from links.general_qa import (
     run_computer_vision_query,
     stream_computer_vision_query,
@@ -23,11 +28,23 @@ from links.data_inspection import (
     run_basic_data_inspection_query,
     _run_default_inspection_for_plan,
 )
+from links.view_creator import create_view_from_plan
 from links.view_creation_classifier import (
     should_create_view,
     should_add_to_view,
 )
+from links.view_creation_planner import (
+    create_view_creation_plan,
+    revise_view_creation_plan,
+)
+from links.view_stage_delegator import delegate_view_stage_creation
 from links.view_setting_classifier import should_set_view
+from links.aggregator import (
+    delegate_aggregation,
+    construct_aggregation,
+    stream_aggregation_analysis,
+    run_aggregation_analysis,
+)
 from links.aggregation_classifier import should_aggregate
 from links.computation import (
     should_run_computation,
@@ -39,21 +56,6 @@ from links.computation import (
     computations_allowed,
     get_compute_approval_threshold,
 )
-from links.view_creator import create_view_from_plan
-from links.aggregator import (
-    delegate_aggregation,
-    construct_aggregation,
-    stream_aggregation_analysis,
-    run_aggregation_analysis,
-)
-from links.view_creation_planner import (
-    create_view_creation_plan,
-    revise_view_creation_plan,
-)
-from links.view_stage_delegator import delegate_view_stage_creation
-from links.utils import PROMPTS_DIR, get_prompt_from
-
-from links.effective_query_generator import generate_effective_query
 
 
 _SUPPORTED_DIALECTS = ("string", "markdown", "raw")
