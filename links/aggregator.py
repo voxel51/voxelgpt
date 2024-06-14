@@ -23,6 +23,7 @@ from .utils import (
     _format_filter_expression,
     stream_runnable,
 )
+from .data_inspection import _list_detection_fields, _list_fields
 
 
 AGGREGATION_DELEGATION_PATH = os.path.join(
@@ -37,16 +38,42 @@ def delegate_aggregation(step):
     return chain.invoke({"question": step})
 
 
-def write_log(log):
-    with open("/tmp/log.txt", "a") as f:
-        f.write(str(log) + "\n")
-
-
 ### AGGREGATION EXPRESSION ###
 
 AGGREGATION_EXPRESSION_PATH = os.path.join(
     PROMPTS_DIR, "aggregation_expression.txt"
 )
+
+
+def _validate_expression(sample_collection, expression):
+    if '"detections"' in expression:
+        det_fields = _list_detection_fields(sample_collection)
+        if "detections" in det_fields:
+            expression = expression.replace(
+                '"detections"', '"detections.detections.label"'
+            )
+        elif "ground_truth" in det_fields:
+            expression = expression.replace(
+                '"detections"', '"ground_truth.detections.label"'
+            )
+        elif len(det_fields) > 0:
+            expression = expression.replace(
+                '"detections"', f'"{det_fields[0]}.detections.label"'
+            )
+
+    if '.detections"' in expression and ".detections.label" not in expression:
+        expression = expression.replace('.detections"', '.detections.label"')
+
+    return expression
+
+
+def _validate_aggregation(sample_collection, aggregation):
+    expression = _format_filter_expression(aggregation.expression)
+    expression = _validate_expression(sample_collection, expression)
+    if "length()" in expression and ".label" in expression:
+        expression = expression.replace(".label", "")
+    aggregation.expression = expression
+    return aggregation
 
 
 class AggregationStage(BaseModel):
@@ -62,12 +89,11 @@ class AggregationStage(BaseModel):
         raise NotImplementedError
 
     def apply(self, sample_collection):
-        expression = eval(_format_filter_expression(self.expression))
+        expression = eval(self.expression)
         return sample_collection.aggregate(self.fiftyone_stage()(expression))
 
     def __repr__(self):
-        expression = _format_filter_expression(self.expression)
-        return f"{self.name}({expression})"
+        return f"{self.name}({self.expression})"
 
 
 class Count(AggregationStage):
@@ -139,12 +165,11 @@ class Min(AggregationStage):
         return fo.Bounds
 
     def apply(self, sample_collection):
-        expression = eval(_format_filter_expression(self.expression))
+        expression = eval(self.expression)
         return sample_collection.aggregate(fo.Bounds(expression))[0]
 
     def __repr__(self):
-        expression = _format_filter_expression(self.expression)
-        return f"bounds({expression})[0]"
+        return f"bounds({self.expression})[0]"
 
 
 class Max(AggregationStage):
@@ -156,12 +181,11 @@ class Max(AggregationStage):
         return fo.Bounds
 
     def apply(self, sample_collection):
-        expression = eval(_format_filter_expression(self.expression))
+        expression = eval(self.expression)
         return sample_collection.aggregate(fo.Bounds(expression))[1]
 
     def __repr__(self):
-        expression = _format_filter_expression(self.expression)
-        return f"bounds({expression})[1]"
+        return f"bounds({self.expression})[1]"
 
 
 class Std(AggregationStage):
@@ -196,21 +220,29 @@ def _get_aggregation_constructor(assignee):
     return None
 
 
-def construct_aggregation(assignee, query, view_repr, *args, **kwargs):
+def construct_aggregation(assignee, query, view_repr, view, *args, **kwargs):
     aggregation_constructor = _get_aggregation_constructor(assignee)
     if aggregation_constructor is None:
         raise ValueError("Invalid assignee for aggregation")
     elif aggregation_constructor == Count:
         return aggregation_constructor(expression="")
     else:
+        fields = _list_fields(view)
+        fields_message = ""
+        for field, ftype in fields.items():
+            fields_message += f"- {field} ({ftype})\n"
         prompt = get_prompt_from(AGGREGATION_EXPRESSION_PATH).format(
-            aggregation_type=assignee, query=query, view=view_repr
+            aggregation_type=assignee,
+            query=query,
+            view=view_repr,
+            fields=fields_message,
         )
         chain = _build_custom_chain(gpt_4o, prompt=prompt)
         expression = chain.invoke({"query": query})
-        write_log(f"Expression: {expression}")
 
-        return aggregation_constructor(expression=expression)
+        aggregation = aggregation_constructor(expression=expression)
+        aggregation = _validate_aggregation(view, aggregation)
+        return aggregation
 
 
 ### AGGREGATION ANALYSIS ###
@@ -231,12 +263,10 @@ def _build_aggregation_analysis_prompt(query, view, aggregation, result):
 
 
 def perform_aggregation(query, view, view_repr, *args, **kwargs):
-    write_log("Performing aggregation")
     assignee = delegate_aggregation(query)
     aggregation = construct_aggregation(
         assignee, query, view_repr, *args, **kwargs
     )
-    write_log(f"Aggregation: {aggregation}")
     aggregation_results = view.aggregate(aggregation)
     if assignee == "min":
         aggregation_results = aggregation_results[0]
@@ -244,6 +274,10 @@ def perform_aggregation(query, view, view_repr, *args, **kwargs):
         aggregation_results = aggregation_results[1]
     if aggregation_results is None:
         return None, None
+
+    aggregation_results = str(aggregation_results)
+    if len(aggregation_results) > 5000:
+        aggregation_results = aggregation_results[:5000] + "..."
     return aggregation, aggregation_results
 
 
