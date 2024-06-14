@@ -8,7 +8,8 @@ VoxelGPT is a [FiftyOne Plugin](https://docs.voxel51.com/plugins/index.html)
 that combines the power of large language models (LLMs) and large multimodal
 models (LMMs) with [FiftyOne](https://github.com/voxel51/fiftyone)'s computer
 vision query language, enabling you to filter, sort, semantically slice and ask
-questions about your data using natural language.
+questions about your data using natural language. It can even perform
+computations on your dataset for you — with approval, of course!
 
 ## Live demo
 
@@ -19,6 +20,7 @@ questions about your data using natural language.
 VoxelGPT is capable of handling any of the following types of queries:
 
 -   [Dataset queries](#querying-your-dataset)
+-   [Computation queries](#computational-queries)
 -   [FiftyOne Library queries](#fiftyone-library-queries)
 -   [FiftyOne Workspace queries](#querying-your-workspace)
 -   [General computer vision or machine learning queries](#general-computer-vision-queries)
@@ -114,6 +116,39 @@ dataset. Here are some examples:
 -   What is the average brightness of my images?
 -   How many images do I have with a `cat` label?
 -   What is the standard deviation of the `confidence` field in my predictions?
+
+### Computational queries
+
+VoxelGPT can perform computations on your dataset, such as:
+
+-   brightness: assign a brightness score to each sample in the dataset, using
+    FiftyOne's
+    [Image Quality Issues plugin](https://github.com/jacobmarks/image-quality-issues)
+-   entropy: quantify the amount of information in each sample in the dataset,
+    using FiftyOne's
+    [Image Quality Issues plugin](https://github.com/jacobmarks/image-quality-issues)
+-   uniqueness: assign a uniqueness score to each sample in the dataset, using
+    the [FiftyOne Brain](https://voxel51.com/fiftyone/workflows/uniqueness/)
+-   duplicates: identify and remove duplicate samples in the dataset, using the
+    [FiftyOne Brain](https://docs.voxel51.com/api/fiftyone.brain.html?highlight=duplicate#fiftyone.brain.compute_exact_duplicates)
+-   similarity: generate a vector similarity index on the dataset, which can be
+    used to compare samples in the dataset, using the
+    [FiftyOne Brain](https://docs.voxel51.com/user_guide/brain.html#similarity)
+-   dimensionality reduction: reduce the dimensionality of feature vectors for
+    each sample, using the
+    [FiftyOne Brain](https://docs.voxel51.com/user_guide/brain.html#visualizing-embeddings)
+    using UMAP, PCA, or t-SNE, so that they can be visualized in 2D or 3D
+-   clustering: cluster samples in the dataset using KMeans, DBSCAN, and other
+    clustering algorithms, using FiftyOne's
+    [Clustering plugin](https://github.com/jacobmarks/clustering-plugin)
+
+Here's some examples of computational queries you can ask VoxelGPT:
+
+-   Compute the brightness of images across my dataset
+-   Score the uniqueness of each image in my dataset
+-   Generate a similarity index for my dataset
+-   Cluster my dataset using KMeans
+-   Help me visualize my dataset in 2D using UMAP
 
 ### FiftyOne Library queries
 
