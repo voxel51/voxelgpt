@@ -18,7 +18,14 @@ intent_chain = _build_custom_chain(
     gpt_3_5, template_path=INTENT_CLASSIFICATION_PATH
 )
 
-allowed_topics = ["documentation", "dataset", "general", "workspace", "other"]
+allowed_topics = [
+    "documentation",
+    "dataset",
+    "general",
+    "workspace",
+    "introspection",
+    "other",
+]
 
 bad_topic_text = "I'm sorry, I'm not sure what you're asking. Could you please provide more context?"
 

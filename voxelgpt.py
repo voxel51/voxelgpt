@@ -15,6 +15,10 @@ import fiftyone as fo
 from links.utils import PROMPTS_DIR, get_prompt_from
 from links.effective_query_generator import generate_effective_query
 from links.query_intent_classifier import classify_query_intent
+from links.introspection import (
+    run_introspection_query,
+    stream_introspection_query,
+)
 from links.docs_qa_with_sources import (
     run_docs_query,
     stream_docs_query,
@@ -317,6 +321,21 @@ def ask_voxelgpt_generator(
         else:
             yield _respond(_format_docs_message(run_docs_query(query)))
         return
+    elif intent == "introspection":
+        if allow_streaming:
+            message = ""
+            for content in stream_introspection_query(query):
+                if isinstance(content, dict):
+                    message = content
+                else:
+                    message += content
+                    yield _emit_streaming_content(content)
+
+            yield _emit_streaming_content("", last=True)
+            yield _respond(message, overwrite=True)
+        else:
+            yield _respond(run_introspection_query(query))
+        return
     elif intent == "general":
         if allow_streaming:
             message = ""
@@ -369,9 +388,6 @@ def ask_voxelgpt_generator(
                     yield _respond(message, overwrite=True)
                 else:
                     yield _respond(run_docs_computation_query(query))
-                # yield _respond(
-                #     "I'm sorry, it looks like you want to run a computation on the dataset, but I can only compute the following: brightness, entropy, uniqueness, similarity, dimensionality reduction, and clustering. Please try again with one of these."
-                # )
                 return
             if not computation_is_possible(computation_assignee):
                 yield _respond(
