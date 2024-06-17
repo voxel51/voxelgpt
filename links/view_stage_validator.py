@@ -40,11 +40,6 @@ from .view_stage_constructor import (
 )
 
 
-def write_log(log):
-    with open("/tmp/log.txt", "a") as f:
-        f.write(str(log) + "\n")
-
-
 def _validate_to_patches_stage(view_stage, dataset):
     det_fields = _list_detection_fields(dataset)
     if len(det_fields) == 0:
@@ -331,16 +326,10 @@ def _validate_filter_labels_evaluations(view_stage, dataset):
 
 
 def _validate_filter_labels_stage(view_stage, dataset):
-    write_log("Validating filter labels stage")
-    write_log(view_stage)
     ## handle evaluations
     view_stage = _validate_filter_labels_evaluations(view_stage, dataset)
-    write_log("After evaluation validation")
-    write_log(view_stage)
     ## handle label classes
     view_stage = _validate_filter_labels_classes(view_stage, dataset)
-    write_log("After class validation")
-    write_log(view_stage)
     return view_stage
 
 

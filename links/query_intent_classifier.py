@@ -30,11 +30,6 @@ allowed_topics = [
 bad_topic_text = "I'm sorry, I'm not sure what you're asking. Could you please provide more context?"
 
 
-def write_log(log):
-    with open("/tmp/log.txt", "a") as f:
-        f.write(str(log) + "\n")
-
-
 def classify_query_intent(query):
     topic = intent_chain.invoke({"query": query}).lower()
 

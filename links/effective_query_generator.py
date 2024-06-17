@@ -22,11 +22,6 @@ EFFECTIVE_QUERY_PATH = os.path.join(
 )
 
 
-def write_log(log):
-    with open("/tmp/log.txt", "a") as f:
-        f.write(str(log) + "\n")
-
-
 def generate_effective_query(chat_history):
 
     chain = _build_custom_chain(gpt_4o, template_path=EFFECTIVE_QUERY_PATH)

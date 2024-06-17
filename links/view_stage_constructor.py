@@ -36,11 +36,6 @@ stages_type = Optional[List[str]]
 Number = Union[int, float]
 
 
-def write_log(log):
-    with open("/tmp/log.txt", "a") as f:
-        f.write(str(log) + "\n")
-
-
 VIEW_STAGE_PROMPT_PREFIX = """
 You are a helpful assistant for computer vision researchers and engineers using
 the FiftyOne library. Your task is to help users create views in the FiftyOne App
@@ -822,22 +817,15 @@ class MatchLabels(ViewStage):
     )
 
     def build(self):
-        write_log("MatchLabels.build()")
-        write_log(f"expr: {self.filter_expression}")
         filter_expr = _format_filter_expression(self.filter_expression)
-        write_log(f"expr: {filter_expr}")
         filter_expr = eval(filter_expr)
-        write_log(f"expr: {filter_expr}")
         return fo.MatchLabels(
             fields=self.fields, filter=filter_expr, bool=self.positive
         )
 
     def __repr__(self):
-        write_log("MatchLabels.__repr__()")
         fields = _format_str_or_list(self.fields)
         filter_expr = _format_filter_expression(self.filter_expression)
-        write_log(f"fields: {fields}")
-        write_log(f"filter_expr: {filter_expr}")
         return f"match_labels(fields={fields}, filter={filter_expr}, bool={self.positive})"
 
 
@@ -1080,7 +1068,6 @@ def _construct_match_labels_expression(stage, step, dataset):
     MATCH_LABELS_EXPRESSION_PATH = os.path.join(PROMPTS_DIR, prompt_filename)
 
     prompt = get_prompt_from(MATCH_LABELS_EXPRESSION_PATH).format(query=step)
-    write_log(f"Prompt: {prompt}")
     chain = _build_chat_chain(gpt_4o, prompt=prompt)
 
     resp = chain.invoke({"messages": [("user", step)]}).content
