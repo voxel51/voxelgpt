@@ -20,7 +20,7 @@ repos:
         language: system
         files: \.py$
         entry: pylint
-        args: ["--errors-only"]
+        args: ["--errors-only", "--disable=import-error"]
         exclude: ^dist/index.umd.js
   - repo: local
     hooks:

@@ -1,13 +1,12 @@
 """
 VoxelGPT plugin.
 
-| Copyright 2017-2023, Voxel51, Inc.
+| Copyright 2017-2024, Voxel51, Inc.
 | `voxel51.com <https://voxel51.com/>`_
 |
 """
 import json
 import os
-import sys
 import traceback
 
 from bson import json_util
@@ -41,7 +40,6 @@ class AskVoxelGPT(foo.Operator):
 
     def execute(self, ctx):
         query = ctx.params["query"]
-        sample_collection = ctx.view if ctx.view is not None else ctx.dataset
         messages = []
 
         inject_voxelgpt_secrets(ctx)
@@ -55,7 +53,7 @@ class AskVoxelGPT(foo.Operator):
 
                 for response in ask_voxelgpt_generator(
                     query,
-                    sample_collection=sample_collection,
+                    ctx=ctx,
                     dialect="string",
                     allow_streaming=True,
                 ):
@@ -165,7 +163,7 @@ class AskVoxelGPTPanel(foo.Operator):
 
                 for response in ask_voxelgpt_generator(
                     query,
-                    sample_collection=sample_collection,
+                    ctx=ctx,
                     chat_history=chat_history,
                     dialect="markdown",
                     allow_streaming=True,
@@ -400,14 +398,28 @@ def deserialize_view(dataset, stages):
     return fo.DatasetView._build(dataset, json_util.loads(json.dumps(stages)))
 
 
-def inject_voxelgpt_secrets(ctx):
-    try:
-        api_key = ctx.secrets["OPENAI_API_KEY"]
-    except:
-        api_key = None
+secrets = (
+    "OPENAI_API_KEY",
+    "OPENAI_API_TYPE",
+    "AZURE_OPENAI_GPT35_DEPLOYMENT_NAME",
+    "AZURE_OPENAI_GPT4O_DEPLOYMENT_NAME",
+    "AZURE_OPENAI_TEXT_EMBEDDING_3_LARGE_DEPLOYMENT_NAME",
+    "AZURE_OPENAI_ENDPOINT",
+    "AZURE_OPENAI_KEY",
+    "VOXELGPT_ALLOW_COMPUTATIONS",
+    "VOXELGPT_APPROVAL_THRESHOLD",
+)
 
-    if api_key:
-        os.environ["OPENAI_API_KEY"] = api_key
+
+def inject_voxelgpt_secrets(ctx):
+    for secret in secrets:
+        try:
+            value = ctx.secrets[secret]
+        except KeyError:
+            value = None
+
+        if value:
+            os.environ[secret] = value
 
 
 def register(p):

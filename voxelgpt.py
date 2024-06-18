@@ -1,37 +1,67 @@
 """
 VoxelGPT entrypoints.
 
-| Copyright 2017-2023, Voxel51, Inc.
+| Copyright 2017-2024, Voxel51, Inc.
 | `voxel51.com <https://voxel51.com/>`_
 |
 """
-from collections import defaultdict
+
+import os
 import re
 import sys
 
 import fiftyone as fo
 
-from links.query_moderator import moderate_query
-from links.dataset_schema_handler import query_schema
+from links.utils import PROMPTS_DIR, get_prompt_from
+from links.effective_query_generator import generate_effective_query
 from links.query_intent_classifier import classify_query_intent
-from links.docs_query_dispatcher import run_docs_query, stream_docs_query
-from links.computer_vision_query_dispatcher import (
+from links.introspection import (
+    run_introspection_query,
+    stream_introspection_query,
+)
+from links.docs_qa_with_sources import (
+    run_docs_query,
+    stream_docs_query,
+    run_docs_computation_query,
+    stream_docs_computation_query,
+)
+from links.general_qa import (
     run_computer_vision_query,
     stream_computer_vision_query,
 )
-from links.view_stage_example_selector import (
-    generate_view_stage_examples_prompt,
+from links.workspace_inspection import run_workspace_inspection_query
+from links.data_inspection import (
+    run_basic_data_inspection_query,
+    _run_default_inspection_for_plan,
 )
-from links.view_stage_description_selector import (
-    generate_view_stage_descriptions_prompt,
-    get_most_relevant_view_stages,
+from links.view_creator import create_view_from_plan
+from links.view_creation_classifier import (
+    should_create_view,
+    should_add_to_view,
 )
-from links.algorithm_selector import select_algorithms
-from links.run_selector import select_runs
-from links.field_selector import select_fields
-from links.label_class_selector import select_label_classes
-from links.dataset_view_generator import get_gpt_view_stage_strings
-from links.effective_query_generator import generate_effective_query
+from links.view_creation_planner import (
+    create_view_creation_plan,
+    revise_view_creation_plan,
+)
+from links.view_stage_delegator import delegate_view_stage_creation
+from links.view_setting_classifier import should_set_view
+from links.aggregator import (
+    delegate_aggregation,
+    construct_aggregation,
+    stream_aggregation_analysis,
+    run_aggregation_analysis,
+)
+from links.aggregation_classifier import should_aggregate
+from links.computation import (
+    should_run_computation,
+    delegate_computation,
+    run_computation,
+    computation_is_possible,
+    computation_failure_message,
+    computation_already_done,
+    computations_allowed,
+    get_compute_approval_threshold,
+)
 
 
 _SUPPORTED_DIALECTS = ("string", "markdown", "raw")
@@ -110,6 +140,7 @@ def ask_voxelgpt_interactive(
 def ask_voxelgpt(
     query,
     sample_collection=None,
+    ctx=None,
     allow_streaming=True,
     chat_history=None,
 ):
@@ -125,6 +156,8 @@ def ask_voxelgpt(
         query: a prompt string
         sample_collection (None): a
             :class:`fiftyone.core.collections.SampleCollection` to query
+        ctx (None): an :class:`fiftyone.operators.executor.ExecutionContext`
+            to query
         allow_streaming (True): whether to allow streaming responses
         chat_history (None): an optional chat history list
 
@@ -137,6 +170,7 @@ def ask_voxelgpt(
     for response in ask_voxelgpt_generator(
         query,
         sample_collection=sample_collection,
+        ctx=ctx,
         dialect="string",
         allow_streaming=allow_streaming,
         chat_history=chat_history,
@@ -162,6 +196,7 @@ def ask_voxelgpt(
 def ask_voxelgpt_generator(
     query,
     sample_collection=None,
+    ctx=None,
     dialect="string",
     allow_streaming=True,
     chat_history=None,
@@ -219,6 +254,8 @@ def ask_voxelgpt_generator(
         query: a prompt string
         sample_collection (None): a
             :class:`fiftyone.core.collections.SampleCollection` to query
+        ctx (None): an :class:`fiftyone.operators.executor.ExecutionContext`
+            to query
         dialect ("string"): the response format to return. Supported values are
             ``("string", "markdown", "raw")``
         allow_streaming (True): whether to allow streaming responses
@@ -232,13 +269,13 @@ def ask_voxelgpt_generator(
     if chat_history is None:
         chat_history = []
 
-    def _respond(message, overwrite=False):
+    def _respond(message, overwrite=False, add_to_history=True):
         if isinstance(message, str):
             message = {"string": message, "markdown": message}
 
         str_msg = message.get("string", None)
-        if str_msg is not None:
-            _log_chat_history("GPT", str_msg, chat_history)
+        if str_msg is not None and add_to_history:
+            _log_chat_history("VoxelGPT", str_msg, chat_history)
 
         if dialect == "raw":
             return str_msg
@@ -247,9 +284,8 @@ def ask_voxelgpt_generator(
         if msg is not None:
             return _emit_message(msg, str_msg, overwrite=overwrite)
 
-    if not moderate_query(query):
-        yield _respond(_moderation_fail_message())
-        return
+    dataset, current_view = _get_dataset_and_view(sample_collection, ctx)
+    view_message = None
 
     if query.strip().lower() == "help":
         yield _respond(_help_message())
@@ -257,18 +293,23 @@ def ask_voxelgpt_generator(
 
     _log_chat_history("User", query, chat_history)
 
+    can_compute_flag = computations_allowed()
+
+    ## Check if have computational approval
+    approved_flag = (
+        _has_compute_approval(chat_history) if can_compute_flag else False
+    )
+
     # Generate a new query that incorporates the chat history
-    if chat_history:
+    if chat_history and not approved_flag:
         query = generate_effective_query(chat_history)
 
-    # Handle schema queries first
-    schema_response = query_schema(query, sample_collection)
-    if schema_response:
-        yield _respond(schema_response)
-        return
-
     # Intent classification
-    intent = classify_query_intent(query)
+    if not approved_flag:
+        intent = classify_query_intent(query)
+    else:
+        intent = "computation"
+
     if intent == "documentation":
         if allow_streaming:
             message = ""
@@ -283,9 +324,23 @@ def ask_voxelgpt_generator(
             yield _respond(_format_docs_message(message), overwrite=True)
         else:
             yield _respond(_format_docs_message(run_docs_query(query)))
-
         return
-    elif intent == "computer_vision":
+    elif intent == "introspection":
+        if allow_streaming:
+            message = ""
+            for content in stream_introspection_query(query):
+                if isinstance(content, dict):
+                    message = content
+                else:
+                    message += content
+                    yield _emit_streaming_content(content)
+
+            yield _emit_streaming_content("", last=True)
+            yield _respond(message, overwrite=True)
+        else:
+            yield _respond(run_introspection_query(query))
+        return
+    elif intent == "general":
         if allow_streaming:
             message = ""
             for content in stream_computer_vision_query(query):
@@ -296,210 +351,205 @@ def ask_voxelgpt_generator(
             yield _respond(message, overwrite=True)
         else:
             yield _respond(run_computer_vision_query(query))
-
         return
-    elif intent != "display":
+    elif intent == "workspace":
+        yield _respond(
+            _format_docs_message(run_workspace_inspection_query(query))
+        )
+        return
+    elif intent == "other":
         yield _respond(_clarify_message())
         return
 
-    if sample_collection is None:
+    if dataset is None:
         yield _respond(
             "You must provide a sample collection in order for me to respond "
             "to this query"
         )
         return
 
-    if sample_collection.media_type not in ("image", "video"):
-        yield _respond(
-            "Only image or video collections are currently supported"
-        )
+    if approved_flag or should_run_computation(query):
+        if approved_flag:
+            yield _respond("Computing...", add_to_history=False)
+            query, computation_assignee = _recover_computation_query(
+                chat_history
+            )
+        else:
+            if not can_compute_flag:
+                yield _respond(
+                    "I'm sorry, I don't have permission to run computations on this dataset. Please try another query."
+                )
+                return
+            computation_assignee = delegate_computation(query)
+            if computation_assignee == "other":
+                if allow_streaming:
+                    message = ""
+                    for content in stream_docs_computation_query(query):
+                        message += content
+                        yield _emit_streaming_content(content)
+
+                    yield _emit_streaming_content("", last=True)
+                    yield _respond(message, overwrite=True)
+                else:
+                    yield _respond(run_docs_computation_query(query))
+                return
+            if not computation_is_possible(computation_assignee):
+                yield _respond(
+                    computation_failure_message(computation_assignee)
+                )
+                return
+
+            if computation_already_done(dataset, computation_assignee):
+                yield _respond(
+                    "It looks like you already have this information. Let me know if you need anything else!"
+                )
+                return
+
+            if dataset.count() > get_compute_approval_threshold():
+                yield _respond(
+                    _get_compute_approval_message(computation_assignee)
+                )
+                return
+
+        response = run_computation(dataset, computation_assignee, query)
+        yield _respond(response)
         return
 
-    # Algorithms
-    algorithms = select_algorithms(query)
-    if algorithms:
-        yield _respond(_algorithms_message(algorithms))
+    create_view_flag = should_create_view(query)
+    aggregate_flag = should_aggregate(query)
 
-    # Runs
-    runs, runs_message = select_runs(sample_collection, query, algorithms)
-    if runs or runs_message:
-        yield _respond(_runs_message(runs, runs_message))
+    ## If no view creation and no aggregation, run basic data inspection agent
+    if not create_view_flag and not aggregate_flag:
+        query_view = current_view if current_view is not None else dataset
+        yield _respond(run_basic_data_inspection_query(query, query_view))
+        return
 
-    # Fields
-    fields = select_fields(sample_collection, query)
-    if fields:
-        yield _respond(_fields_message(fields))
-
-    # Label classes
-    label_classes = select_label_classes(sample_collection, query, fields)
-    if label_classes == "_CONFUSED_":
-        if "text_similarity" in runs:
-            label_classes = {}
+    ### VIEW CREATION
+    if create_view_flag:
+        if current_view is not None and should_add_to_view(
+            query, current_view
+        ):
+            starting_view = current_view
+            starting_str = "view"
         else:
-            yield _respond(_clarify_message())
+            starting_view = dataset
+            starting_str = "dataset"
+
+        yield _respond("Creating a plan...", add_to_history=False)
+        view_creation_plan = create_view_creation_plan(query)
+        yield _respond(
+            _view_creation_plan_message(view_creation_plan),
+            add_to_history=False,
+        )
+        view_creation_actors = [
+            delegate_view_stage_creation(step)
+            for step in view_creation_plan.steps
+        ]
+        yield _respond("Inspecting the data schema...", add_to_history=False)
+        inspection_results = _run_default_inspection_for_plan(
+            starting_view, view_creation_actors, view_creation_plan
+        )
+        yield _respond("Crafting a revised plan...", add_to_history=False)
+        revised_view_creation_plan = revise_view_creation_plan(
+            query, inspection_results, view_creation_plan
+        )
+
+        if _view_creation_plan_changed(
+            view_creation_plan, revised_view_creation_plan
+        ):
+            yield _respond(
+                _view_creation_plan_message(revised_view_creation_plan),
+                add_to_history=False,
+            )
+        else:
+            yield _respond(
+                "The plan hasn't changed. Proceeding with the original plan.",
+                add_to_history=False,
+            )
+
+        view, stage_reprs = create_view_from_plan(
+            starting_view, revised_view_creation_plan
+        )
+
+        if view is None:
+            yield _respond(_invalid_view_message())
             return
 
-    if any(len(v) > 0 for v in label_classes.values()):
-        _label_classes, _unmatched_classes = _format_label_classes(
-            label_classes
+        if view == starting_view:
+            ##! TODO: If FilterLabels, MatchLabels, or SortBySimilarity fails here b/c of lack of computation, suggest computation and add routing to ask for approval
+            yield _respond(
+                "No view stages were applied. Perhaps you should try a different query, or add fields to the dataset.",
+            )
+        view_message = _load_view_message(starting_str, stage_reprs)
+        yield _respond(view_message)
+    else:
+        view = dataset
+
+    if should_set_view(query):
+        yield _emit_view(view.view())
+
+    ### AGGREGATION ###
+    if not aggregate_flag:
+        yield _respond(
+            "I've updated the view in the App. Let me know if you need anything else!",
+            add_to_history=False,
         )
-        yield _respond(_label_classes_message(_label_classes))
-
-    examples = generate_view_stage_examples_prompt(
-        sample_collection, query, runs, label_classes
-    )
-    view_stage_descriptions = generate_view_stage_descriptions_prompt(examples)
-
-    # View stages
-    view_stages = get_most_relevant_view_stages(examples)
-    if view_stages:
-        yield _respond(_view_stages_message(view_stages))
-
-    examples = _reformat_query(examples, label_classes)
-    _label_classes, _unmatched_classes = _format_label_classes(label_classes)
-
-    stages = get_gpt_view_stage_strings(
-        sample_collection,
-        runs,
-        fields,
-        _label_classes,
-        _unmatched_classes,
-        view_stage_descriptions,
-        examples,
-    )
-
-    if "metadata" in ".".join(stages) and "metadata" not in runs:
-        stages = "_NEED_METADATA_"
-
-    if dialect == "raw":
-        yield stages
         return
 
-    if stages == "_NEED_METADATA_":
-        yield _respond(_metadata_message())
-        return
+    if aggregate_flag:
+        aggregation_assignee = delegate_aggregation(query)
 
-    if stages == "_MORE_":
-        yield _respond(_specific_message())
-        return
+        view_message_str = view_message["string"] if view_message else ""
 
-    if stages == "_CONFUSED_":
-        yield _respond(_clarify_message())
-        return
+        aggregation = construct_aggregation(
+            aggregation_assignee, query, view_message_str, view
+        )
+        if aggregation is None:
+            yield _respond(
+                "I'm sorry, I couldn't understand the aggregation query"
+            )
+            return
 
-    stages = _format_stages(sample_collection, stages)
+        if create_view_flag:
+            yield _respond(
+                _perform_aggregation_message(
+                    "view", str(aggregation.__repr__())
+                )
+            )
+        else:
+            yield _respond(
+                _perform_aggregation_message(
+                    "dataset", str(aggregation.__repr__())
+                )
+            )
 
-    if stages:
-        yield _respond(_load_view_message(stages))
+        aggregation_results = aggregation.apply(view)
+        if aggregation_results is None:
+            yield _respond("I'm sorry, I couldn't perform the aggregation")
+            return
 
-        try:
-            view = _build_view(sample_collection, stages)
-            yield _emit_view(view)
-        except Exception as e:
-            yield _respond(_invalid_view_message())
-    else:
-        yield _respond(_full_collection_message(sample_collection))
-        yield _emit_view(sample_collection)
+        if allow_streaming:
+            message = ""
+            for content in stream_aggregation_analysis(
+                query, view, aggregation, aggregation_results
+            ):
+                message += content
+                yield _emit_streaming_content(content)
 
+            yield _emit_streaming_content("", last=True)
+            yield _respond(message, overwrite=True)
+        else:
+            yield _respond(
+                run_aggregation_analysis(
+                    query, view, aggregation, aggregation_results
+                )
+            )
 
-def _format_label_classes(label_classes):
-    unmatched_entities = []
-
-    label_fields = list(label_classes.keys())
-    label_class_dict = {}
-    for field in label_fields:
-        field_list = []
-        lcl = label_classes[field]
-        for el in lcl:
-            el_val = list(el.values())[0]
-            if type(el_val) == str:
-                field_list.append(el_val)
-            else:
-                unmatched_entities.append(list(el.keys())[0])
-                field_list += el_val
-
-        label_class_dict[field] = field_list
-
-    return label_class_dict, unmatched_entities
-
-
-def _reformat_query(examples, label_classes):
-    example_lines = examples.split("\n")
-    query = example_lines[-2]
-
-    label_classes_list = list(label_classes.values())
-    label_classes_list = [
-        item for sublist in label_classes_list for item in sublist
-    ]
-    class_name_map = {k: v for d in label_classes_list for k, v in d.items()}
-    for k, v in class_name_map.items():
-        if type(v) == str:
-            query = query.replace(k, v)
-        elif v:
-            clarification = f" where by {k} I mean any of {v}"
-            query += clarification
-
-    example_lines[-2] = query
-    return "\n".join(example_lines)
-
-
-def _format_stages(sample_collection, stages):
-    stages = [s for s in stages if s.strip() not in ("", "None")]
-
-    if not stages:
-        return None
-
-    if isinstance(sample_collection, fo.DatasetView):
-        ctype = "view"
-    else:
-        ctype = "dataset"
-
-    return [ctype] + stages
-
-
-def _build_view(sample_collection, stages):
-    import fiftyone as fo
-    from fiftyone import ViewField as F
-
-    if isinstance(sample_collection, fo.DatasetView):
-        view = sample_collection
-        dataset = view._root_dataset
-    else:
-        dataset = sample_collection
-        view = dataset.view()
-
-    view = eval(".".join(stages))
-
-    # Ensures view is valid
-    _ = view.count()
-
-    return view
+    return
 
 
 def _log_chat_history(speaker, text, chat_history):
     chat_history.append(f"{speaker}: {text}")
-
-
-def _moderation_fail_message():
-    return "I'm sorry, this query does not abide by OpenAI's guidelines"
-
-
-def _metadata_message():
-    return {
-        "string": "Please compute metadata and then try again",
-        "markdown": (
-            "Please run `compute_metadata()` on your samples and then try "
-            "again"
-        ),
-    }
-
-
-def _clarify_message():
-    return "I'm sorry, I don't understand. Can you clarify what you're asking?"
-
-
-def _specific_message():
-    return "I'm sorry, I don't understand. Can you be more specific?"
 
 
 def _format_docs_message(response):
@@ -515,172 +565,6 @@ def _format_docs_message(response):
     }
 
 
-def _algorithms_message(algorithms):
-    prefix = "Identified potential algorithms: "
-    markdown = ", ".join(f"`{a}`" for a in algorithms)
-    return {
-        "string": prefix + ", ".join(algorithms),
-        "markdown": prefix + markdown,
-    }
-
-
-def _runs_message(runs, runs_message):
-    prefix = "Identified potential runs: "
-    runs_map = {}
-    for run_type in list(runs.keys()):
-        run_info = runs[run_type]
-        if run_type == "uniqueness":
-            key = "uniqueness_field"
-        else:
-            key = "key"
-
-        runs_map[run_type] = run_info[key]
-
-    # String
-    str_message = ""
-    if runs_map:
-        str_message += prefix + str(runs_map)
-
-    if runs_message:
-        str_message += "\n" + runs_message + "\n"
-
-    # Markdown
-    runs_md = ""
-    if runs_map:
-        chunks = []
-        for run_type, key in runs_map.items():
-            chunks.append(f"\n - `{run_type}` run: `{key}`")
-
-        runs_md += prefix + "".join(chunks)
-
-    if runs_message:
-        runs_md += "\n" + runs_message + "\n"
-
-    return {
-        "string": str_message,
-        "markdown": runs_md,
-    }
-
-
-def _fields_message(fields):
-    prefix = "Identified potential fields: "
-    markdown = ", ".join(f"`{f}`" for f in fields)
-    return {
-        "string": prefix + ", ".join(fields),
-        "markdown": prefix + markdown,
-    }
-
-
-def _label_classes_message(label_classes):
-    prefix = "Identified potential label classes: "
-
-    # Markdown
-    chunks = []
-    for label_field, classes in label_classes.items():
-        chunks.append(f"\n - `{label_field}` field: ")
-        if classes:
-            chunks.append(", ".join(f"`{c}`" for c in sorted(classes)))
-        else:
-            chunks.append("N/A")
-
-    markdown = "".join(chunks)
-
-    return {
-        "string": prefix + str(label_classes),
-        "markdown": prefix + markdown,
-    }
-
-
-_HELP_MESSAGE_MARKDOWN = """
-Hi! I'm VoxelGPT, your AI assistant for computer vision.
-
-I can help you with the following tasks:
-- 🔎 **Querying your data:** I can help you filter, match, sort, and more - without writing a line of code. Tell me what you'd like to see and I'll load the corresponding view
-- 💪 **Becoming a FiftyOne pro:** I have access to the FiftyOne documentation, so I can help you learn how to use FiftyOne and find the information you're looking for
-- 📈 **Troubleshooting data quality:** I can help you build better datasets and higher quality models by answering general knowledge questions about computer vision and machine learning
-
-**Tips**
-- Be as specific as possible. The more specific you are, the better I can help you. I am still learning, so sometimes I need a little help understanding what you're asking
-- If you want to query your dataset, but your input is being interpreted as a documentation or general computer vision query, try using the `show` keyword. For example: *"show me all images with a label of dog"*
-- If you want to query the FiftyOne documentation, try using either `docs` or `fiftyone` in your query. For example: *"how do I load a dataset in FiftyOne?"*
-- If you want me to use our conversation history to infer what you're asking, try using the `now` keyword. For example: if you just asked *"show me high confidence predictions of cats, dogs, and rabbits"*, you can ask *"now the low confidence predictions"*
-
-**Learn more**
-- You can learn more about me on my [GitHub page](https://github.com/voxel51/voxelgpt). While you're at it, please give me a star ⭐! VoxelGPT is open source and it is constantly improving. Contributions are welcome!
-- Did you know that I'm a [FiftyOne Plugin](https://docs.voxel51.com/plugins/index.html)? Check out how FiftyOne can be extended to do all sorts of cool things!
-- Learn more about [FiftyOne](https://github.com/voxel51/fiftyone) and give the project a star ⭐! FiftyOne is open source too!
-- Join the [FiftyOne Slack community](https://slack.voxel51.com) where thousands of enthusiasts and professionals are discussing the latest in computer vision and machine learning
-
-I'm still learning, so I appreciate your patience 😊
-"""
-
-_HELP_MESSAGE_STRING = """
-Hi! I'm VoxelGPT, your AI assistant for computer vision.
-
-I can help you with the following tasks
-===============================================================================
-
-🔎  ~~Querying your data~~
-    I can help you filter, match, sort, and more - without writing a line of
-    code. Tell me what you'd like to see and I'll load the corresponding view
-
-💪  ~~Becoming a FiftyOne pro~~
-    I have access to the FiftyOne documentation, so I can help you learn how to
-    use FiftyOne and find the information you're looking for
-
-📈  ~~Troubleshooting data quality~~
-    I can help you build better datasets and higher quality models by answering
-    general knowledge questions about computer vision and machine learning
-
-Tips
-===============================================================================
-
-1.  ~~Be as specific as possible~~
-    The more specific you are, the better I can help you. I am still learning,
-    so sometimes I need a little help understanding what you're asking
-
-2.  If you want to query your dataset, but your input is being interpreted as a
-    documentation or general computer vision query, try using the 'show'
-    keyword. For example:
-
-        show me all images with a label of dog
-
-3.  If you want to query the FiftyOne documentation, try using either 'docs' or
-   'fiftyone' in your query. For example:
-
-        how do I load a dataset in FiftyOne?
-
-4.  If you want me to use our conversation history to infer what you're asking,
-    try using the 'now' keyword. For example:
-
-        show me high confidence predictions of cats, dogs, and rabbits
-        now the low confidence predictions
-
-5.  Type 'reset' to clear our chat history
-
-6.  Type 'exit' to exit our chat
-
-Learn more
-===============================================================================
-
--   You can learn more about me on GitHub: https://github.com/voxel51/voxelgpt
-    While you're at it, please give me a star ⭐! VoxelGPT is an open source
-    project and it is constantly improving. Contributions are welcome!
-
--   Did you know that I'm a FiftyOne Plugin? Check out how FiftyOne can be 
-    extended to do all sorts of cool things at https://docs.voxel51.com/plugins/index.html
-
--   Learn more about FiftyOne at https://github.com/voxel51/fiftyone
-    Please give the project a star ⭐! FiftyOne is open source too!
-
--   Join the FiftyOne Slack community at https://slack.voxel51.com
-    Thousands of enthusiasts and professionals are discussing the latest in
-    computer vision and machine learning
-
-I'm still learning, so I appreciate your patience 😊
-"""
-
-
 def _help_message():
     return {
         "string": _HELP_MESSAGE_STRING.strip(),
@@ -688,36 +572,78 @@ def _help_message():
     }
 
 
-def _view_stages_message(view_stages):
-    prefix = "Identified potential view stages: "
-    markdown = ", ".join(_wrap_stage_name(name) for name in view_stages)
+def _perform_aggregation_message(start_string, aggregation_string):
     return {
-        "string": prefix + str(view_stages),
-        "markdown": prefix + markdown,
+        "string": f"Performing aggregation: {start_string}.{aggregation_string}",
+        "markdown": f"Performing aggregation:\n```py\n{start_string}.{aggregation_string}\n```",
     }
 
 
-def _wrap_stage_name(stage_name):
-    return f"[{stage_name}()]({_get_stage_doc_link(stage_name)})"
+def _view_creation_plan_message(plan):
+    message = ""
+    for step in plan.steps:
+        message += f"  - {step}\n"
+    return {
+        "string": f"Here's the plan:\n{message}",
+        "markdown": f"Here's the plan:\n{message}",
+    }
 
 
-def _get_stage_doc_link(stage_name):
-    return f"https://docs.voxel51.com/api/fiftyone.core.collections.html#fiftyone.core.collections.SampleCollection.{stage_name}"
+def _view_creation_plan_changed(plan1, plan2):
+    if plan1.steps == plan2.steps:
+        return False
+    return True
 
 
-def _load_view_message(stages):
+def _get_dataset_and_view(sample_collection, ctx):
+    if sample_collection is not None:
+        if isinstance(sample_collection, fo.DatasetView):
+            view = sample_collection
+            dataset = sample_collection._dataset
+        else:
+            view = None
+            dataset = sample_collection
+    elif ctx is not None:
+        view = ctx.view
+        dataset = ctx.dataset
+    else:
+        view = None
+        dataset = None
+
+    return dataset, view
+
+
+def _recover_computation_query(chat_history):
+    query_message = chat_history[-3]
+    query = query_message.split(":")[-1].strip()
+    compute_assignee_message = chat_history[-2]
+    first_sentence = compute_assignee_message.split(".")[0]
+    return (
+        query,
+        first_sentence.replace(
+            "It looks like you want to compute ", ""
+        ).strip(),
+    )
+
+
+def _load_view_message(start_string, view_stage_strings):
+    if not view_stage_strings:
+        return {
+            "string": "Not applying any view stages.",
+            "markdown": "Not applying any view stages.",
+        }
     prefix = "Okay, I'm going to load "
-    view_str = ".".join(stages)
+    view_str = start_string + "." + ".".join(view_stage_strings)
 
     # Markdown
-    if len(view_str) < 80 or len(stages) <= 2:
+    if len(view_str) < 80 or len(view_stage_strings) <= 2:
         markdown = f":\n```py\n{view_str}\n```"
     else:
-        stages_str = "".join(f"    .{s}\n" for s in stages[1:])
-        markdown = f":\n```py\nview = (\n    {stages[0]}\n{stages_str})\n```"
+        stages_str = "".join(f"    .{s}\n" for s in view_stage_strings[1:])
+        markdown = f":\n```py\nview = (\n    {view_stage_strings[0]}\n{stages_str})\n```"
 
     return {
-        "string": prefix + view_str,
+        "string": prefix + "`" + view_str + "`",
         "markdown": prefix + markdown,
     }
 
@@ -726,13 +652,8 @@ def _invalid_view_message():
     return "I tested the view and it was invalid. Please try again"
 
 
-def _full_collection_message(sample_collection):
-    if isinstance(sample_collection, fo.DatasetView):
-        ctype = "view"
-    else:
-        ctype = "dataset"
-
-    return f"Okay, let's load your entire {ctype}"
+def _clarify_message():
+    return "I'm sorry, I don't understand. Can you clarify what you're asking?"
 
 
 def _emit_message(message, history, overwrite=False):
@@ -746,6 +667,22 @@ def _emit_message(message, history, overwrite=False):
     }
 
 
+def _has_compute_approval(chat_history):
+    if not chat_history:
+        return False
+    last_message = chat_history[-1]
+    if "yes" not in last_message.lower():
+        return False
+    second_last_message = chat_history[-2]
+    if "it looks like you want to compute" in second_last_message.lower():
+        return True
+    return False
+
+
+def _get_compute_approval_message(computation_assignee):
+    return f"It looks like you want to compute {computation_assignee}. For a dataset of this size, I need your approval to proceed. Please confirm by typing 'yes'"
+
+
 def _emit_streaming_content(content, last=False):
     return {"type": "streaming", "data": {"content": content, "last": last}}
 
@@ -754,5 +691,8 @@ def _emit_view(view):
     return {"type": "view", "data": {"view": view}}
 
 
-def _emit_warning(message):
-    return {"type": "warning", "data": {"message": message}}
+HELP_MESSAGE_MD_PATH = os.path.join(PROMPTS_DIR, "help_message_markdown.txt")
+_HELP_MESSAGE_MARKDOWN = get_prompt_from(HELP_MESSAGE_MD_PATH)
+
+HELP_MESSAGE_STRING_PATH = os.path.join(PROMPTS_DIR, "help_message_string.txt")
+_HELP_MESSAGE_STRING = get_prompt_from(HELP_MESSAGE_STRING_PATH)

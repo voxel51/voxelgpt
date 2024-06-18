@@ -1,15 +1,15 @@
 # VoxelGPT
 
-Wish you could search your images or videos without writing a line of code? Now
-you can! 🎉
+Wish you could search your images or videos without writing a line of code?
+Want to extract insights from your data by asking in plain English? Now you
+can! 🎉
 
-VoxelGPT is a [FiftyOne Plugin](https://docs.voxel51.com/plugins/index.html) that combines the
-power of [GPT-3.5](https://platform.openai.com/docs/models/gpt-3-5) with
-[FiftyOne](https://github.com/voxel51/fiftyone)'s computer vision query
-language, enabling you to filter, sort, and semantically slice your data with
-natural language.
-
-https://github.com/voxel51/voxelgpt/assets/12500356/3c2659a4-833d-4634-8d26-9792ab3453cd
+VoxelGPT is a [FiftyOne Plugin](https://docs.voxel51.com/plugins/index.html)
+that combines the power of large language models (LLMs) and large multimodal
+models (LMMs) with [FiftyOne](https://github.com/voxel51/fiftyone)'s computer
+vision query language, enabling you to filter, sort, semantically slice and ask
+questions about your data using natural language. It can even perform
+computations on your dataset for you — with approval, of course!
 
 ## Live demo
 
@@ -20,8 +20,10 @@ https://github.com/voxel51/voxelgpt/assets/12500356/3c2659a4-833d-4634-8d26-9792
 VoxelGPT is capable of handling any of the following types of queries:
 
 -   [Dataset queries](#querying-your-dataset)
--   [FiftyOne docs queries](#querying-the-fiftyone-docs)
--   [General computer vision queries](#general-computer-vision-queries)
+-   [Computation queries](#computational-queries)
+-   [FiftyOne library queries](#fiftyone-library-queries)
+-   [FiftyOne workspace queries](#querying-your-workspace)
+-   [General machine learning queries](#general-machine-learning-queries)
 
 When you ask VoxelGPT a question, it will interpret your intent and determine
 which type of query you are asking. If VoxelGPT is unsure, it will ask you to
@@ -31,13 +33,22 @@ clarify.
 
 https://github.com/voxel51/voxelgpt/assets/12500356/5728b067-defc-4db3-8cda-ad8da3523cf4
 
+VoxelGPT can handle the following types of queries about your dataset:
+
+-   Answer questions about the schema of your dataset, fields, and runs that
+    have been performed
+-   Create a filtered view of your data by constructing and concatenating view
+    stages.
+-   Set the view in the FiftyOne App
+-   Perform aggregations over the entire dataset or a view into the dataset
+
 You can ask VoxelGPT to search your datasets for you. Here's some examples of
 things you can ask:
 
--   Retrieve me 10 random samples
--   Display the most unique images with a false positive prediction
--   Just the images with at least 2 people
--   Show me the 25 images that are most similar to the first image with a cat
+-   Show me 10 random samples
+-   Show me high confidence false positive predictions
+-   Do I have any images with multiple people?
+-   What is the average brightness for my images that contain a cat?
 
 Under the hood, VoxelGPT interprets your query and translates it into the
 corresponding
@@ -45,24 +56,153 @@ corresponding
 understands the schema of your dataset, as well as things like
 [evaluation runs](https://docs.voxel51.com/user_guide/evaluation.html) and
 [similarity indexes](https://docs.voxel51.com/user_guide/brain.html#similarity).
+
 It can also automatically inspect the contents of your dataset in order to
 retrieve specific entities.
 
-### Querying the FiftyOne docs
+#### Data schema queries
 
-https://github.com/voxel51/voxelgpt/assets/12500356/a32d4856-612c-4407-8dde-6bad5efb0357
+VoxelGPT can answer questions about the schema of your dataset, brain runs,
+evaluation runs, and more. Here are some examples:
+
+-   What fields do I have in my dataset?
+-   Do I have any evaluation runs?
+-   What model did I use to similarity index my dataset?
+
+#### Object detection queries
+
+If your dataset contains one or more
+[`fo.Detections`](https://docs.voxel51.com/user_guide/using_datasets.html#object-detection)
+field(s), VoxelGPT can filter or match based on the size (relative and
+absolute) of bounding boxes, and on the number of detections.
+
+-   Restrict the view to ground truth detections larger than half of the image
+    area
+-   Show me all of the predictions < $96^2$ pixels
+-   What is the average number of person detections I have per image?
+
+#### Geolocation queries
+
+If your dataset has a
+[`GeoLocation`](https://docs.voxel51.com/user_guide/using_datasets.html#geolocation)
+field, you can run geographic queries on your dataset. VoxelGPT can perform
+geocoding to go from location name (or textual description) to a `(lon, lat)`
+pair, or a list of `(lon, lat)` points defining a boundary region. Here are a
+few examples:
+
+-   Sort by proximity to the Statue of Liberty
+-   Show me samples within 400m of Grand Central
+-   Filter for images of Paris
+-   How many images do I have that were taken in Hell's Kitchen?
+
+#### Temporal queries
+
+If your dataset has a
+[`Date` or `DateTime` field](https://docs.voxel51.com/user_guide/basics.html#fields),
+VoxelGPT can perform temporal queries such as:
+
+-   Filter for pictures taken on a Tuesday
+-   How many images were added after June 01, 2023?
+-   Show me samples with `event` field reading a time of day between 8pm and
+    11pm
+
+#### Aggregations
+
+VoxelGPT has access to Aggregation stages in FiftyOne, so it can perform
+aggregations like `count`, `mean`, `sum`, `std`, `min`, `max`, `values`, and
+`distinct` for a field or expression over the entire dataset or a view into the
+dataset. Here are some examples:
+
+-   What is the average brightness of my images?
+-   How many images do I have with a `cat` label?
+-   What is the standard deviation of the `confidence` field in my predictions?
+
+### Computational queries
+
+VoxelGPT can perform computations on your dataset, such as:
+
+-   Brightness: assign a brightness score to each sample in the dataset, using
+    FiftyOne's
+    [Image Quality Issues plugin](https://github.com/jacobmarks/image-quality-issues)
+-   Entropy: quantify the amount of information in each sample in the dataset,
+    using FiftyOne's
+    [Image Quality Issues plugin](https://github.com/jacobmarks/image-quality-issues)
+-   Uniqueness: assign a uniqueness score to each sample in the dataset, using
+    the [FiftyOne Brain](https://voxel51.com/fiftyone/workflows/uniqueness/)
+-   Duplicates: identify and remove duplicate samples in the dataset, using the
+    [FiftyOne Brain](https://docs.voxel51.com/api/fiftyone.brain.html?highlight=duplicate#fiftyone.brain.compute_exact_duplicates)
+-   Similarity: generate a vector similarity index on the dataset, which can be
+    used to compare samples in the dataset, using the
+    [FiftyOne Brain](https://docs.voxel51.com/user_guide/brain.html#similarity)
+-   Dimensionality reduction: reduce the dimensionality of feature vectors for
+    each sample, using the
+    [FiftyOne Brain](https://docs.voxel51.com/user_guide/brain.html#visualizing-embeddings)
+    using UMAP, PCA, or t-SNE, so that they can be visualized in 2D or 3D
+-   Clustering: cluster samples in the dataset using KMeans, DBSCAN, and other
+    clustering algorithms, using FiftyOne's
+    [Clustering plugin](https://github.com/jacobmarks/clustering-plugin)
+
+Here's some examples of computational queries you can ask VoxelGPT:
+
+-   Compute the brightness of images across my dataset
+-   Score the uniqueness of each image in my dataset
+-   Generate a similarity index for my dataset
+-   Cluster my dataset using KMeans
+-   Help me visualize my dataset in 2D using UMAP
+
+💡 If you do not want to allow VoxelGPT to run computations, set the
+environment variable:
+
+```shell
+export VOXELGPT_ALLOW_COMPUTATIONS=false
+```
+
+You can also set the minimum dataset size at which VoxelGPT needs to ask for
+permission to run computations:
+
+```shell
+export VOXELGPT_APPROVAL_THRESHOLD=1000
+```
+
+The default value is 100 samples.
+
+### FiftyOne library queries
 
 VoxelGPT is not only a pair programmer; it is also an educational tool.
-VoxelGPT has access to the entire [FiftyOne docs](https://docs.voxel51.com),
-which it can use to answer FiftyOne-related questions.
+VoxelGPT has access to the entire [FiftyOne docs](https://docs.voxel51.com), as
+well as all of the blog posts on the [Voxel51 Blog](https://voxel51.com/blog/),
+and transcripts from videos on the
+[Voxel51 YouTube channel](https://www.youtube.com/channel/UC9GWqiVDwPdQrW70_v4VtlQ).
+It can use all of these resources to answer FiftyOne-related questions.
 
 Here's some examples of documentation queries you can ask VoxelGPT:
 
 -   How do I load a dataset from the FiftyOne Zoo?
 -   What does the match() stage do?
 -   Can I export my dataset in COCO format?
+-   Does FiftyOne have any plugins for active learning?
 
-### General computer vision queries
+VoxelGPT will provide links to the most helpful resources across Voxel51's
+docs, blog, and YouTube channel. For YouTube videos, the links will point
+directly to the most relevant timestamp!
+
+### Querying your workspace
+
+VoxelGPT can answer questions about the environment in which you are running
+FiftyOne, including:
+
+-   Other datasets you have downloaded
+-   Plugins you have installed, and operators within those plugins
+-   Your FiftyOne config
+-   Your FiftyOne App config
+
+Here's some examples of workspace queries you can ask VoxelGPT:
+
+-   Do I have any COCO datasets?
+-   Do I have any plugins for identifying issues in my data?
+-   What is my operator timeout set to?
+
+### General machine learning queries
 
 https://github.com/voxel51/voxelgpt/assets/12500356/294b53f8-9398-4e6a-b923-56c7a9684f1d
 
@@ -70,7 +210,7 @@ Finally, VoxelGPT can answer general questions about computer vision, machine
 learning, and data science. It can help you to understand basic concepts and
 learn how to overcome data quality issues.
 
-Here's some examples of computer vision queries you can ask VoxelGPT:
+Here's some examples of machine learning queries you can ask VoxelGPT:
 
 -   What is the difference between precision and recall?
 -   How can I detect faces in my images?
@@ -91,6 +231,9 @@ You'll also need to provide an OpenAI API key
 ```shell
 export OPENAI_API_KEY=XXXXXXXX
 ```
+
+For use with your private Azure deployment, see
+[here](#using-azure-openai-deployment)
 
 ### App-only use
 
@@ -133,6 +276,26 @@ Want to add VoxelGPT to your
 [FiftyOne Teams](https://voxel51.com/fiftyone-teams) deployment? You can!
 [Instructions here](FIFTYONE_TEAMS.md).
 
+### Using an Azure OpenAI deployment
+
+You can use VoxelGPT with your private Azure deployment by setting the
+following environment variables:
+
+```shell
+export OPENAI_API_TYPE=azure
+export AZURE_OPENAI_ENDPOINT=<azure_endpoint>
+export AZURE_OPENAI_KEY=<azure_api_key>
+
+export AZURE_OPENAI_GPT35_DEPLOYMENT_NAME=<gpt35-deployment-name>
+export AZURE_OPENAI_GPT4O_DEPLOYMENT_NAME=<gpt4o-deployment-name>
+export AZURE_OPENAI_TEXT_EMBEDDING_3_LARGE_DEPLOYMENT_NAME=<embedding-deployment-name>
+```
+
+If any of the first three environment variables is not set, VoxelGPT will
+default to using the OpenAI API. For the last three environment variables, if
+any of them is not set of the resource is not found, VoxelGPT will default to
+using the OpenAI API for that specific model.
+
 ## Using VoxelGPT in the App
 
 You can use VoxelGPT in the FiftyOne App by loading any dataset:
@@ -174,7 +337,8 @@ interact with VoxelGPT via Python.
 ### Interactive sessions
 
 You can use `ask_voxelgpt_interactive()` to launch an interactive session where
-you can converse with VoxelGPT via `input()` prompts:
+you can converse with VoxelGPT via `input()` prompts. Navigate to the directory
+where VoxelGPT is located and run:
 
 ```py
 import fiftyone as fo
@@ -287,7 +451,6 @@ ask_voxelgpt("Does FiftyOne integrate with CVAT?")
 ```
 
 ```
-
 Yes, FiftyOne integrates with CVAT, which is an open-source image and video
 annotation tool. You can upload your data directly from FiftyOne to CVAT to add or
 edit labels. You can use CVAT either through the hosted server at app.cvat.ai or
@@ -348,10 +511,12 @@ for instructions.
 
 VoxelGPT uses:
 
--   OpenAI's [GPT-3.5 model](https://platform.openai.com/docs/models/gpt-3-5)
-    to generate answers, including Python code
 -   OpenAI's
-    [text-embedding-ada-002 model](https://platform.openai.com/docs/guides/embeddings/embedding-models)
+    [GPT-3.5-Turbo](https://platform.openai.com/docs/models/gpt-3-5-turbo) and
+    [GPT-4o](https://platform.openai.com/docs/models/gpt-4o) to generate
+    textual answers and code
+-   OpenAI's
+    [text-embedding-3-large model](https://platform.openai.com/docs/guides/embeddings/embedding-models)
     to embed input text prompts
 -   [LangChain](https://github.com/hwchase17/langchain) provides the connective
     tissue for the application
@@ -363,8 +528,9 @@ VoxelGPT uses:
 
 ### Media types
 
-VoxelGPT currently only supports image datasets. We're working on adding
-support for videos and other media types.
+VoxelGPT provides limited support for videos, grouped datasets, and 3D media.
+Basic filtering, querying, and aggregations will still work, but don't expect
+deep insights into 3D data.
 
 ### Examples
 
@@ -372,13 +538,6 @@ This implementation is based on a limited set of examples, so it may not
 generalize well to all datasets. The more specific your query, the better the
 results will be. If you find that the results are not what you expect, please
 let us know!
-
-### View stages
-
-The current implementation supports most FiftyOne
-[view stages](https://docs.voxel51.com/user_guide/using_views.html), but
-certain stages like `concat()`, `mongo()`, and `geo_within()` are not yet
-supported. We're working on it!
 
 ## About FiftyOne
 
@@ -393,5 +552,5 @@ Thanks for visiting! 😊
 ## Join the Community
 
 If you want join a fast-growing community of engineers, researchers, and
-practitioners who love computer vision, join the
+practitioners who love visual AI, join the
 [FiftyOne Slack community](https://slack.voxel51.com/)! 🚀🚀🚀

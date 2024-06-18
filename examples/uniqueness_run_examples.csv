@@ -1,6 +1,0 @@
-query,available_runs,selected_run,added_by
-uniqueness with torch model,"[(key: u1, model: TorchImageModel), (key: u2, model: resnet)]",u2,Jacob
-most distinct images with key 'partial_uniqueness',"[(key: partial_uniqueness, model: TorchImageModel), (key: full_uniqueness, model: TorchImageModel)]",partial_uniqueness,Jacob
-sort by uniqueness,"[(key: uniqueness, model: modelA), (key: uniqueness_new, model: modelB)]",uniqueness,Jacob
-sort by other_uniqueness,"[(key: this_uniqueness, model: clip), (key: other_uniqueness, model: clip)]",other_uniqueness,Jacob
-most unique samples with uniqueness1,"[(key: uniqueness, model: TorchImageModel), (key: uniqueness1, model: TorchImageModel), (key: uniqueness2, model: TorchImageModel)]",uniqueness1,Jacob
