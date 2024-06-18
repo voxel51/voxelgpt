@@ -21,9 +21,9 @@ VoxelGPT is capable of handling any of the following types of queries:
 
 -   [Dataset queries](#querying-your-dataset)
 -   [Computation queries](#computational-queries)
--   [FiftyOne Library queries](#fiftyone-library-queries)
--   [FiftyOne Workspace queries](#querying-your-workspace)
--   [General computer vision or machine learning queries](#general-computer-vision-queries)
+-   [FiftyOne library queries](#fiftyone-library-queries)
+-   [FiftyOne workspace queries](#querying-your-workspace)
+-   [General machine learning queries](#general-machine-learning-queries)
 
 When you ask VoxelGPT a question, it will interpret your intent and determine
 which type of query you are asking. If VoxelGPT is unsure, it will ask you to
@@ -60,7 +60,7 @@ understands the schema of your dataset, as well as things like
 It can also automatically inspect the contents of your dataset in order to
 retrieve specific entities.
 
-#### Data Schema Queries
+#### Data schema queries
 
 VoxelGPT can answer questions about the schema of your dataset, brain runs,
 evaluation runs, and more. Here are some examples:
@@ -69,7 +69,7 @@ evaluation runs, and more. Here are some examples:
 -   Do I have any evaluation runs?
 -   What model did I use to similarity index my dataset?
 
-#### Object Detection Queries
+#### Object detection queries
 
 If your dataset contains one or more
 [`fo.Detections`](https://docs.voxel51.com/user_guide/using_datasets.html#object-detection)
@@ -81,7 +81,7 @@ absolute) of bounding boxes, and on the number of detections.
 -   Show me all of the predictions < $96^2$ pixels
 -   What is the average number of person detections I have per image?
 
-#### Geolocation Queries
+#### Geolocation queries
 
 If your dataset has a
 [`GeoLocation`](https://docs.voxel51.com/user_guide/using_datasets.html#geolocation)
@@ -95,7 +95,7 @@ few examples:
 -   Filter for images of Paris
 -   How many images do I have that were taken in Hell's Kitchen?
 
-#### Temporal Queries
+#### Temporal queries
 
 If your dataset has a
 [`Date` or `DateTime` field](https://docs.voxel51.com/user_guide/basics.html#fields),
@@ -166,7 +166,7 @@ export VOXELGPT_APPROVAL_THRESHOLD=1000
 
 The default value is 100 samples.
 
-### FiftyOne Library queries
+### FiftyOne library queries
 
 VoxelGPT is not only a pair programmer; it is also an educational tool.
 VoxelGPT has access to the entire [FiftyOne docs](https://docs.voxel51.com), as
@@ -202,7 +202,7 @@ Here's some examples of workspace queries you can ask VoxelGPT:
 -   Do I have any plugins for identifying issues in my data?
 -   What is my operator timeout set to?
 
-### General computer vision queries
+### General machine learning queries
 
 https://github.com/voxel51/voxelgpt/assets/12500356/294b53f8-9398-4e6a-b923-56c7a9684f1d
 
@@ -210,7 +210,7 @@ Finally, VoxelGPT can answer general questions about computer vision, machine
 learning, and data science. It can help you to understand basic concepts and
 learn how to overcome data quality issues.
 
-Here's some examples of computer vision queries you can ask VoxelGPT:
+Here's some examples of machine learning queries you can ask VoxelGPT:
 
 -   What is the difference between precision and recall?
 -   How can I detect faces in my images?
