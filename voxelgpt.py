@@ -156,6 +156,8 @@ def ask_voxelgpt(
         query: a prompt string
         sample_collection (None): a
             :class:`fiftyone.core.collections.SampleCollection` to query
+        ctx (None): an :class:`fiftyone.operators.executor.ExecutionContext`
+            to query
         allow_streaming (True): whether to allow streaming responses
         chat_history (None): an optional chat history list
 
@@ -252,6 +254,8 @@ def ask_voxelgpt_generator(
         query: a prompt string
         sample_collection (None): a
             :class:`fiftyone.core.collections.SampleCollection` to query
+        ctx (None): an :class:`fiftyone.operators.executor.ExecutionContext`
+            to query
         dialect ("string"): the response format to return. Supported values are
             ``("string", "markdown", "raw")``
         allow_streaming (True): whether to allow streaming responses

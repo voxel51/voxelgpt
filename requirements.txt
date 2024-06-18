@@ -3,5 +3,4 @@ langchain-community>=0.2.0
 langchain-core>=0.2.0
 langchain-openai>=0.1.0
 openai>=1.0.0
-fiftyone>=0.23.7
 tiktoken>=0.7.0

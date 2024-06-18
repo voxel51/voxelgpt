@@ -121,24 +121,24 @@ dataset. Here are some examples:
 
 VoxelGPT can perform computations on your dataset, such as:
 
--   brightness: assign a brightness score to each sample in the dataset, using
+-   Brightness: assign a brightness score to each sample in the dataset, using
     FiftyOne's
     [Image Quality Issues plugin](https://github.com/jacobmarks/image-quality-issues)
--   entropy: quantify the amount of information in each sample in the dataset,
+-   Entropy: quantify the amount of information in each sample in the dataset,
     using FiftyOne's
     [Image Quality Issues plugin](https://github.com/jacobmarks/image-quality-issues)
--   uniqueness: assign a uniqueness score to each sample in the dataset, using
+-   Uniqueness: assign a uniqueness score to each sample in the dataset, using
     the [FiftyOne Brain](https://voxel51.com/fiftyone/workflows/uniqueness/)
--   duplicates: identify and remove duplicate samples in the dataset, using the
+-   Duplicates: identify and remove duplicate samples in the dataset, using the
     [FiftyOne Brain](https://docs.voxel51.com/api/fiftyone.brain.html?highlight=duplicate#fiftyone.brain.compute_exact_duplicates)
--   similarity: generate a vector similarity index on the dataset, which can be
+-   Similarity: generate a vector similarity index on the dataset, which can be
     used to compare samples in the dataset, using the
     [FiftyOne Brain](https://docs.voxel51.com/user_guide/brain.html#similarity)
--   dimensionality reduction: reduce the dimensionality of feature vectors for
+-   Dimensionality reduction: reduce the dimensionality of feature vectors for
     each sample, using the
     [FiftyOne Brain](https://docs.voxel51.com/user_guide/brain.html#visualizing-embeddings)
     using UMAP, PCA, or t-SNE, so that they can be visualized in 2D or 3D
--   clustering: cluster samples in the dataset using KMeans, DBSCAN, and other
+-   Clustering: cluster samples in the dataset using KMeans, DBSCAN, and other
     clustering algorithms, using FiftyOne's
     [Clustering plugin](https://github.com/jacobmarks/clustering-plugin)
 
@@ -276,7 +276,7 @@ Want to add VoxelGPT to your
 [FiftyOne Teams](https://voxel51.com/fiftyone-teams) deployment? You can!
 [Instructions here](FIFTYONE_TEAMS.md).
 
-### Using Azure OpenAI deployment
+### Using an Azure OpenAI deployment
 
 You can use VoxelGPT with your private Azure deployment by setting the
 following environment variables:
@@ -289,7 +289,6 @@ export AZURE_OPENAI_KEY=<azure_api_key>
 export AZURE_OPENAI_GPT35_DEPLOYMENT_NAME=<gpt35-deployment-name>
 export AZURE_OPENAI_GPT4O_DEPLOYMENT_NAME=<gpt4o-deployment-name>
 export AZURE_OPENAI_TEXT_EMBEDDING_3_LARGE_DEPLOYMENT_NAME=<embedding-deployment-name>
-
 ```
 
 If any of the first three environment variables is not set, VoxelGPT will
@@ -452,7 +451,6 @@ ask_voxelgpt("Does FiftyOne integrate with CVAT?")
 ```
 
 ```
-
 Yes, FiftyOne integrates with CVAT, which is an open-source image and video
 annotation tool. You can upload your data directly from FiftyOne to CVAT to add or
 edit labels. You can use CVAT either through the hosted server at app.cvat.ai or
