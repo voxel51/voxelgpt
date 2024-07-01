@@ -319,7 +319,7 @@ class OpenVoxelGPTPanelOnStartup(foo.Operator):
         return foo.OperatorConfig(
             name="open_voxelgpt_panel_on_startup",
             label="Open VoxelGPT Panel",
-            on_startup=True,
+            on_dataset_open=True,
             unlisted=True,
         )
 
