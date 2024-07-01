@@ -1,25 +1,24 @@
-description: VoxelGPT is an AI assistant that can query visual datasets, search the
-  FiftyOne docs, and answer general computer vision questions
-fiftyone:
-  version: '>=0.23.7'
-js_bundle: dist/index.umd.js
-license: Apache 2.0
-name: '@voxel51/voxelgpt'
-operators:
-- ask_voxelgpt
-- ask_voxelgpt_panel
-- open_voxelgpt_panel
-- open_voxelgpt_panel_on_startup
-- vote_for_query
-secrets:
-- OPENAI_API_KEY
-- OPENAI_API_TYPE
-- AZURE_OPENAI_GPT35_DEPLOYMENT_NAME
-- AZURE_OPENAI_GPT4O_DEPLOYMENT_NAME
-- AZURE_OPENAI_TEXT_EMBEDDING_3_LARGE_DEPLOYMENT_NAME
-- AZURE_OPENAI_ENDPOINT
-- AZURE_OPENAI_KEY
-- VOXELGPT_ALLOW_COMPUTATIONS
-- VOXELGPT_APPROVAL_THRESHOLD
-url: https://github.com/voxel51/voxelgpt
+name: "@voxel51/voxelgpt"
+description: VoxelGPT is an AI assistant that can query visual datasets, search the FiftyOne docs, and answer general computer vision questions
 version: 1.1.1
+fiftyone:
+  version: ">=0.23.7"
+url: https://github.com/voxel51/voxelgpt
+license: Apache 2.0
+js_bundle: dist/index.umd.js
+operators:
+  - ask_voxelgpt
+  - ask_voxelgpt_panel
+  - open_voxelgpt_panel
+  - open_voxelgpt_panel_on_startup
+  - vote_for_query
+secrets:
+  - OPENAI_API_KEY
+  - OPENAI_API_TYPE
+  - AZURE_OPENAI_GPT35_DEPLOYMENT_NAME
+  - AZURE_OPENAI_GPT4O_DEPLOYMENT_NAME
+  - AZURE_OPENAI_TEXT_EMBEDDING_3_LARGE_DEPLOYMENT_NAME
+  - AZURE_OPENAI_ENDPOINT
+  - AZURE_OPENAI_KEY
+  - VOXELGPT_ALLOW_COMPUTATIONS
+  - VOXELGPT_APPROVAL_THRESHOLD
