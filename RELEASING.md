@@ -44,7 +44,7 @@ Only files committed locally will be included in the plugin archive.
 This is also a good time to tag the new version.
 
 ```shell
-VERSION=1.2.3
+VERSION=1.1.1
 
 git checkout -b release/$VERSION
 git add .  # files you want included
