@@ -4,7 +4,7 @@ filter on `datetime.datetime` fields in their FiftyOne datasets. 'F()' is a stan
 field to be filtered on. You do not need to include the name of the field in the
 expression.
 
-You have access to the following methods:
+You have access to the following temporal methods:
 - `day_of_week()` - Returns the day of the week as an integer (1-7)
 - `day_of_month()` - Returns the day of the month as an integer (1-31)
 - `day_of_year()` - Returns the day of the year as an integer (1-366)
@@ -14,6 +14,10 @@ You have access to the following methods:
 - `week()` - Returns the week of the year as an integer (1-53)
 - `month()` - Returns the month of the year as an integer (1-12)
 - `year()` - Returns the year as an integer
+
+You have access to the following additional methods:
+- `is_in(values)` - Returns whether the integer is in the given list of values
+- `<`, `<=`, `==`, `!=`, `>`, `>=` - Standard comparison operators
 
 You can also construct `datetime.date` objects using the `datetime` module, and
 compare them using the standard comparison operators.
@@ -48,8 +52,17 @@ Examples::
 # Query: Filter for dates that fall in an odd month
 # Expression: 'F().month() % 2 == 1'
 
+# Query: Filter for dates in May or June on a Wednesday
+# Expression: '(F().month().is_in([5, 6])) & (F().day_of_week() == 3)'
+
+# Query: Filter for dates on the 15th of the month but not in April or May
+# Expression: '(F().day_of_month() == 15) & (~F().month().is_in([4, 5]))'
+
 # Query: Filter for dates that fall in the month of May
 # Expression: 'F().month() == 5'
+
+# Query: Filter for images taken on a Monday, Thursday, or Saturday
+# Expression: 'F().day_of_week().is_in([1, 4, 6])'
 
 # Query: Filter for dates before the year 2000
 # Expression: 'F().year() < 2000'
