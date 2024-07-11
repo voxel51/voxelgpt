@@ -57,6 +57,9 @@ Examples::
     # Query: What is the mean brightness of the first 100 samples?
     Classification: inspect
 
+    # Query: Show me 10 images that contain dogs using text similarity
+    Classification: inspect
+
     # Query: Compute the entropy of my dataset
 
     # Query: divide my images into 10 clusters

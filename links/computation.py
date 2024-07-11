@@ -55,6 +55,10 @@ def get_compute_approval_threshold():
 
 
 def should_run_computation(query):
+    lower_query = query.lower()
+    if "show" in lower_query and "compute" not in lower_query:
+        return False
+
     prompt = get_prompt_from(SHOULD_COMPUTE_CLASSIFICATION_PATH).format(
         query=query
     )
