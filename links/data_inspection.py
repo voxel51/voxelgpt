@@ -385,19 +385,11 @@ def _get_text_sim_runs(dataset):
 
 
 def _get_classification_evaluation_runs(dataset):
-    cls_eval_runs = []
-    for run in dataset.list_evaluations():
-        if dataset.get_evaluation_info(run).config.type == "classification":
-            cls_eval_runs.append(run)
-    return cls_eval_runs
+    return dataset.list_evauations(type="classification")
 
 
 def _get_detection_evaluation_runs(dataset):
-    det_eval_runs = []
-    for run in dataset.list_evaluations():
-        if dataset.get_evaluation_info(run).config.type == "detection":
-            det_eval_runs.append(run)
-    return det_eval_runs
+    return dataset.list_evauations(type="detection")
 
 
 def _run_default_inspection_for_plan(dataset, actors, plan):
