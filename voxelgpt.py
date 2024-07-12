@@ -261,6 +261,7 @@ def ask_voxelgpt_generator(
         allow_streaming (True): whether to allow streaming responses
         chat_history (None): an optional chat history list
     """
+
     if dialect not in _SUPPORTED_DIALECTS:
         raise ValueError(
             f"Unsupported dialect '{dialect}'. Supported: {_SUPPORTED_DIALECTS}"
@@ -300,11 +301,15 @@ def ask_voxelgpt_generator(
         _has_compute_approval(chat_history) if can_compute_flag else False
     )
 
-    # Generate a new query that incorporates the chat history
+    ## Check for view/dataset keywords
+    view_kw_flag = _has_view_keyword(query)
+    dataset_kw_flag = _has_dataset_keyword(query)
+
+    ## Generate a new query that incorporates the chat history
     if chat_history and not approved_flag:
         query = generate_effective_query(chat_history)
 
-    # Intent classification
+    ## Intent classification
     if not approved_flag:
         intent = classify_query_intent(query)
     else:
@@ -427,7 +432,10 @@ def ask_voxelgpt_generator(
     ### VIEW CREATION
     if create_view_flag:
         if current_view is not None and should_add_to_view(
-            query, current_view
+            query,
+            current_view,
+            view_kw_flag=view_kw_flag,
+            dataset_kw_flag=dataset_kw_flag,
         ):
             starting_view = current_view
             starting_str = "view"
@@ -550,6 +558,16 @@ def ask_voxelgpt_generator(
 
 def _log_chat_history(speaker, text, chat_history):
     chat_history.append(f"{speaker}: {text}")
+
+
+def _has_view_keyword(query):
+    view_keywords = ("current view", "add", "now")
+    return any(word in query.lower() for word in view_keywords)
+
+
+def _has_dataset_keyword(query):
+    dataset_keywords = ("dataset",)
+    return any(word in query.lower() for word in dataset_keywords)
 
 
 def _format_docs_message(response):

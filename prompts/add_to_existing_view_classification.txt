@@ -14,12 +14,49 @@ require modification, classify the query as `create`.
 
 Do not respond with more than one word.
 
-<question>
-{query}
-</question>
+Examples::
 
-<current_view>
-{current_view}
-</current_view>
+    # Query: Show me the first 10 samples in my dataset.
+    # Current view: dataset
+    # Classification: create
 
+    # Query: Show me the first 10 samples in my dataset.
+    # Current view:
+        - Take(size=5, seed=None)
+        - Limit(limit=3)
+    # Classification: create
+
+    # Query: Limit my current view to 5 samples.
+    # Current view:
+        - Take(size=10, seed=None)
+    # Classification: add
+
+    # Query: Sort this view by number of detections in descending order.
+    # Current view:
+        - FilterLabels(field='ground_truth', filter=LEFT_BRACE'$eq': ['$$this.label', 'dog']RIGHT_BRACE, only_matches=True, trajectories=False)
+    # Classification: add
+
+    # Query: How many samples do I have with a car or a bicycle?
+    # Current view:
+        - FilterField(field='uniqueness', filter=LEFT_BRACE'$gt': ['$uniqueness', 0.5]RIGHT_BRACE, only_matches=True)\n"
+    # Classification: create
+
+    # Query: Show me all of the samples in the dataset with a dog
+    # Current view:
+        - FilterLabels(field='ground_truth', filter=LEFT_BRACE'$eq': ['$$this.label', 'cat']RIGHT_BRACE, only_matches=True, trajectories=False)
+    # Classification: create
+
+If the user asks you to perform further actions on *this* view, you should
+classify the query as `add`. If the user asks you to create a new view from
+scratch, or asks about the dataset itself, you should classify the query as
+`create`.
+
+Given the following user query and current view, classify the query as either
+`create` or `add`. If the existing stages would
+require modification, classify the query as `create`.
+
+Do not respond with more than one word.
+
+Query: {query}
+Current view: {current_view}
 Classification: 

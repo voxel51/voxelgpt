@@ -384,12 +384,12 @@ def _get_text_sim_runs(dataset):
     return text_runs
 
 
+def _get_classification_evaluation_runs(dataset):
+    return dataset.list_evauations(type="classification")
+
+
 def _get_detection_evaluation_runs(dataset):
-    det_eval_runs = []
-    for run in dataset.list_evaluations():
-        if dataset.get_evaluation_info(run).config.type == "detection":
-            det_eval_runs.append(run)
-    return det_eval_runs
+    return dataset.list_evauations(type="detection")
 
 
 def _run_default_inspection_for_plan(dataset, actors, plan):
