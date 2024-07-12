@@ -20,6 +20,8 @@ Here are the rules:
 - If "fiftyone" or "docs" is in the user's query, your effective query must contain "fiftyone" or "docs". You will be penalized if you do not.
 - If specific numbers are mentioned in the user's query, you must include them in your effective query. You will be penalized if you do not.
 - Your effective query must be written in plain english, it should not be a code snippet or pseudocode. You will be penalized if you do.
+- If the user mentions 'dataset' in their query, you must include 'dataset' in your effective query. You will be penalized if you do not.
+- If the user mentions their current view in their query, you must include 'view' in your effective query. You will be penalized if you do not.
 
 Conversation log:
 
