@@ -9,6 +9,7 @@ View stage validator
 import re
 
 import fiftyone as fo
+from fiftyone import ViewField as F
 
 # pylint: disable=relative-beyond-top-level
 from .utils import (
@@ -19,6 +20,7 @@ from .utils import (
     fn_field_names,
 )
 from .data_inspection import (
+    _get_classification_evaluation_runs,
     _get_detection_evaluation_runs,
     _get_text_sim_runs,
     _list_detection_fields,
@@ -220,6 +222,104 @@ def _get_class_names(dataset, field_name):
         return []
 
 
+def _validate_filter_labels_fields(view_stage, dataset):
+    det_eval_patts = ("fp", "fn", "tp")
+    cls_eval_patts = ("true", "false")
+
+    def _set_field(view_stage, field):
+        if hasattr(view_stage, "field"):
+            view_stage.field = field
+        else:
+            view_stage.fields = [field]
+        return view_stage
+
+    def _resolve_label_field(view_stage, dataset, gt=True):
+        ## gt=True --> resolve ground truth field
+        ## gt=False --> resolve prediction field
+        filter_expr = view_stage.filter_expression.lower()
+        if "eval" in filter_expr:
+            if any(patt in filter_expr for patt in det_eval_patts):
+                eval_keys = _get_detection_evaluation_runs(dataset)
+                if len(eval_keys) == 0:
+                    return None
+
+                eval_key = eval_keys[0]
+                eval_run = dataset.get_evaluation_info(eval_key)
+                return (
+                    eval_run.config.gt_field
+                    if gt
+                    else eval_run.config.pred_field
+                )
+
+            if any(patt in filter_expr for patt in cls_eval_patts):
+                eval_keys = _get_classification_evaluation_runs(dataset)
+                if len(eval_keys) == 0:
+                    return None
+
+                eval_key = eval_keys[0]
+                eval_run = dataset.get_evaluation_info(eval_key)
+                return (
+                    eval_run.config.gt_field
+                    if gt
+                    else eval_run.config.pred_field
+                )
+
+        candidate_fields = (
+            _list_detection_fields(dataset)
+            + _list_classification_fields(dataset)
+            + _list_polylines_fields(dataset)
+        )
+        if len(candidate_fields) == 0:
+            return None
+
+        try:
+            for field in candidate_fields:
+                view = dataset.filter_labels(
+                    field=field, filter=F("confidence")
+                )
+                if view.count() > 0 and not gt:
+                    return field
+                elif view.count() == 0 and gt:
+                    return field
+        except Exception as e:
+            return None
+
+        return None
+
+    def _resolve_ground_truth_field(dataset):
+        return _resolve_label_field(view_stage, dataset, gt=True)
+
+    def _resolve_prediction_field(dataset):
+        return _resolve_label_field(view_stage, dataset, gt=False)
+
+    field = (
+        view_stage.field if hasattr(view_stage, "field") else view_stage.fields
+    )
+
+    # ignore multi-field case for now
+    if isinstance(field, list) and len(field) > 1:
+        return view_stage
+    elif isinstance(field, list):
+        field = field[0]
+
+    if dataset.has_field(field) and issubclass(
+        dataset.get_field(field).document_type, fo.Label
+    ):
+        return view_stage
+
+    if field == "predictions":
+        field = _resolve_prediction_field(dataset)
+        if field is not None:
+            return _set_field(view_stage, field)
+
+    if field == "ground_truth":
+        field = _resolve_ground_truth_field(dataset)
+        if field is not None:
+            return _set_field(view_stage, field)
+
+    return view_stage
+
+
 def _validate_filter_labels_classes(view_stage, dataset):
     filter_expr = view_stage.filter_expression
 
@@ -326,6 +426,8 @@ def _validate_filter_labels_evaluations(view_stage, dataset):
 
 
 def _validate_filter_labels_stage(view_stage, dataset):
+    ## handle field names
+    view_stage = _validate_filter_labels_fields(view_stage, dataset)
     ## handle evaluations
     view_stage = _validate_filter_labels_evaluations(view_stage, dataset)
     ## handle label classes
