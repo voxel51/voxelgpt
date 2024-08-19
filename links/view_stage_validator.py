@@ -28,6 +28,7 @@ from .data_inspection import (
     _list_polylines_fields,
 )
 from .view_stage_constructor import (
+    Match,
     MatchLabels,
     FilterLabels,
     ToPatches,
@@ -89,17 +90,17 @@ def _validate_to_evaluation_patches_stage(view_stage, dataset):
 
 def _validate_select_group_slices_stage(view_stage, dataset):
     if dataset.media_type != "group":
-        return "Dataset is not a group dataset"
+        return "No: Dataset is not a group dataset"
 
     if view_stage.slices is not None:
         if not all(
             slice_name in dataset.group_slices
             for slice_name in view_stage.slices
         ):
-            return "Invalid group slices"
+            return "No: Invalid group slices"
     elif view_stage.media_type is not None:
         if view_stage.media_type not in ["image", "video", "3d"]:
-            return "Invalid media type"
+            return "No: Invalid media type"
 
     return view_stage
 
@@ -111,7 +112,7 @@ def _validate_match_tags_stage(view_stage, dataset):
     intersection = set(all_tags).intersection(set(query_tags))
     if len(intersection) == 0:
         #! TO DO: Disambiguate
-        return "No common tags found"
+        return "No: No common tags found"
 
     return view_stage
 
@@ -155,13 +156,13 @@ def _validate_select_labels_stage(view_stage, dataset):
         )
         return view_stage
     else:
-        return "No common tags found"
+        return "No: No common tags found"
 
 
 def _validate_sort_by_similarity_stage(view_stage, dataset):
     sim_keys = _get_text_sim_runs(dataset)
     if len(sim_keys) == 0:
-        return "No text similarity runs found"
+        return "No: No text similarity runs found"
 
     sim_key = view_stage.brain_key
     if sim_key in sim_keys:
@@ -222,79 +223,129 @@ def _get_class_names(dataset, field_name):
         return []
 
 
-def _validate_filter_labels_fields(view_stage, dataset):
-    det_eval_patts = ("fp", "fn", "tp")
-    cls_eval_patts = ("true", "false")
+det_eval_patts = ("fp", "fn", "tp")
+cls_eval_patts = ("true", "false")
 
-    def _set_field(view_stage, field):
-        if hasattr(view_stage, "field"):
-            view_stage.field = field
-        else:
-            view_stage.fields = [field]
-        return view_stage
 
-    def _resolve_label_field(view_stage, dataset, gt=True):
-        ## gt=True --> resolve ground truth field
-        ## gt=False --> resolve prediction field
+def _set_field(view_stage, field):
+    if hasattr(view_stage, "field"):
+        view_stage.field = field
+    else:
+        view_stage.fields = [field]
+    return view_stage
+
+
+def _get_field(view_stage):
+    return (
+        view_stage.field
+        if hasattr(view_stage, "field")
+        else view_stage.fields[0]
+    )
+
+
+def _has_predictions(dataset, field):
+    view = dataset.filter_labels(field, F("confidence"))
+    return view.count() > 0
+
+
+def _resolve_label_field(view_stage, dataset, gt=True, doc_type=None):
+    if isinstance(view_stage, str):
+        return None
+    ## gt=True --> resolve ground truth field
+    ## gt=False --> resolve prediction field
+
+    def _resolve_label_field_evaluations():
+
         filter_expr = view_stage.filter_expression.lower()
         if "eval" in filter_expr:
             if any(patt in filter_expr for patt in det_eval_patts):
                 eval_keys = _get_detection_evaluation_runs(dataset)
-                if len(eval_keys) == 0:
-                    return None
-
-                eval_key = eval_keys[0]
-                eval_run = dataset.get_evaluation_info(eval_key)
-                return (
-                    eval_run.config.gt_field
-                    if gt
-                    else eval_run.config.pred_field
-                )
-
+                if len(eval_keys) != 0:
+                    eval_key = eval_keys[0]
+                    eval_run = dataset.get_evaluation_info(eval_key)
+                    return (
+                        eval_run.config.gt_field
+                        if gt
+                        else eval_run.config.pred_field
+                    )
             if any(patt in filter_expr for patt in cls_eval_patts):
                 eval_keys = _get_classification_evaluation_runs(dataset)
-                if len(eval_keys) == 0:
-                    return None
-
-                eval_key = eval_keys[0]
-                eval_run = dataset.get_evaluation_info(eval_key)
-                return (
-                    eval_run.config.gt_field
-                    if gt
-                    else eval_run.config.pred_field
-                )
-
-        candidate_fields = (
-            _list_detection_fields(dataset)
-            + _list_classification_fields(dataset)
-            + _list_polylines_fields(dataset)
-        )
-        if len(candidate_fields) == 0:
-            return None
-
-        try:
-            for field in candidate_fields:
-                view = dataset.filter_labels(
-                    field=field, filter=F("confidence")
-                )
-                if view.count() > 0 and not gt:
-                    return field
-                elif view.count() == 0 and gt:
-                    return field
-        except Exception as e:
-            return None
+                if len(eval_keys) != 0:
+                    eval_key = eval_keys[0]
+                    eval_run = dataset.get_evaluation_info(eval_key)
+                    return (
+                        eval_run.config.gt_field
+                        if gt
+                        else eval_run.config.pred_field
+                    )
 
         return None
 
-    def _resolve_ground_truth_field(dataset):
-        return _resolve_label_field(view_stage, dataset, gt=True)
+    try:
+        field = _resolve_label_field_evaluations()
+    except:
+        field = None
 
-    def _resolve_prediction_field(dataset):
-        return _resolve_label_field(view_stage, dataset, gt=False)
+    if field is not None and field != None:
+        return field
 
-    field = (
-        view_stage.field if hasattr(view_stage, "field") else view_stage.fields
+    candidate_fields = (
+        _list_detection_fields(dataset)
+        + _list_classification_fields(dataset)
+        + _list_polylines_fields(dataset)
     )
+
+    if len(candidate_fields) != 0:
+        for field in candidate_fields:
+            try:
+                hp = _has_predictions(dataset, field)
+                if hp and not gt:
+                    return field
+                elif not hp and gt:
+                    return field
+            except Exception as e:
+                continue
+
+    ## if no candidate fields found, try to resolve otherwise
+    if gt:
+        for field_name in _gt_field_names:
+            if dataset.has_field(field_name):
+                return field_name
+    else:
+        pred_field = _get_field(view_stage)
+        if dataset.has_field(pred_field):
+            return pred_field
+
+        if doc_type is not None and doc_type == "classification":
+            candidate_fields = _list_classification_fields(dataset)
+        elif doc_type is not None and doc_type == "detection":
+            candidate_fields = _list_detection_fields(dataset)
+        else:
+            candidate_fields = (
+                _list_classification_fields(dataset)
+                + _list_detection_fields(dataset)
+                + _list_polylines_fields(dataset)
+            )
+
+        for field in candidate_fields:
+            if _has_predictions(dataset, field):
+                return field
+
+    return None
+
+
+def _resolve_ground_truth_field(view_stage, dataset):
+    return _resolve_label_field(view_stage, dataset, gt=True)
+
+
+def _resolve_prediction_field(view_stage, dataset, doc_type=None):
+    return _resolve_label_field(
+        view_stage, dataset, gt=False, doc_type=doc_type
+    )
+
+
+def _validate_filter_labels_fields(view_stage, dataset):
+    field = _get_field(view_stage)
 
     # ignore multi-field case for now
     if isinstance(field, list) and len(field) > 1:
@@ -307,13 +358,35 @@ def _validate_filter_labels_fields(view_stage, dataset):
     ):
         return view_stage
 
+    if (
+        field.endswith("predictions")
+        and field != "predictions"
+        and not dataset.has_field(field)
+    ):
+        field = field.replace("predictions", "")
+        if field.endswith("_") or field.endswith(" "):
+            field = field[:-1]
+        if dataset.has_field(field) and issubclass(
+            dataset.get_field(field).document_type, fo.Label
+        ):
+            return _set_field(view_stage, field)
+
+    for dataset_field in list(dataset.get_field_schema().keys()):
+        if dataset_field.lower().replace("_", "_") == field.lower().replace(
+            "_", "_"
+        ):
+            if issubclass(
+                dataset.get_field(dataset_field).document_type, fo.Label
+            ):
+                return _set_field(view_stage, dataset_field)
+
     if field == "predictions":
-        field = _resolve_prediction_field(dataset)
+        field = _resolve_prediction_field(view_stage, dataset)
         if field is not None:
             return _set_field(view_stage, field)
 
     if field == "ground_truth":
-        field = _resolve_ground_truth_field(dataset)
+        field = _resolve_ground_truth_field(view_stage, dataset)
         if field is not None:
             return _set_field(view_stage, field)
 
@@ -321,6 +394,9 @@ def _validate_filter_labels_fields(view_stage, dataset):
 
 
 def _validate_filter_labels_classes(view_stage, dataset):
+    if isinstance(view_stage, str):
+        return view_stage
+
     filter_expr = view_stage.filter_expression
 
     ## handle label classes
@@ -334,11 +410,7 @@ def _validate_filter_labels_classes(view_stage, dataset):
     has_matching_class_name = False
 
     if len(label_class_names) > 0:
-        field = (
-            view_stage.field
-            if hasattr(view_stage, "field")
-            else view_stage.fields
-        )
+        field = _get_field(view_stage)
         field = field if isinstance(field, str) else field[0]
         all_class_names = _get_class_names(dataset, field)
         all_class_names_lower = {
@@ -399,15 +471,58 @@ def _validate_filter_labels_classes(view_stage, dataset):
     return view_stage
 
 
-def _validate_filter_labels_evaluations(view_stage, dataset):
+def _evaluate_classifications_manual(gt_field, pred_field, eval_type):
+    ##!TODO: Add confidence and other aspects
+    eq_patt = "==" if eval_type == "True" else "!="
+    return Match(
+        filter_expression=f"F('{gt_field}.label') {eq_patt} F('{pred_field}.label')"
+    )
+
+
+def _validate_filter_labels_eval_cls(
+    view_stage, dataset, gt_field, pred_field
+):
     filter_expr = view_stage.filter_expression
 
-    eval_keys = _get_detection_evaluation_runs(dataset)
+    eval_type = None
+
+    ## Handle TP, FP, FN explicitly:
+    for tp_patt in tp_field_names:
+        if tp_patt in filter_expr:
+            filter_expr = filter_expr.replace(tp_patt, "True")
+            eval_type = "True"
+    for false_patt in fp_field_names + fn_field_names:
+        if false_patt in filter_expr:
+            filter_expr = filter_expr.replace(false_patt, "fp")
+            eval_type = "False"
+
+    if eval_type is None:
+        return view_stage
+
+    ## get evaluation keys
+    eval_keys = _get_classification_evaluation_runs(dataset)
     if "eval" in filter_expr and "eval" not in eval_keys:
         if len(eval_keys) == 0:
-            return "No detection evaluations found"
+            return _evaluate_classifications_manual(
+                gt_field, pred_field, eval_type
+            )
         new_key = eval_keys[0]
         filter_expr = filter_expr.replace("eval", new_key)
+
+        ## Replace "False" --> False, "True" --> True
+        filter_expr = filter_expr.replace("'False'", "False").replace(
+            '"False"', "False"
+        )
+        filter_expr = filter_expr.replace("'True'", "True").replace(
+            '"True"', "True"
+        )
+
+    view_stage.filter_expression = filter_expr
+    return view_stage
+
+
+def _validate_filter_labels_eval_det(view_stage, dataset):
+    filter_expr = view_stage.filter_expression
 
     ## Handle TP, FP, FN explicitly:
     for tp_patt in tp_field_names:
@@ -420,8 +535,60 @@ def _validate_filter_labels_evaluations(view_stage, dataset):
         if fn_patt in filter_expr:
             filter_expr = filter_expr.replace(fn_patt, "fn")
 
-    ##! TODO Add validation for classification evaluation too, True, False <-> TP, FP
     view_stage.filter_expression = filter_expr
+
+    eval_keys = _get_detection_evaluation_runs(dataset)
+    if "eval" in filter_expr and "eval" not in eval_keys:
+        if len(eval_keys) == 0:
+            return "No: no detection evaluations found"
+        new_key = eval_keys[0]
+        filter_expr = filter_expr.replace("eval", new_key)
+
+    view_stage.filter_expression = filter_expr
+    return view_stage
+
+
+def _validate_filter_labels_evaluations(view_stage, dataset):
+    if isinstance(view_stage, str):
+        return view_stage
+
+    filter_expr = view_stage.filter_expression
+    if "eval" not in filter_expr:
+        return view_stage
+
+    gt_field = _resolve_ground_truth_field(view_stage, dataset)
+    gt_field_type = (
+        "classification"
+        if gt_field in _list_classification_fields(dataset)
+        else (
+            "detection"
+            if gt_field in _list_detection_fields(dataset)
+            else None
+        )
+    )
+
+    pred_field = _resolve_prediction_field(
+        view_stage, dataset, doc_type=gt_field_type
+    )
+
+    if gt_field is None or pred_field is None or gt_field == pred_field:
+        return view_stage
+
+    ### classification evaluation
+    if gt_field in _list_classification_fields(
+        dataset
+    ) and pred_field in _list_classification_fields(dataset):
+        return _validate_filter_labels_eval_cls(
+            view_stage, dataset, gt_field, pred_field
+        )
+
+    ## detection evaluation
+    if gt_field in _list_detection_fields(
+        dataset
+    ) and pred_field in _list_detection_fields(dataset):
+        return _validate_filter_labels_eval_det(view_stage, dataset)
+
+    ##! TO DO Polylines, segmentations, etc.
     return view_stage
 
 
@@ -477,7 +644,7 @@ def _validate_exists_stage(view_stage, dataset):
         if len(polyline_fields) > 0:
             view_stage.field = polyline_fields[0]
             return view_stage
-    return "Field not found"
+    return "No: Field not found"
 
 
 def validate_view_stage(view_stage, dataset):

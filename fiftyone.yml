@@ -1,6 +1,6 @@
 name: "@voxel51/voxelgpt"
 description: VoxelGPT is an AI assistant that can query visual datasets, search the FiftyOne docs, and answer general computer vision questions
-version: 1.1.2
+version: 1.1.3
 fiftyone:
   version: ">=0.23.7"
 url: https://github.com/voxel51/voxelgpt

@@ -385,11 +385,11 @@ def _get_text_sim_runs(dataset):
 
 
 def _get_classification_evaluation_runs(dataset):
-    return dataset.list_evauations(type="classification")
+    return dataset.list_evaluations(type="classification")
 
 
 def _get_detection_evaluation_runs(dataset):
-    return dataset.list_evauations(type="detection")
+    return dataset.list_evaluations(type="detection")
 
 
 def _run_default_inspection_for_plan(dataset, actors, plan):
@@ -408,6 +408,7 @@ def _run_default_inspection_for_plan(dataset, actors, plan):
     eval_patches_flag = any(
         [actor in ["ToEvaluationPatches"] for actor in actors]
     )
+    eval_keys_flag = any(["eval" in step.lower() for step in plan.steps])
 
     ## Basic info
     if all_fields_flag:
@@ -509,10 +510,26 @@ def _run_default_inspection_for_plan(dataset, actors, plan):
     if eval_patches_flag:
         det_eval_runs = _get_detection_evaluation_runs(dataset)
         if not det_eval_runs:
-            inspection_results += "Dataset does not have detection evaluation runs, so you cannot use `ToEvaluationPatches` stage.\n"
+            inspection_results += "Dataset does not have detection evaluation runs, so you cannot use `ToEvaluationPatches` stage. You also cannot use 'eval' in `filter_labels()` or `match_labels()` on detection fields.\n"
         else:
             inspection_results += f"Dataset has the following detection evaluation runs: {det_eval_runs}\n"
             for run in det_eval_runs:
+                inspection_results += (
+                    f"Here is configuration info about the run {run}:\n"
+                )
+                for k, v in dataset.get_evaluation_info(
+                    run
+                ).config.__dict__.items():
+                    inspection_results += f"    {k}: {v}\n"
+
+    ## Evaluation Keys
+    if eval_keys_flag:
+        cls_eval_runs = _get_classification_evaluation_runs(dataset)
+        if not cls_eval_runs:
+            inspection_results += "Dataset does not have classification evaluation runs, so you cannot use 'eval' in `filter_labels()` or `match_labels()` on classification fields.\n"
+        else:
+            inspection_results += f"Dataset has the following classification evaluation runs: {cls_eval_runs}\n"
+            for run in cls_eval_runs:
                 inspection_results += (
                     f"Here is configuration info about the run {run}:\n"
                 )
