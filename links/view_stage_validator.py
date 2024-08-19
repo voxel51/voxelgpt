@@ -358,6 +358,28 @@ def _validate_filter_labels_fields(view_stage, dataset):
     ):
         return view_stage
 
+    if (
+        field.endswith("predictions")
+        and field != "predictions"
+        and not dataset.has_field(field)
+    ):
+        field = field.replace("predictions", "")
+        if field.endswith("_") or field.endswith(" "):
+            field = field[:-1]
+        if dataset.has_field(field) and issubclass(
+            dataset.get_field(field).document_type, fo.Label
+        ):
+            return _set_field(view_stage, field)
+
+    for dataset_field in list(dataset.get_field_schema().keys()):
+        if dataset_field.lower().replace("_", "_") == field.lower().replace(
+            "_", "_"
+        ):
+            if issubclass(
+                dataset.get_field(dataset_field).document_type, fo.Label
+            ):
+                return _set_field(view_stage, dataset_field)
+
     if field == "predictions":
         field = _resolve_prediction_field(view_stage, dataset)
         if field is not None:
