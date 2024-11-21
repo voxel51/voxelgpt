@@ -324,9 +324,13 @@ class OpenVoxelGPTPanelOnStartup(foo.Operator):
         )
 
     def execute(self, ctx):
-        open_on_startup = get_plugin_setting(
-            ctx.dataset, self.plugin_name, "open_on_startup", default=False
-        )
+        if ctx.dataset is not None:
+            open_on_startup = get_plugin_setting(
+                ctx.dataset, self.plugin_name, "open_on_startup", default=False
+            )
+        else:
+            open_on_startup = False
+
         if open_on_startup:
             ctx.trigger(
                 "open_panel",
