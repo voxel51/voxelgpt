@@ -76,6 +76,7 @@ export const Intro = () => {
       spacing={2}
       justifyContent="center"
       alignItems="start"
+      lg={10}
     >
       <Grid
         container

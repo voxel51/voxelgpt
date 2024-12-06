@@ -44,7 +44,9 @@ const ChatPanel = () => {
       sx={{ height: "100%" }}
       justifyContent="center"
     >
-      {!hasMessages && <Intro />}
+      {!hasMessages && (
+        <Intro />
+      )}
       {hasMessages && (
         <Grid item lg={12}>
           <Chat />
@@ -56,7 +58,7 @@ const ChatPanel = () => {
         sx={{ marginTop: hasMessages ? "auto" : undefined }}
         justifyContent="center"
       >
-        <Grid item sm={12} md={6} lg={8}>
+        <Grid item sm={12} lg={6}>
           <Actions />
           <InputBar
             hasMessages={hasMessages}

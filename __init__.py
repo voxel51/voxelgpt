@@ -17,6 +17,10 @@ import fiftyone.operators as foo
 import fiftyone.operators.types as types
 
 
+def voxel_gpt_in_path():
+    voxel_gpt_path = os.path.realpath(os.path.dirname(os.path.abspath(__file__)))
+    return add_sys_path(voxel_gpt_path)
+
 class AskVoxelGPT(foo.Operator):
     @property
     def config(self):
@@ -45,9 +49,9 @@ class AskVoxelGPT(foo.Operator):
         inject_voxelgpt_secrets(ctx)
 
         try:
-            with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
+            with voxel_gpt_in_path():
                 # pylint: disable=no-name-in-module
-                from voxelgpt import ask_voxelgpt_generator
+                from voxelgpt_internal import ask_voxelgpt_generator
 
                 streaming_message = None
 
@@ -150,10 +154,10 @@ class AskVoxelGPTPanel(foo.Operator):
         inject_voxelgpt_secrets(ctx)
 
         try:
-            with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
+            with voxel_gpt_in_path():
                 # pylint: disable=import-error,no-name-in-module
                 import db
-                from voxelgpt import ask_voxelgpt_generator
+                from voxelgpt_internal import ask_voxelgpt_generator
 
                 # Log user query
                 table = db.table(db.UserQueryTable)
@@ -369,7 +373,7 @@ class VoteForQuery(foo.Operator):
         query_id = ctx.params["query_id"]
         vote = ctx.params["vote"]
 
-        with add_sys_path(os.path.dirname(os.path.abspath(__file__))):
+        with voxel_gpt_in_path():
             # pylint: disable=import-error,no-name-in-module
             import db
 
