@@ -1,6 +1,7 @@
 import {
   Avatar,
   Grid,
+  Icon,
   List,
   ListItem,
   ListItemAvatar,
@@ -18,6 +19,9 @@ import ManageSearchIcon from "@mui/icons-material/ManageSearch";
 
 import { useSetRecoilState } from "recoil";
 import { atoms } from "./state";
+import useContent from "./useContent";
+import { useTheme } from "@fiftyone/components";
+
 
 const examples = [
   { id: "example-1", label: "How do I export in COCO format?" },
@@ -61,6 +65,8 @@ const capabilities = [
 
 export const Intro = () => {
   const setInput = useSetRecoilState(atoms.input);
+  const content = useContent();
+  const theme = useTheme();
   return (
     <Grid
       container
@@ -71,60 +77,77 @@ export const Intro = () => {
       justifyContent="center"
       alignItems="start"
     >
-      <Grid item xs={12}>
-        <Typography variant="h2" style={{ textAlign: "center" }}>
-          VoxelGPT
-        </Typography>
+      <Grid
+        container
+        item
+        direction="row"
+        sx={{ margin: "auto" }}
+        spacing={2}
+        justifyContent="center"
+        alignItems="center">
+        <Grid item>
+          {content.iconURL && (
+            <img width={content.iconWidth + "px"} src={content.iconURL} alt="VoxelGPT" />
+          )}
+        </Grid>
+        <Grid item>
+          <Typography variant="h3" style={{ textAlign: "center", fontSize: "32px" }}>
+            {content.mainHeaderLabel}
+          </Typography>
+        </Grid>
       </Grid>
       <Grid item sm={12} lg={4} sx={{ alignSelf: "stretch", minWidth: 300 }}>
-        <Paper
-          elevation={3}
-          sx={{ height: "100%", padding: "20px", marginBottom: "16px" }}
-        >
-          <Typography variant="h4" gutterBottom style={{ textAlign: "center" }}>
-            Examples
-          </Typography>
-          <List>
-            {examples.map(({ label, id }) => (
-              <ListItemButton
-                key={id}
-                onClick={() => {
-                  setInput(label);
-                }}
-              >
-                <ListItemAvatar>
-                  <Avatar>
-                    <QuestionAnswer />
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText primary={label} />
-              </ListItemButton>
-            ))}
-          </List>
-        </Paper>
+        <CustomPaper
+          header={"Example prompts:"}
+          content={examples}
+          theme={theme}
+        />
       </Grid>
       <Grid item sm={12} lg={4} sx={{ alignSelf: "stretch", minWidth: 300 }}>
-        <Paper
-          elevation={3}
-          sx={{ height: "100%", padding: "20px", marginBottom: "16px" }}
-        >
-          <Typography variant="h4" gutterBottom style={{ textAlign: "center" }}>
-            Capabilities
-          </Typography>
-          <List>
-            {capabilities.map(({ id, label, Icon }) => (
-              <ListItem key={id}>
-                <ListItemAvatar>
-                  <Avatar>
-                    <Icon />
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText primary={label} />
-              </ListItem>
-            ))}
-          </List>
-        </Paper>
+        <CustomPaper
+          header={"Capabilities:"}
+          content={capabilities}
+          theme={theme}
+        />
       </Grid>
     </Grid>
   );
 };
+
+function CustomPaper({header, content, theme}) {
+  console.log(content)
+  return (
+    <Paper
+      elevation={0}
+      sx={{ height: "100%", padding: "20px", marginBottom: "16px", borderRadius: "15px", border: `solid 1px ${theme.divider}` }}
+    >
+      <Typography variant="h5" gutterBottom style={{ textAlign: "center" }}>
+        {header}
+      </Typography>
+      <List>
+        {content?.map(({ label, icon, Icon: IconCmpt }) => (
+          <ListItemButton
+            key={label}
+            onClick={() => {
+              setInput(label);
+            }}
+          >
+            <ListItemAvatar>
+              <Avatar sx={{borderRadius: '5px', background: theme.background.card, color: theme.text.secondary}}>
+                {IconCmpt && <IconCmpt />}
+                {icon ? (
+                  <Icon>
+                    {icon}
+                  </Icon>
+                ) : !IconCmpt && (
+                  <QuestionAnswer />
+                )}
+              </Avatar>
+            </ListItemAvatar>
+            <ListItemText primary={label} />
+          </ListItemButton>
+        ))}
+      </List>
+    </Paper>
+  )
+}

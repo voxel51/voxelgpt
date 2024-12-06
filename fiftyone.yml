@@ -12,6 +12,9 @@ operators:
   - open_voxelgpt_panel
   - open_voxelgpt_panel_on_startup
   - vote_for_query
+  - fetch_content
+  - update_content
+  - reset_content
 secrets:
   - OPENAI_API_KEY
   - OPENAI_API_TYPE

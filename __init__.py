@@ -425,6 +425,117 @@ def inject_voxelgpt_secrets(ctx):
         if value:
             os.environ[secret] = value
 
+##
+## Custom Content
+##
+
+DEFAULT_CONTENT = {
+    "main_header_label": "VoxelGPT",
+    "icon_width": "100px",
+    "capabilities": [
+        {
+            "label": "Can search the FiftyOne docs for answers and link to its sources",
+            "icon": "manage_search",
+        },
+        {
+            "label": "Understands the schema of your dataset",
+            "icon": "schema",
+        },
+        {
+            "label": "Can automatically load views that contain the content you specify",
+            "icon": "dataset",
+        },
+        {
+            "label": "Knows how to use brain methods, evaluations, similarity indexes, and more",
+            "icon": "psychology",
+        },
+    ],
+    "examples": [
+        {"label": "How do I export in COCO format?"},
+        {"label": "What does the match() stage do?"},
+        {
+            "label": "Show me samples with a high confidence prediction evaluated as a false positive",
+        },
+        {"label": "Show me 10 images that contain dogs using text similarity"},
+    ],
+}
+
+def content_store(ctx):
+    return ctx.store("voxelgpt_content")
+
+def get_content(ctx):
+    store_content = content_store(ctx).get("content") or {}
+    return {
+        **DEFAULT_CONTENT,
+        **store_content
+    }
+
+def update_content(ctx, params):
+    content_store(ctx).set("content", {
+        **DEFAULT_CONTENT,
+        **params
+    })
+class FetchContent(foo.Operator):
+    @property
+    def config(self):
+        return foo.OperatorConfig(
+            name="fetch_content",
+            label="Fetch Content",
+            unlisted=True,
+        )
+
+    def execute(self, ctx):
+        return get_content(ctx)
+
+
+class UpdateContent(foo.Operator):
+    @property
+    def config(self):
+        return foo.OperatorConfig(
+            name="update_content",
+            label="Update Content",
+            dynamic=False
+        )
+
+    def resolve_input(self, ctx):
+        content = get_content(ctx)
+        inputs = types.Object()
+        inputs.str("icon_url", label="Icon URL", default=content.get("icon_url"))
+        inputs.str("icon_width", label="Icon Width (CSS)", default=content.get("icon_width"))
+        inputs.str("main_header_label", label="Main Header Label", default=content["main_header_label"])
+        capability_type = types.Object()
+        capability_type.str("label", label="Label", view=types.LazyFieldView())
+        capability_type.str("icon", label="Icon", view=types.LazyFieldView())
+        inputs.list("capabilities", label="Capabilities", element_type=capability_type, default=content["capabilities"])
+        example_type = types.Object()
+        example_type.str("label", label="Label", view=types.LazyFieldView())
+        inputs.list("examples", label="Examples", element_type=example_type, default=content["examples"])
+        inputs.md("""
+        **Icons**
+
+        Click [here](https://marella.me/material-icons/demo/) to see all available icons.          
+
+        """)
+
+        return types.Property(inputs)
+
+    def execute(self, ctx):
+        update_content(ctx, ctx.params)
+        ctx.ops.reload_dataset()
+        return {}
+
+class ResetContent(foo.Operator):
+    @property
+    def config(self):
+        return foo.OperatorConfig(
+            name="reset_content",
+            label="Reset Content",
+        )
+
+    def execute(self, ctx):
+        content_store(ctx).set("content", {})
+        ctx.ops.reload_dataset()
+        return {}
 
 def register(p):
     p.register(AskVoxelGPT)
@@ -432,3 +543,6 @@ def register(p):
     p.register(OpenVoxelGPTPanel)
     p.register(OpenVoxelGPTPanelOnStartup)
     p.register(VoteForQuery)
+    p.register(FetchContent)
+    p.register(UpdateContent)
+    p.register(ResetContent)

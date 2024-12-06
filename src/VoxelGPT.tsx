@@ -19,6 +19,7 @@ import * as state from "./state";
 import { Actions } from "./Actions";
 import { Intro } from "./Intro";
 import { ChatGPTAvatar } from "./avatars";
+import useContent from "./useContent";
 
 const PLUGIN_NAME = "@voxel51/voxelgpt";
 
@@ -33,6 +34,7 @@ const ChatPanel = () => {
   const receiving = useRecoilValue(state.atoms.receiving);
   const waiting = useRecoilValue(state.atoms.waiting);
   const hasMessages = messages.length > 0;
+  const content = useContent();
 
   return (
     <Grid
@@ -65,7 +67,7 @@ const ChatPanel = () => {
             variant="caption"
             sx={{ marginTop: "8px", display: "block", textAlign: "center" }}
           >
-            VoxelGPT is in beta and may not understand certain queries.{" "}
+            {content.mainHeaderLabel} is in beta and may not understand certain queries.{" "}
             <Link href="https://github.com/voxel51/voxelgpt" target="_blank">
               Learn more
             </Link>
