@@ -7,6 +7,7 @@ Query DB tables.
 """
 import uuid
 import os
+import time
 
 
 class UserQueryTable(object):
@@ -16,6 +17,7 @@ class UserQueryTable(object):
         self.client = client
         self.schema = [
             bigquery.SchemaField("query_id", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("ts", "TIMESTAMP", mode="REQUIRED"),
             bigquery.SchemaField("user_query", "STRING", mode="NULLABLE"),
             bigquery.SchemaField("upvotes", "INTEGER", mode="NULLABLE"),
             bigquery.SchemaField("downvotes", "INTEGER", mode="NULLABLE"),
@@ -31,7 +33,7 @@ class UserQueryTable(object):
     def _insert_row(self, query_id, user_query=None, upvotes=0, downvotes=0):
         errors = self.client.insert_rows(
             self.client.get_table(self.table_id),
-            [(query_id, user_query, upvotes, downvotes)],
+            [(query_id, time.time(), user_query, upvotes, downvotes)],
         )
         if errors:
             raise InsertExpection(
